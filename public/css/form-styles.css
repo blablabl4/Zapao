@@ -100,7 +100,7 @@
     }
 }
 
-/* Premium Custom Scrollbar with Auto-Hide */
+/* Premium Custom Scrollbar with Auto-Hide - Gold */
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -112,8 +112,8 @@
 
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg,
-            rgba(102, 126, 234, 0.3) 0%,
-            rgba(118, 75, 162, 0.3) 100%);
+            rgba(212, 175, 55, 0.3) 0%,
+            rgba(184, 134, 11, 0.3) 100%);
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
@@ -122,27 +122,27 @@
 
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg,
-            rgba(102, 126, 234, 0.8) 0%,
-            rgba(118, 75, 162, 0.8) 100%);
+            rgba(255, 215, 0, 0.8) 0%,
+            rgba(212, 175, 55, 0.8) 100%);
     box-shadow:
-        0 0 10px rgba(102, 126, 234, 0.5),
-        0 0 20px rgba(118, 75, 162, 0.3);
+        0 0 10px rgba(212, 175, 55, 0.5),
+        0 0 20px rgba(184, 134, 11, 0.3);
     transform: scaleX(1.2);
 }
 
 ::-webkit-scrollbar-thumb:active {
     background: linear-gradient(135deg,
-            rgba(102, 126, 234, 1) 0%,
-            rgba(118, 75, 162, 1) 100%);
+            rgba(255, 215, 0, 1) 0%,
+            rgba(212, 175, 55, 1) 100%);
     box-shadow:
-        0 0 15px rgba(102, 126, 234, 0.8),
-        0 0 30px rgba(118, 75, 162, 0.5);
+        0 0 15px rgba(255, 215, 0, 0.8),
+        0 0 30px rgba(212, 175, 55, 0.5);
 }
 
 /* Firefox Scrollbar */
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(102, 126, 234, 0.4) transparent;
+    scrollbar-color: rgba(212, 175, 55, 0.4) transparent;
 }
 
 /* Smooth scrolling */
@@ -160,13 +160,13 @@ html {
 .modal-content::-webkit-scrollbar-thumb,
 .form-container::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg,
-            rgba(102, 126, 234, 0.2) 0%,
-            rgba(118, 75, 162, 0.2) 100%);
+            rgba(212, 175, 55, 0.2) 0%,
+            rgba(184, 134, 11, 0.2) 100%);
 }
 
 .modal-content:hover::-webkit-scrollbar-thumb,
 .form-container:hover::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg,
-            rgba(102, 126, 234, 0.6) 0%,
-            rgba(118, 75, 162, 0.6) 100%);
+            rgba(212, 175, 55, 0.6) 0%,
+            rgba(184, 134, 11, 0.6) 100%);
 }

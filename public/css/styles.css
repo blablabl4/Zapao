@@ -1,39 +1,57 @@
 /* ====== Theme System ====== */
+/* Gold Metallic Palette */
 /* Dark Mode (Default) */
 :root,
 [data-theme="dark"] {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Gold Gradients */
+    --primary-gradient: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
     --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --bg-dark: #0f0f23;
-    --bg-card: #1a1a2e;
-    --bg-hover: #252541;
+    --success-gradient: linear-gradient(135deg, #FFF8DC 0%, #FFD700 25%, #D4AF37 50%, #B8860B 100%);
+
+    /* Gold Metal Shine Effect */
+    --gold-shine: linear-gradient(135deg, #FFF8DC 0%, #FFD700 20%, #D4AF37 40%, #B8860B 60%, #8B6914 80%, #D4AF37 100%);
+    --gold-light: #FFD700;
+    --gold-base: #D4AF37;
+    --gold-dark: #B8860B;
+
+    /* Base Colors */
+    --bg-dark: #0f0f1a;
+    --bg-card: #1a1a28;
+    --bg-hover: #252535;
     --text-primary: #ffffff;
-    --text-secondary: #a0a0c0;
-    --border-color: #2a2a4a;
-    --accent: #667eea;
-    --success: #00f2fe;
+    --text-secondary: #a0a0b8;
+    --border-color: #3a3a4a;
+    --accent: #D4AF37;
+    --success: #FFD700;
     --warning: #f5576c;
-    --bg-overlay: rgba(15, 15, 35, 0.85);
-    --shadow-color: rgba(0, 0, 0, 0.3);
+    --bg-overlay: rgba(15, 15, 26, 0.88);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --gold-glow: rgba(212, 175, 55, 0.5);
 }
 
 /* Light Mode */
 [data-theme="light"] {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #8B6914 100%);
     --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --bg-dark: #f0f2f5;
+    --success-gradient: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
+
+    --gold-shine: linear-gradient(135deg, #FFF8DC 0%, #FFD700 20%, #D4AF37 40%, #B8860B 60%, #8B6914 80%, #D4AF37 100%);
+    --gold-light: #FFD700;
+    --gold-base: #D4AF37;
+    --gold-dark: #B8860B;
+
+    --bg-dark: #f5f5f0;
     --bg-card: #ffffff;
-    --bg-hover: #e8eaed;
+    --bg-hover: #f0ebe0;
     --text-primary: #1a1a2e;
-    --text-secondary: #5a5a7a;
-    --border-color: #d0d0e0;
-    --accent: #667eea;
-    --success: #00c4cc;
+    --text-secondary: #5a5a6a;
+    --border-color: #d4c9a8;
+    --accent: #B8860B;
+    --success: #D4AF37;
     --warning: #f5576c;
-    --bg-overlay: rgba(240, 242, 245, 0.9);
-    --shadow-color: rgba(0, 0, 0, 0.1);
+    --bg-overlay: rgba(245, 245, 240, 0.92);
+    --shadow-color: rgba(0, 0, 0, 0.15);
+    --gold-glow: rgba(184, 134, 11, 0.4);
 }
 
 * {
@@ -54,7 +72,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Carbon Fiber Texture Pattern */
+/* Perforated Metal Background with Vignette */
 body::before {
     content: '';
     position: fixed;
@@ -62,54 +80,20 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -2;
-    opacity: 0.15;
+    z-index: -3;
 
-    /* Carbon fiber pattern using CSS gradients */
-    background:
-        /* Diagonal weave pattern */
-        repeating-linear-gradient(45deg,
-            transparent,
-            transparent 2px,
-            rgba(128, 128, 128, 0.1) 2px,
-            rgba(128, 128, 128, 0.1) 4px),
-        repeating-linear-gradient(-45deg,
-            transparent,
-            transparent 2px,
-            rgba(128, 128, 128, 0.1) 2px,
-            rgba(128, 128, 128, 0.1) 4px),
-        /* Base fiber texture */
-        repeating-linear-gradient(0deg,
-            rgba(60, 60, 60, 0.3),
-            rgba(40, 40, 40, 0.3) 1px,
-            rgba(80, 80, 80, 0.2) 2px,
-            rgba(60, 60, 60, 0.3) 3px);
-    background-size: 8px 8px, 8px 8px, 4px 4px;
+    /* Perforated metal dots pattern */
+    background-image:
+        /* Radial dots - main grid */
+        radial-gradient(circle at center, rgba(40, 40, 40, 0.9) 2px, transparent 2px),
+        /* Offset row for honeycomb effect */
+        radial-gradient(circle at center, rgba(40, 40, 40, 0.9) 2px, transparent 2px);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    background-color: #1a1a1a;
 }
 
-/* Light mode adjustments for carbon fiber */
-[data-theme="light"] body::before {
-    opacity: 0.08;
-    background:
-        repeating-linear-gradient(45deg,
-            transparent,
-            transparent 2px,
-            rgba(100, 100, 100, 0.15) 2px,
-            rgba(100, 100, 100, 0.15) 4px),
-        repeating-linear-gradient(-45deg,
-            transparent,
-            transparent 2px,
-            rgba(100, 100, 100, 0.15) 2px,
-            rgba(100, 100, 100, 0.15) 4px),
-        repeating-linear-gradient(0deg,
-            rgba(150, 150, 150, 0.2),
-            rgba(130, 130, 130, 0.2) 1px,
-            rgba(170, 170, 170, 0.15) 2px,
-            rgba(150, 150, 150, 0.2) 3px);
-    background-size: 8px 8px, 8px 8px, 4px 4px;
-}
-
-/* Overlay for better readability */
+/* Vignette overlay - dark edges, lighter center */
 body::after {
     content: '';
     position: fixed;
@@ -117,8 +101,31 @@ body::after {
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--bg-overlay);
-    z-index: -1;
+    z-index: -2;
+    background: radial-gradient(ellipse at center,
+            transparent 0%,
+            transparent 30%,
+            rgba(0, 0, 0, 0.3) 60%,
+            rgba(0, 0, 0, 0.7) 100%);
+    pointer-events: none;
+}
+
+/* Light mode perforated metal */
+[data-theme="light"] body::before {
+    background-image:
+        radial-gradient(circle at center, rgba(180, 180, 180, 0.8) 2px, transparent 2px),
+        radial-gradient(circle at center, rgba(180, 180, 180, 0.8) 2px, transparent 2px);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    background-color: #e8e8e8;
+}
+
+[data-theme="light"] body::after {
+    background: radial-gradient(ellipse at center,
+            transparent 0%,
+            transparent 30%,
+            rgba(0, 0, 0, 0.1) 60%,
+            rgba(0, 0, 0, 0.25) 100%);
 }
 
 /* Theme Toggle Button */
@@ -414,7 +421,7 @@ body.has-header.header-scrolled {
     border-color: var(--accent);
     background: var(--bg-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px var(--gold-glow);
 }
 
 .number-btn:disabled {
@@ -422,41 +429,65 @@ body.has-header.header-scrolled {
     cursor: not-allowed;
 }
 
-/* Selected number state */
+/* Selected number state - Gold Metal Effect */
 .number-btn.selected {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
-    color: white;
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
-    animation: selected-pulse 1.5s ease-in-out infinite;
+    background: linear-gradient(135deg,
+            #FFF8DC 0%,
+            #FFD700 15%,
+            #D4AF37 30%,
+            #B8860B 50%,
+            #D4AF37 70%,
+            #FFD700 85%,
+            #FFF8DC 100%);
+    border-color: #D4AF37;
+    color: #1a1a1a;
+    font-weight: 700;
+    transform: scale(1.08);
+    box-shadow:
+        0 0 25px rgba(212, 175, 55, 0.7),
+        0 0 50px rgba(255, 215, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    animation: gold-shine 2s ease-in-out infinite;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
-@keyframes selected-pulse {
+/* Gold shine animation */
+@keyframes gold-shine {
 
     0%,
     100% {
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+        box-shadow:
+            0 0 25px rgba(212, 175, 55, 0.7),
+            0 0 50px rgba(255, 215, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        filter: brightness(1);
     }
 
     50% {
-        box-shadow: 0 0 30px rgba(102, 126, 234, 0.9);
+        box-shadow:
+            0 0 35px rgba(212, 175, 55, 0.9),
+            0 0 70px rgba(255, 215, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        filter: brightness(1.15);
     }
 }
 
-/* Floating Buy Button */
+/* Floating Buy Button - Gold */
 .floating-buy-btn {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
+    background: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
+    color: #1a1a1a;
     padding: 18px 32px;
     border: none;
     border-radius: 50px;
     font-size: 18px;
     font-weight: bold;
-    box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.5);
     cursor: pointer;
     z-index: 999;
     transition: all 0.3s ease;
@@ -465,7 +496,7 @@ body.has-header.header-scrolled {
 
 .floating-buy-btn:hover {
     transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 12px 30px rgba(245, 87, 108, 0.6);
+    box-shadow: 0 12px 30px rgba(212, 175, 55, 0.7);
 }
 
 @keyframes float-bounce {
@@ -609,22 +640,22 @@ body.has-header.header-scrolled {
 
 .btn-primary {
     background: var(--primary-gradient);
-    color: white;
+    color: #1a1a1a;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px var(--gold-glow);
 }
 
 .btn-success {
     background: var(--success-gradient);
-    color: white;
+    color: #1a1a1a;
 }
 
 .btn-success:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 242, 254, 0.4);
+    box-shadow: 0 4px 12px var(--gold-glow);
 }
 
 .btn-secondary {
