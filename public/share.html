@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Sorteio Exclusivo - Compartilhe e Participe!</title>
+    <meta name="description" content="Compartilhe no seu status e ganhe acesso ao grupo exclusivo do sorteio!">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/form-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Sticky Header with Logo */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 1.5rem 1rem;
+        }
+
+        .site-header.scrolled {
+            padding: 0.5rem 1rem;
+            background: rgba(15, 15, 35, 0.98);
+        }
+
+        .header-logo {
+            height: 80px;
+            width: auto;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.3));
+        }
+
+        .site-header.scrolled .header-logo {
+            height: 40px;
+        }
+
+        /* Adjust body padding for fixed header */
+        body {
+            padding-top: 120px;
+        }
+
+        body.scrolled {
+            padding-top: 70px;
+        }
+
+        /* Share Page Specific Styles */
+        .share-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .hero-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 2.5rem 2rem;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .hero-emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce-emoji 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce-emoji {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-10px) scale(1.1);
+            }
+        }
+
+        .hero-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .prize-highlight {
+            display: inline-block;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        /* Steps Container */
+        .steps-container {
+            margin-top: 1.5rem;
+        }
+
+        .step-wrapper {
+            margin-bottom: 1rem;
+        }
+
+        .step-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .step-number {
+            background: var(--primary-gradient);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Share Preview Image */
+        .share-preview {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .preview-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-image {
+            max-width: 150px;
+            width: 100%;
+            border-radius: 0.75rem;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .preview-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* Share Button - Primary CTA */
+        .btn-share {
+            width: 100%;
+            padding: 1.25rem 2rem;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            border: none;
+            border-radius: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-share::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-share:hover::before {
+            left: 100%;
+        }
+
+        .btn-share:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(37, 211, 102, 0.5);
+        }
+
+        .btn-share:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-share .icon {
+            font-size: 1.5rem;
+        }
+
+        /* Group Button - Initially Hidden */
+        .btn-group {
+            width: 100%;
+            padding: 1.25rem 2rem;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+            text-decoration: none;
+        }
+
+        .btn-group:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-group .icon {
+            font-size: 1.5rem;
+        }
+
+        /* Hidden State */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Fade In Animation */
+        .fade-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Success Badge when group is unlocked */
+        .success-badge {
+            background: rgba(0, 242, 254, 0.15);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Divider */
+        .step-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+        }
+
+        .step-divider::before,
+        .step-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .step-divider span {
+            padding: 0 1rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Info tips */
+        .info-tip {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .info-tip strong {
+            color: var(--accent);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            .share-container {
+                padding: 1rem;
+            }
+
+            .hero-card {
+                padding: 2rem 1.5rem;
+                border-radius: 1rem;
+            }
+
+            .hero-emoji {
+                font-size: 3rem;
+            }
+
+            .hero-title {
+                font-size: 1.5rem;
+            }
+
+            .btn-share,
+            .btn-group {
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Pulse animation for share button */
+        .pulse {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 25px rgba(37, 211, 102, 0.35);
+            }
+
+            50% {
+                box-shadow: 0 8px 40px rgba(37, 211, 102, 0.6);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sticky Header with Logo -->
+    <header class="site-header" id="siteHeader">
+        <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
+    </header>
+
+    <div class="share-container">
+        <div class="hero-card">
+            <!-- Hero Section -->
+            <div class="hero-emoji">🎄</div>
+            <h1 class="hero-title">R$450 Salva seu Natal?</h1>
+            <p class="hero-subtitle">
+                <strong>SORTEIO GRATUITO HOJE ÀS 21H!</strong><br>
+                Compartilhe no <strong>Status do WhatsApp</strong> e concorra!
+            </p>
+
+            <div class="prize-highlight">Prêmio: R$ 450,00</div>
+
+            <!-- Steps Container -->
+            <div class="steps-container">
+                <!-- Step 1: Share -->
+                <div class="step-wrapper" id="step1Wrapper">
+                    <div class="step-label">
+                        <span class="step-number">1</span>
+                        <span>Compartilhe para liberar o acesso</span>
+                    </div>
+
+                    <!-- Image Preview -->
+                    <div class="share-preview">
+                        <p class="preview-label">Você vai compartilhar:</p>
+                        <img src="/images/share-promo.jpg" alt="Imagem do sorteio" class="preview-image">
+                    </div>
+
+                    <button class="btn-share pulse" id="shareButton" onclick="shareToStatus()">
+                        <span class="icon">📤</span>
+                        <span>Compartilhar no Status</span>
+                    </button>
+                </div>
+
+                <!-- Divider - Hidden initially -->
+                <div class="step-divider hidden" id="stepDivider">
+                    <span>Pronto!</span>
+                </div>
+
+                <!-- Step 2: Join Group - Hidden initially -->
+                <div class="step-wrapper hidden" id="step2Wrapper">
+                    <div class="success-badge">
+                        <span>✅</span>
+                        <span>Acesso liberado!</span>
+                    </div>
+                    <div class="step-label">
+                        <span class="step-number">2</span>
+                        <span>Entre no grupo do sorteio</span>
+                    </div>
+                    <a href="https://taggo.one/amigosdozapao" class="btn-group" id="groupButton">
+                        <span class="icon">👥</span>
+                        <span>Entrar no Grupo</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Info tip -->
+            <div class="info-tip" id="infoTip">
+                💡 <strong>Dica:</strong> Após compartilhar, volte aqui para acessar o grupo exclusivo!
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/share.js"></script>
+
+    <!-- Header Scroll Behavior -->
+    <script>
+        // Handle header shrinking on scroll
+        (function () {
+            const header = document.getElementById('siteHeader');
+            const SCROLL_THRESHOLD = 50;
+            let ticking = false;
+
+            function updateHeader() {
+                if (window.scrollY > SCROLL_THRESHOLD) {
+                    header.classList.add('scrolled');
+                    document.body.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                    document.body.classList.remove('scrolled');
+                }
+                ticking = false;
+            }
+
+            window.addEventListener('scroll', function () {
+                if (!ticking) {
+                    window.requestAnimationFrame(updateHeader);
+                    ticking = true;
+                }
+            }, { passive: true });
+
+            // Initial check
+            updateHeader();
+        })();
+    </script>
+</body>
+
+</html>

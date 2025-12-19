@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Admin - TVZapão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .setup-container {
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo p {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .welcome-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-box h2 {
+            color: #fff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .welcome-box p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(0, 200, 83, 0.2);
+            color: #00c853;
+            border: 1px solid rgba(0, 200, 83, 0.3);
+        }
+
+        .message.error {
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+            border: 1px solid rgba(255, 82, 82, 0.3);
+        }
+
+        .success-view {
+            display: none;
+            text-align: center;
+        }
+
+        .success-view .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .success-view h2 {
+            color: #00c853;
+            margin-bottom: 15px;
+        }
+
+        .success-view p {
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="setup-container">
+        <div class="logo">
+            <h1>🎰 TVZapão</h1>
+            <p>Configuração Inicial</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <!-- Setup Form -->
+        <div id="setup-form-view">
+            <div class="welcome-box">
+                <h2>👋 Bem-vindo!</h2>
+                <p>Configure o primeiro administrador do sistema</p>
+            </div>
+
+            <form id="setup-form">
+                <input type="hidden" id="token" value="">
+
+                <div class="form-group">
+                    <label for="name">Seu nome</label>
+                    <input type="text" id="name" placeholder="João Silva" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Seu email</label>
+                    <input type="email" id="email" placeholder="seu@email.com" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btn-submit">
+                    Criar conta admin
+                </button>
+            </form>
+        </div>
+
+        <!-- Success View -->
+        <div id="success-view" class="success-view">
+            <div class="icon">✅</div>
+            <h2>Conta criada!</h2>
+            <p>Agora você pode fazer login com seu email</p>
+            <a href="/admin/login" class="btn btn-primary">Ir para o login</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('setup-form');
+        const message = document.getElementById('message');
+        const btnSubmit = document.getElementById('btn-submit');
+        const setupFormView = document.getElementById('setup-form-view');
+        const successView = document.getElementById('success-view');
+        const tokenInput = document.getElementById('token');
+
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        tokenInput.value = token || '';
+
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Criando...';
+
+            try {
+                const response = await fetch('/admin/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, token })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    setupFormView.style.display = 'none';
+                    successView.style.display = 'block';
+                } else {
+                    showMessage(data.error || 'Erro ao criar conta', 'error');
+                }
+            } catch (error) {
+                showMessage('Erro de conexão', 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Criar conta admin';
+            }
+        });
+    </script>
+</body>
+
+</html>
