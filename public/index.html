@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorteio MVP - Escolha seu número</title>
+    <title>Zapão da Sorte - Escolha seu número</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/form-styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,27 +36,13 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🎰 Sorteio de Números</h1>
+            <h1>🍀 Zapão da Sorte</h1>
             <div class="prize-display" id="prizeDisplay">R$ 500,00</div>
             <div id="reinforcedBadge"></div>
             <div id="salesStatus"></div>
             <p style="color: var(--text-secondary); margin-top: 1rem;">
                 Escolha um número de 00 a 99 e concorra!
             </p>
-        </div>
-
-        <!-- Info Section -->
-        <div class="info-section">
-            <h3>📋 Como funciona</h3>
-            <ul>
-                <li>Escolha 1 número por vez. Cada compra gera um Pix exclusivo.</li>
-                <li>O mesmo número pode ser comprado por mais de uma pessoa.</li>
-                <li>Valor do Pix: R$ 1,00 + (número ÷ 100). Ex: 05 = R$ 1,05 | 99 = R$ 1,99</li>
-                <li>Pagamento deve ser confirmado em até 10 minutos.</li>
-                <li>Se o número sorteado tiver mais de um ganhador, o prêmio é dividido.</li>
-                <li>Se não houver ganhador na rodada, o prêmio vai para reserva e a próxima rodada fica com prêmio
-                    reforçado.</li>
-            </ul>
         </div>
 
         <!-- Numbers Grid (2 Columns: 0-49 | 50-99) -->
@@ -69,11 +55,6 @@
                 <div class="column-title">50 - 99</div>
                 <div class="numbers-column" id="numbersGrid2"></div>
             </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <p>MVP de demonstração | <a href="/admin">Admin</a></p>
         </div>
     </div>
 
