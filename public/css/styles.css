@@ -151,6 +151,49 @@ body::after {
     transform: scale(0.95);
 }
 
+/* Sticky Header with Logo */
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 1.5rem 1rem;
+}
+
+.site-header.scrolled {
+    padding: 0.5rem 1rem;
+    background: var(--bg-card);
+}
+
+.header-logo {
+    height: 80px;
+    width: auto;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.3));
+}
+
+.site-header.scrolled .header-logo {
+    height: 40px;
+}
+
+/* Adjust body padding for fixed header */
+body.has-header {
+    padding-top: 120px;
+}
+
+.site-header.scrolled~.container,
+body.has-header.header-scrolled {
+    padding-top: 80px;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
