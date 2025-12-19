@@ -19,7 +19,7 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            background: rgba(15, 15, 35, 0.95);
+            background: var(--bg-overlay);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -31,7 +31,7 @@
 
         .site-header.scrolled {
             padding: 0.5rem 1rem;
-            background: rgba(15, 15, 35, 0.98);
+            background: var(--bg-card);
         }
 
         .header-logo {
@@ -396,6 +396,11 @@
         <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
     </header>
 
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar tema">
+        🌙
+    </button>
+
     <div class="share-container">
         <div class="hero-card">
             <!-- Hero Section -->
@@ -490,6 +495,8 @@
             updateHeader();
         })();
     </script>
+
+    <script src="/js/theme-toggle.js"></script>
 </body>
 
 </html>
