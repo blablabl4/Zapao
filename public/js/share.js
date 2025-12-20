@@ -102,23 +102,36 @@ function startCountdown() {
 }
 
 /**
- * Main share function - triggers Web Share API or fallback
- * Shares text message only (no image)
+ * Main share function - Compartilha VÍDEO + texto
  */
 async function shareToStatus() {
     const shareButton = document.getElementById('shareButton');
 
     // Disable button to prevent double-clicks
     shareButton.disabled = true;
-    shareButton.innerHTML = '<span class="icon">⏳</span><span>Abrindo...</span>';
+    shareButton.innerHTML = '<span class="icon">⏳</span><span>Preparando...</span>';
     shareButton.classList.remove('pulse');
 
     // Check if Web Share API is supported
-    if (navigator.share) {
+    if (navigator.share && navigator.canShare) {
         try {
-            await navigator.share({
-                text: SHARE_CONFIG.text
-            });
+            // Buscar o vídeo
+            const videoResp = await fetch('/video-compartilhamento.mp4');
+            const videoBlob = await videoResp.blob();
+            const videoFile = new File([videoBlob], 'sorteio-tvzapao.mp4', { type: 'video/mp4' });
+
+            const shareData = {
+                files: [videoFile],
+                text: '🚨 R$450 PIX DE NATAL 🚨\n\nTodos participam\n👉 https://www.tvzapao.com.br/share.html'
+            };
+
+            // Tentar compartilhar vídeo
+            if (navigator.canShare(shareData)) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback: só texto se não suportar vídeo
+                await navigator.share({ text: shareData.text });
+            }
 
             console.log('Share completed successfully');
 
