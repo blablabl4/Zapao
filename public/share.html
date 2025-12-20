@@ -45,6 +45,65 @@
             height: 40px;
         }
 
+        /* Timer in Header - Left Side */
+        .header-timer-container {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.4rem 0.8rem;
+            border-radius: 2rem;
+            border: 1px solid var(--accent);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-timer-label {
+            color: var(--accent);
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-timer {
+            display: flex;
+            align-items: center;
+            gap: 0.1rem;
+        }
+
+        .header-timer .timer-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Courier New', monospace;
+        }
+
+        .header-timer .timer-separator {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .site-header.scrolled .header-timer-container {
+            padding: 0.3rem 0.6rem;
+        }
+
+        .site-header.scrolled .header-timer .timer-value,
+        .site-header.scrolled .header-timer .timer-separator {
+            font-size: 0.75rem;
+        }
+
+        .site-header.scrolled .header-timer-label {
+            display: none;
+        }
+
         /* Apple-style Toggle Switch in Header */
         .theme-toggle-container {
             position: absolute;
@@ -65,6 +124,7 @@
             padding: 0;
         }
 
+        /* Dark mode - selector is dark */
         .theme-switch::before {
             content: '';
             position: absolute;
@@ -72,18 +132,21 @@
             left: 2px;
             width: 24px;
             height: 24px;
-            background: white;
+            background: #1a1a1a;
             border-radius: 50%;
-            transition: transform 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
+        /* Light mode - selector is white, background is gold */
         .theme-switch.light {
             background: var(--accent);
         }
 
         .theme-switch.light::before {
             transform: translateX(22px);
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .theme-switch-icons {
@@ -586,9 +649,24 @@
 </head>
 
 <body>
-    <!-- Sticky Header with Logo and Toggle -->
+    <!-- Sticky Header with Timer, Logo, and Toggle -->
     <header class="site-header" id="siteHeader">
+        <!-- Timer on Left -->
+        <div class="header-timer-container">
+            <span class="header-timer-label">Sorteio:</span>
+            <div class="header-timer" id="countdownTimer">
+                <span class="timer-value">--</span>
+                <span class="timer-separator">:</span>
+                <span class="timer-value">--</span>
+                <span class="timer-separator">:</span>
+                <span class="timer-value">--</span>
+            </div>
+        </div>
+
+        <!-- Logo Center -->
         <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
+
+        <!-- Toggle on Right -->
         <div class="theme-toggle-container">
             <button class="theme-switch" id="themeSwitch" onclick="toggleTheme()" aria-label="Alternar tema">
                 <span class="theme-switch-icons">
@@ -598,18 +676,6 @@
             </button>
         </div>
     </header>
-
-    <!-- Floating Countdown Timer -->
-    <div class="countdown-container">
-        <div class="countdown-label">Sorteio em:</div>
-        <div class="countdown-timer" id="countdownTimer">
-            <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">h</span></span>
-            <span class="timer-separator">:</span>
-            <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">m</span></span>
-            <span class="timer-separator">:</span>
-            <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">s</span></span>
-        </div>
-    </div>
 
     <div class="share-container">
         <div class="hero-card">

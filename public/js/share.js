@@ -76,11 +76,11 @@ function startCountdown() {
         const secondsStr = String(seconds).padStart(2, '0');
 
         timerDisplay.innerHTML = `
-            <span class="timer-unit"><span class="timer-value">${hoursStr}</span><span class="timer-label">h</span></span>
+            <span class="timer-value">${hoursStr}</span>
             <span class="timer-separator">:</span>
-            <span class="timer-unit"><span class="timer-value">${minutesStr}</span><span class="timer-label">m</span></span>
+            <span class="timer-value">${minutesStr}</span>
             <span class="timer-separator">:</span>
-            <span class="timer-unit"><span class="timer-value">${secondsStr}</span><span class="timer-label">s</span></span>
+            <span class="timer-value">${secondsStr}</span>
         `;
     }
 
