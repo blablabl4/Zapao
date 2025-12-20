@@ -53,10 +53,13 @@
             height: 40px;
         }
 
-        /* Toggle button - same animation as logo */
+        /* Toggle button - fixed bottom-left */
         .theme-toggle {
-            width: 40px;
-            height: 40px;
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background: var(--bg-card);
             border: 2px solid var(--accent);
@@ -64,28 +67,36 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            font-size: 1.3rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
 
         .theme-toggle:hover {
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
         }
 
-        .site-header.scrolled .theme-toggle {
-            width: 30px;
-            height: 30px;
+        /* FALTAM label above timer */
+        .timer-label {
+            text-align: center;
+            color: var(--accent);
             font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
         }
 
-        /* Timer Row in Hero - Between Alert Emojis */
+        /* Timer Row in Hero - Between Alert Emojis with shake */
         .timer-row {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
             margin-bottom: 1rem;
+            animation: continuous-shake 0.5s ease-in-out infinite;
         }
 
         .timer-emoji {
@@ -133,6 +144,27 @@
             font-size: 1.4rem;
             font-weight: 800;
             color: var(--accent);
+        }
+
+        /* Continuous shake animation */
+        @keyframes continuous-shake {
+
+            0%,
+            100% {
+                transform: translateX(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateX(-3px) rotate(-1deg);
+            }
+
+            50% {
+                transform: translateX(0) rotate(0deg);
+            }
+
+            75% {
+                transform: translateX(3px) rotate(1deg);
+            }
         }
 
         /* Light shake animation on scroll */
@@ -640,18 +672,27 @@
 </head>
 
 <body>
-    <!-- Sticky Header with Logo and Toggle -->
+    <!-- Toggle button fixed bottom-left -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar tema">
+        🌙
+    </button>
+
+    <!-- Sticky Header with Logo -->
     <header class="site-header" id="siteHeader">
         <div class="header-content">
             <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
-            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar tema">
-                🌙
-            </button>
         </div>
     </header>
 
     <div class="share-container">
         <div class="hero-card">
+            <!-- Share Image -->
+            <img src="/images/share-banner.jpg" alt="Sorteio"
+                style="width: 100%; max-width: 600px; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+
+            <!-- FALTAM label -->
+            <div class="timer-label">FALTAM</div>
+
             <!-- Timer Row with Alert Emojis -->
             <div class="timer-row" id="timerRow">
                 <span class="timer-emoji">🚨</span>
@@ -665,14 +706,7 @@
                 <span class="timer-emoji">🚨</span>
             </div>
 
-            <!-- Hero Section -->
-            <h1 class="hero-title">R$450 PIX DE NATAL</h1>
-            <p class="hero-subtitle">
-                <strong>Todos participam</strong><br>
-                Só recebe quem compartilhar no Status do WhatsApp HOJE
-            </p>
-
-            <div class="prize-highlight">Prêmio: R$ 450,00</div>
+            <!-- Removed hero text -->
 
             <!-- Steps Container -->
             <div class="steps-container">
