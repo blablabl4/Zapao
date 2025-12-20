@@ -132,40 +132,40 @@
 
         .theme-switch {
             position: relative;
-            width: 50px;
-            height: 28px;
+            width: 52px;
+            height: 30px;
             background: #3a3a3a;
-            border-radius: 14px;
+            border-radius: 15px;
             cursor: pointer;
-            transition: background 0.3s ease;
-            border: none;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
             padding: 0;
+            box-sizing: border-box;
         }
 
-        /* Dark mode - selector is dark */
+        /* The sliding circle */
         .theme-switch::before {
             content: '';
             position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 24px;
-            height: 24px;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
             background: #1a1a1a;
             border-radius: 50%;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        /* Light mode - selector is white, background is gold, gray border */
+        /* Light mode - gold background, gray border, white circle */
         .theme-switch.light {
             background: var(--accent);
-            border: 2px solid #888;
+            border-color: #888;
         }
 
         .theme-switch.light::before {
-            top: 0px;
-            left: 0px;
-            transform: translateX(18px);
+            left: auto;
+            right: 3px;
             background: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
