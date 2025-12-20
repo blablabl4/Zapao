@@ -3,14 +3,20 @@
  * 
  * Uses Web Share API to trigger native sharing on mobile.
  * Reveals the group button after the share dialog is closed.
+ * Includes countdown timer to 21:00 Brasília time.
  */
 
 // Configuration - Customize these values
 const SHARE_CONFIG = {
-    title: '🎄 R$450 SALVA SEU NATAL?',
-    text: '🎰 SORTEIO GRATUITO HOJE ÀS 21H!\n\n✅ Entre no grupo\n✅ Compartilhe essa imagem no status\n\n⚠️ Quem compartilha, continua no sorteio\n❌ Não compartilhou? Perde!\n\n👇 Entre no grupo e compartilhe:',
-    url: window.location.origin + '/share.html',
-    imageUrl: '/images/share-promo.jpg',
+    text: `🚨 R$450 PIX DE NATAL 🚨
+
+Todos participam
+Só recebe quem compartilhar esse aviso no status do WhatsApp HOJE
+
+Não compartilhou?
+Se ganhar, perde.
+
+👉 Entre agora: https://www.tvzapao.com.br/share.html`,
     groupLink: 'https://chat.whatsapp.com/KX52zLyO8GIEY25qHo55T0',
     fallbackDelay: 3000 // 3 seconds delay for fallback
 };
@@ -30,11 +36,62 @@ document.addEventListener('DOMContentLoaded', () => {
     if (groupBtn) {
         groupBtn.href = SHARE_CONFIG.groupLink;
     }
+
+    // Start countdown timer
+    startCountdown();
 });
 
 /**
+ * Countdown timer to 21:00 Brasília time
+ */
+function startCountdown() {
+    const timerDisplay = document.getElementById('countdownTimer');
+    if (!timerDisplay) return;
+
+    function updateTimer() {
+        // Get current time in Brasília timezone (UTC-3)
+        const now = new Date();
+        const brasiliaOffset = -3 * 60; // UTC-3 in minutes
+        const localOffset = now.getTimezoneOffset();
+        const brasiliaTime = new Date(now.getTime() + (localOffset + brasiliaOffset) * 60000);
+
+        // Target: 21:00 today (or tomorrow if past 21:00)
+        let target = new Date(brasiliaTime);
+        target.setHours(21, 0, 0, 0);
+
+        // If it's past 21:00, target is tomorrow
+        if (brasiliaTime >= target) {
+            target.setDate(target.getDate() + 1);
+        }
+
+        // Calculate difference
+        const diff = target - brasiliaTime;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        // Format display
+        const hoursStr = String(hours).padStart(2, '0');
+        const minutesStr = String(minutes).padStart(2, '0');
+        const secondsStr = String(seconds).padStart(2, '0');
+
+        timerDisplay.innerHTML = `
+            <span class="timer-unit"><span class="timer-value">${hoursStr}</span><span class="timer-label">h</span></span>
+            <span class="timer-separator">:</span>
+            <span class="timer-unit"><span class="timer-value">${minutesStr}</span><span class="timer-label">m</span></span>
+            <span class="timer-separator">:</span>
+            <span class="timer-unit"><span class="timer-value">${secondsStr}</span><span class="timer-label">s</span></span>
+        `;
+    }
+
+    // Update immediately and then every second
+    updateTimer();
+    setInterval(updateTimer, 1000);
+}
+
+/**
  * Main share function - triggers Web Share API or fallback
- * Tries to share with image file when supported
+ * Shares text message only (no image)
  */
 async function shareToStatus() {
     const shareButton = document.getElementById('shareButton');
@@ -47,9 +104,9 @@ async function shareToStatus() {
     // Check if Web Share API is supported
     if (navigator.share) {
         try {
-            // Try to share with image file first
-            const shareData = await prepareShareData();
-            await navigator.share(shareData);
+            await navigator.share({
+                text: SHARE_CONFIG.text
+            });
 
             console.log('Share completed successfully');
 
@@ -59,157 +116,60 @@ async function shareToStatus() {
         } finally {
             // Always show the group button when returning to the page
             showGroupButton(true);
-            resetShareButton();
         }
     } else {
-        // Fallback for browsers without Web Share API
-        console.log('Web Share API not supported, using fallback');
-        openWhatsAppFallback();
-
-        // Show group button after delay
-        setTimeout(() => {
-            showGroupButton(true);
-            resetShareButton();
-        }, SHARE_CONFIG.fallbackDelay);
+        // Fallback: Open WhatsApp directly
+        fallbackToWhatsApp();
     }
 }
 
 /**
- * Prepares the share data, attempting to include the image file
+ * Fallback for browsers that don't support Web Share API
+ * Opens WhatsApp directly with the message text
  */
-async function prepareShareData() {
-    const baseShareData = {
-        title: SHARE_CONFIG.title,
-        text: SHARE_CONFIG.text,
-        url: SHARE_CONFIG.url
-    };
+function fallbackToWhatsApp() {
+    const encodedText = encodeURIComponent(SHARE_CONFIG.text);
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
 
-    // Try to fetch and include the image for sharing
-    try {
-        const response = await fetch(SHARE_CONFIG.imageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], 'sorteio-natal.jpg', { type: 'image/jpeg' });
+    // Open WhatsApp in new tab
+    window.open(whatsappUrl, '_blank');
 
-        // Check if sharing with files is supported
-        const shareDataWithFile = {
-            ...baseShareData,
-            files: [file]
-        };
-
-        if (navigator.canShare && navigator.canShare(shareDataWithFile)) {
-            console.log('Sharing with image file');
-            return shareDataWithFile;
-        }
-    } catch (error) {
-        console.log('Could not include image:', error.message);
-    }
-
-    // Fallback to text-only sharing
-    console.log('Sharing text only');
-    return baseShareData;
+    // Show group button after delay
+    setTimeout(() => {
+        showGroupButton(true);
+    }, SHARE_CONFIG.fallbackDelay);
 }
 
 /**
- * Shows the group button with optional animation
- * @param {boolean} animate - Whether to play fade-in animation
+ * Show the group button with animation
  */
 function showGroupButton(animate = true) {
-    const step2Wrapper = document.getElementById('step2Wrapper');
-    const stepDivider = document.getElementById('stepDivider');
+    const step1 = document.getElementById('step1Wrapper');
+    const divider = document.getElementById('stepDivider');
+    const step2 = document.getElementById('step2Wrapper');
     const infoTip = document.getElementById('infoTip');
     const shareButton = document.getElementById('shareButton');
 
-    // Mark as revealed
+    // Mark as revealed for this session
     groupButtonRevealed = true;
     sessionStorage.setItem('groupRevealed', 'true');
 
-    // Update share button to show it's complete
-    shareButton.innerHTML = '<span class="icon">✅</span><span>Compartilhado!</span>';
-    shareButton.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
-    shareButton.classList.remove('pulse');
-    shareButton.disabled = true;
-
-    // Hide info tip
-    if (infoTip) {
-        infoTip.style.display = 'none';
-    }
-
-    // Show the divider and step 2
-    stepDivider.classList.remove('hidden');
-    step2Wrapper.classList.remove('hidden');
-
-    // Apply animation if requested
-    if (animate) {
-        stepDivider.classList.add('fade-in');
-        step2Wrapper.classList.add('fade-in');
-    }
-
-    // Scroll to make sure the button is visible
-    setTimeout(() => {
-        step2Wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-}
-
-/**
- * Resets the share button state (keeps it as completed if already shared)
- */
-function resetShareButton() {
-    const shareButton = document.getElementById('shareButton');
-
-    if (groupButtonRevealed) {
-        // Keep it in completed state
-        shareButton.innerHTML = '<span class="icon">✅</span><span>Compartilhado!</span>';
-        shareButton.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
-        shareButton.disabled = true;
-    } else {
-        // Reset to original state
-        shareButton.innerHTML = '<span class="icon">📤</span><span>Compartilhar no Status</span>';
-        shareButton.style.background = '';
+    // Update share button to "shared" state
+    if (shareButton) {
         shareButton.disabled = false;
-        shareButton.classList.add('pulse');
-    }
-}
-
-/**
- * Fallback: Opens WhatsApp with pre-filled message
- * Used when Web Share API is not available
- */
-function openWhatsAppFallback() {
-    const message = encodeURIComponent(
-        `${SHARE_CONFIG.title}\n\n${SHARE_CONFIG.text}\n\n${SHARE_CONFIG.url}`
-    );
-
-    // Try WhatsApp app first, fallback to web
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${message}`;
-
-    // Open in new tab/window
-    window.open(whatsappUrl, '_blank');
-}
-
-/**
- * Utility: Reset everything (for testing)
- */
-function resetShareFlow() {
-    sessionStorage.removeItem('groupRevealed');
-    groupButtonRevealed = false;
-
-    const step2Wrapper = document.getElementById('step2Wrapper');
-    const stepDivider = document.getElementById('stepDivider');
-    const infoTip = document.getElementById('infoTip');
-
-    step2Wrapper.classList.add('hidden');
-    step2Wrapper.classList.remove('fade-in');
-    stepDivider.classList.add('hidden');
-    stepDivider.classList.remove('fade-in');
-
-    if (infoTip) {
-        infoTip.style.display = 'block';
+        shareButton.innerHTML = '<span class="icon">✅</span><span>Compartilhado!</span>';
+        shareButton.classList.add('shared');
     }
 
-    resetShareButton();
+    // Show divider and step 2
+    if (divider) divider.classList.remove('hidden');
+    if (step2) step2.classList.remove('hidden');
+    if (infoTip) infoTip.classList.add('hidden');
 
-    console.log('Share flow reset');
+    if (animate && step2) {
+        // Scroll to the group button
+        setTimeout(() => {
+            step2.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    }
 }
-
-// Expose reset function globally for testing
-window.resetShareFlow = resetShareFlow;

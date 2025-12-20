@@ -132,6 +132,59 @@
             font-size: 1.5rem;
         }
 
+        /* Countdown Timer */
+        .countdown-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--accent);
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .countdown-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .timer-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .timer-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .timer-separator {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-top: -0.5rem;
+        }
+
         /* Steps Container */
         .steps-container {
             margin-top: 1.5rem;
@@ -404,12 +457,27 @@
     <div class="share-container">
         <div class="hero-card">
             <!-- Hero Section -->
-            <div class="hero-emoji">🎄</div>
-            <h1 class="hero-title">R$450 Salva seu Natal?</h1>
+            <div class="hero-emoji">🚨</div>
+            <h1 class="hero-title">R$450 PIX DE NATAL</h1>
             <p class="hero-subtitle">
-                <strong>SORTEIO GRATUITO HOJE ÀS 21H!</strong><br>
-                Compartilhe no <strong>Status do WhatsApp</strong> e concorra!
+                <strong>Todos participam</strong><br>
+                Só recebe quem compartilhar no Status do WhatsApp HOJE
             </p>
+
+            <!-- Countdown Timer -->
+            <div class="countdown-container">
+                <div class="countdown-label">⏰ Sorteio em:</div>
+                <div class="countdown-timer" id="countdownTimer">
+                    <span class="timer-unit"><span class="timer-value">--</span><span
+                            class="timer-label">h</span></span>
+                    <span class="timer-separator">:</span>
+                    <span class="timer-unit"><span class="timer-value">--</span><span
+                            class="timer-label">m</span></span>
+                    <span class="timer-separator">:</span>
+                    <span class="timer-unit"><span class="timer-value">--</span><span
+                            class="timer-label">s</span></span>
+                </div>
+            </div>
 
             <div class="prize-highlight">Prêmio: R$ 450,00</div>
 
@@ -419,13 +487,7 @@
                 <div class="step-wrapper" id="step1Wrapper">
                     <div class="step-label">
                         <span class="step-number">1</span>
-                        <span>Compartilhe para liberar o acesso</span>
-                    </div>
-
-                    <!-- Image Preview -->
-                    <div class="share-preview">
-                        <p class="preview-label">Você vai compartilhar:</p>
-                        <img src="/images/share-promo.jpg" alt="Imagem do sorteio" class="preview-image">
+                        <span>Compartilhe para participar</span>
                     </div>
 
                     <button class="btn-share pulse" id="shareButton" onclick="shareToStatus()">
