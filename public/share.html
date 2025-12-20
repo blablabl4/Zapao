@@ -201,24 +201,25 @@
             }
         }
 
-        /* Body sem scroll - tudo cabe na tela */
+        /* Body com scroll permitido */
         body {
             padding-top: 60px;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             max-width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
         }
 
         /* Share Page Specific Styles */
         .share-container {
-            height: calc(100vh - 60px);
+            min-height: calc(100vh - 60px);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             padding: 0.25rem;
             text-align: center;
-            overflow: hidden;
+            padding-bottom: 2rem;
         }
 
         .hero-card {
