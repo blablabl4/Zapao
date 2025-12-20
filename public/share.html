@@ -209,10 +209,11 @@
         body {
             background-color: #000000 !important;
             color: #ffffff;
+            height: 100vh;
+            /* Fallback */
             height: 100dvh;
             /* Dynamic Viewport Height */
             overflow: hidden !important;
-            /* Trava scroll */
             margin: 0;
             padding: 0;
             display: flex;
@@ -221,19 +222,19 @@
 
         body {
             padding-top: 50px;
-            /* Header pequeno */
             width: 100vw;
+            /* Garante que o conteúdo não cole na barra inferior do iPhone */
+            padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        /* Share Page Specific Styles */
         /* Share Page Specific Styles - FLEXBOX POWER */
         .share-container {
-            height: calc(100dvh - 50px);
+            /* Altura total - Header - Safe Area */
+            height: calc(100dvh - 50px - env(safe-area-inset-bottom, 0px));
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-evenly;
-            /* Distribui espaço verticalmente */
             padding: 0.5rem;
             text-align: center;
             overflow: hidden;
