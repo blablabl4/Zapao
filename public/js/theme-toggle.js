@@ -26,11 +26,21 @@ function getTheme() {
 function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
 
-    // Update toggle button icon
+    // Update old toggle button icon (if exists)
     const toggleBtn = document.getElementById('themeToggle');
     if (toggleBtn) {
         toggleBtn.innerHTML = theme === DARK ? '☀️' : '🌙';
         toggleBtn.setAttribute('aria-label', theme === DARK ? 'Mudar para modo claro' : 'Mudar para modo escuro');
+    }
+
+    // Update Apple-style switch (if exists)
+    const themeSwitch = document.getElementById('themeSwitch');
+    if (themeSwitch) {
+        if (theme === LIGHT) {
+            themeSwitch.classList.add('light');
+        } else {
+            themeSwitch.classList.remove('light');
+        }
     }
 
     // Save preference

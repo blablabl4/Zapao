@@ -12,13 +12,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Sticky Header with Logo */
+        /* Sticky Header with Logo + Theme Toggle */
         .site-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1000;
+            z-index: 1001;
             background: var(--bg-overlay);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
@@ -45,9 +45,64 @@
             height: 40px;
         }
 
+        /* Apple-style Toggle Switch in Header */
+        .theme-toggle-container {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .theme-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: #3a3a3a;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            border: none;
+            padding: 0;
+        }
+
+        .theme-switch::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-switch.light {
+            background: var(--accent);
+        }
+
+        .theme-switch.light::before {
+            transform: translateX(22px);
+        }
+
+        .theme-switch-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 6px;
+            pointer-events: none;
+            font-size: 0.75rem;
+        }
+
         /* Adjust body padding for fixed header */
         body {
-            padding-top: 120px;
+            padding-top: 130px;
         }
 
         body.scrolled {
@@ -135,24 +190,47 @@
         /* Round Countdown Timer - Animated on Scroll */
         .countdown-container {
             position: fixed;
-            top: 140px;
+            top: 150px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.85);
             border: 3px solid var(--accent);
             border-radius: 50%;
-            width: 160px;
-            height: 160px;
+            width: 180px;
+            height: 180px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 999;
-            backdrop-filter: blur(10px);
+            z-index: 998;
+            backdrop-filter: blur(20px);
             box-shadow:
-                0 0 30px rgba(212, 175, 55, 0.4),
-                inset 0 0 20px rgba(212, 175, 55, 0.1);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                0 0 40px rgba(212, 175, 55, 0.5),
+                0 0 80px rgba(212, 175, 55, 0.2),
+                inset 0 0 30px rgba(212, 175, 55, 0.1);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: timer-pulse 2s ease-in-out infinite;
+        }
+
+        /* Pulse animation to grab attention */
+        @keyframes timer-pulse {
+
+            0%,
+            100% {
+                box-shadow:
+                    0 0 40px rgba(212, 175, 55, 0.5),
+                    0 0 80px rgba(212, 175, 55, 0.2),
+                    inset 0 0 30px rgba(212, 175, 55, 0.1);
+                transform: translateX(-50%) scale(1);
+            }
+
+            50% {
+                box-shadow:
+                    0 0 60px rgba(212, 175, 55, 0.7),
+                    0 0 100px rgba(212, 175, 55, 0.3),
+                    inset 0 0 40px rgba(212, 175, 55, 0.2);
+                transform: translateX(-50%) scale(1.02);
+            }
         }
 
         /* When scrolled - move to bottom-left and shrink */
@@ -160,11 +238,25 @@
             top: auto;
             bottom: 20px;
             left: 20px;
-            transform: translateX(0);
-            width: 90px;
-            height: 90px;
+            transform: translateX(0) scale(1);
+            width: 85px;
+            height: 85px;
             border-width: 2px;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            animation: timer-pulse-small 2s ease-in-out infinite;
+        }
+
+        @keyframes timer-pulse-small {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+                transform: translateX(0) scale(1);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
+                transform: translateX(0) scale(1.05);
+            }
         }
 
         .countdown-label {
@@ -494,9 +586,17 @@
 </head>
 
 <body>
-    <!-- Sticky Header with Logo -->
+    <!-- Sticky Header with Logo and Toggle -->
     <header class="site-header" id="siteHeader">
         <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
+        <div class="theme-toggle-container">
+            <button class="theme-switch" id="themeSwitch" onclick="toggleTheme()" aria-label="Alternar tema">
+                <span class="theme-switch-icons">
+                    <span>🌙</span>
+                    <span>☀️</span>
+                </span>
+            </button>
+        </div>
     </header>
 
     <!-- Floating Countdown Timer -->
@@ -510,11 +610,6 @@
             <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">s</span></span>
         </div>
     </div>
-
-    <!-- Theme Toggle Button -->
-    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar tema">
-        🌙
-    </button>
 
     <div class="share-container">
         <div class="hero-card">
