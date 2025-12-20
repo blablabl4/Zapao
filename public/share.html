@@ -527,11 +527,13 @@
         .btn-share,
         .btn-group {
             width: 100%;
-            height: 54px;
+            height: 48px;
+            /* Mais compacto para caber melhor */
             padding: 0 1rem;
             border: none;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            /* Fonte levemente menor */
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -545,6 +547,8 @@
             position: relative;
             overflow: hidden;
             margin: 0;
+            flex-shrink: 0;
+            /* Não deixar botão esmagar */
         }
 
         .btn-share {
