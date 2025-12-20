@@ -440,10 +440,165 @@
                 box-shadow: 0 8px 40px rgba(37, 211, 102, 0.6);
             }
         }
+
+        /* Golden Money Rain Effect */
+        .money-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .money-note {
+            position: absolute;
+            top: -60px;
+            font-size: 1.5rem;
+            animation: money-fall linear infinite;
+            opacity: 0.7;
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4));
+        }
+
+        @keyframes money-fall {
+            0% {
+                transform: translateY(0) rotate(0deg) scale(1);
+                opacity: 0.7;
+            }
+
+            25% {
+                transform: translateY(25vh) rotate(15deg) scale(0.95);
+            }
+
+            50% {
+                transform: translateY(50vh) rotate(-10deg) scale(1.05);
+            }
+
+            75% {
+                transform: translateY(75vh) rotate(20deg) scale(0.9);
+            }
+
+            100% {
+                transform: translateY(110vh) rotate(-15deg) scale(1);
+                opacity: 0.3;
+            }
+        }
+
+        /* Individual timing variations */
+        .money-note:nth-child(1) {
+            left: 5%;
+            animation-duration: 8s;
+            animation-delay: 0s;
+        }
+
+        .money-note:nth-child(2) {
+            left: 15%;
+            animation-duration: 10s;
+            animation-delay: 1s;
+        }
+
+        .money-note:nth-child(3) {
+            left: 25%;
+            animation-duration: 9s;
+            animation-delay: 2s;
+        }
+
+        .money-note:nth-child(4) {
+            left: 35%;
+            animation-duration: 11s;
+            animation-delay: 0.5s;
+        }
+
+        .money-note:nth-child(5) {
+            left: 45%;
+            animation-duration: 8.5s;
+            animation-delay: 3s;
+        }
+
+        .money-note:nth-child(6) {
+            left: 55%;
+            animation-duration: 10.5s;
+            animation-delay: 1.5s;
+        }
+
+        .money-note:nth-child(7) {
+            left: 65%;
+            animation-duration: 9.5s;
+            animation-delay: 2.5s;
+        }
+
+        .money-note:nth-child(8) {
+            left: 75%;
+            animation-duration: 12s;
+            animation-delay: 0.3s;
+        }
+
+        .money-note:nth-child(9) {
+            left: 85%;
+            animation-duration: 7.5s;
+            animation-delay: 4s;
+        }
+
+        .money-note:nth-child(10) {
+            left: 95%;
+            animation-duration: 11.5s;
+            animation-delay: 1.8s;
+        }
+
+        .money-note:nth-child(11) {
+            left: 10%;
+            animation-duration: 9s;
+            animation-delay: 3.5s;
+        }
+
+        .money-note:nth-child(12) {
+            left: 30%;
+            animation-duration: 10s;
+            animation-delay: 4.5s;
+        }
+
+        .money-note:nth-child(13) {
+            left: 50%;
+            animation-duration: 8s;
+            animation-delay: 5s;
+        }
+
+        .money-note:nth-child(14) {
+            left: 70%;
+            animation-duration: 11s;
+            animation-delay: 2.2s;
+        }
+
+        .money-note:nth-child(15) {
+            left: 90%;
+            animation-duration: 9.5s;
+            animation-delay: 3.8s;
+        }
     </style>
 </head>
 
 <body>
+    <!-- Golden Money Rain -->
+    <div class="money-rain">
+        <span class="money-note">💵</span>
+        <span class="money-note">💰</span>
+        <span class="money-note">💵</span>
+        <span class="money-note">💰</span>
+        <span class="money-note">💵</span>
+        <span class="money-note">💰</span>
+        <span class="money-note">💵</span>
+        <span class="money-note">💰</span>
+        <span class="money-note">💵</span>
+        <span class="money-note">💰</span>
+        <span class="money-note">💵</span>
+        <span class="money-note">💰</span>
+        <span class="money-note">💵</span>
+        <span class="money-note">💰</span>
+        <span class="money-note">💵</span>
+    </div>
+
     <!-- Sticky Header with Logo -->
     <header class="site-header" id="siteHeader">
         <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
