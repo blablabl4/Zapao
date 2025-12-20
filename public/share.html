@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -12,26 +12,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Sticky Header - centered content */
+        /* Sticky Header - FIXO PEQUENO sem animação */
         .site-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1001;
-            background: var(--bg-overlay);
+            background: var(--bg-card);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 1.5rem 1rem;
-        }
-
-        .site-header.scrolled {
             padding: 0.5rem 1rem;
-            background: var(--bg-card);
         }
 
         /* Header content group - logo and toggle together */
@@ -43,14 +37,9 @@
         }
 
         .header-logo {
-            height: 80px;
-            width: auto;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.3));
-        }
-
-        .site-header.scrolled .header-logo {
             height: 40px;
+            width: auto;
+            filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.3));
         }
 
         /* Cordinha de Abajur - estilo pull string */
@@ -212,26 +201,24 @@
             }
         }
 
-        /* Adjust body padding for fixed header + NO horizontal scroll */
+        /* Body sem scroll - tudo cabe na tela */
         body {
-            padding-top: 130px;
-            overflow-x: hidden;
+            padding-top: 60px;
+            overflow: hidden;
             max-width: 100vw;
-        }
-
-        body.scrolled {
-            padding-top: 70px;
+            height: 100vh;
         }
 
         /* Share Page Specific Styles */
         .share-container {
-            min-height: 100vh;
+            height: calc(100vh - 60px);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0.5rem;
+            padding: 0.25rem;
             text-align: center;
+            overflow-y: auto;
         }
 
         .hero-card {
