@@ -12,7 +12,7 @@ const SHARE_POPUP_CONFIG = {
     text: '🎰 SORTEIO GRATUITO HOJE ÀS 21H!\n\n✅ Entre no grupo\n✅ Compartilhe essa imagem no status\n\n⚠️ Quem compartilha, continua no sorteio\n❌ Não compartilhou? Perde!\n\n👇 Entre no grupo e compartilhe:',
     url: window.location.origin + '/share.html',
     imageUrl: '/images/share-promo.jpg',
-    groupLink: 'https://chat.whatsapp.com/KX52zLyO8GIEY25qHo55T0'
+    groupLink: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
 };
 
 // Check if popup should be shown
