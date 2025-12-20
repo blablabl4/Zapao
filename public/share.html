@@ -45,7 +45,7 @@
             height: 40px;
         }
 
-        /* Timer in Header - Left Side */
+        /* Timer in Header - Left Side (swaps to center on scroll) */
         .header-timer-container {
             position: absolute;
             left: 1rem;
@@ -59,6 +59,8 @@
             border-radius: 2rem;
             border: 1px solid var(--accent);
             backdrop-filter: blur(10px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
         }
 
         .header-timer-label {
@@ -67,6 +69,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            transition: opacity 0.3s ease;
         }
 
         .header-timer {
@@ -83,25 +86,64 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             font-family: 'Courier New', monospace;
+            transition: font-size 0.3s ease;
         }
 
         .header-timer .timer-separator {
             font-size: 0.9rem;
             font-weight: 700;
             color: var(--accent);
+            transition: font-size 0.3s ease;
         }
 
+        /* When scrolled - timer moves to center, logo goes to left */
         .site-header.scrolled .header-timer-container {
+            left: 50%;
+            transform: translate(-50%, -50%);
             padding: 0.3rem 0.6rem;
+            animation: timer-vibrate 0.5s ease-out;
+        }
+
+        .site-header.scrolled .header-logo {
+            position: absolute;
+            left: 1rem;
+            height: 35px;
         }
 
         .site-header.scrolled .header-timer .timer-value,
         .site-header.scrolled .header-timer .timer-separator {
-            font-size: 0.75rem;
+            font-size: 0.85rem;
         }
 
         .site-header.scrolled .header-timer-label {
-            display: none;
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        /* Vibration animation */
+        @keyframes timer-vibrate {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            20% {
+                transform: translate(-50%, -50%) rotate(-2deg);
+            }
+
+            40% {
+                transform: translate(-50%, -50%) rotate(2deg);
+            }
+
+            60% {
+                transform: translate(-50%, -50%) rotate(-1deg);
+            }
+
+            80% {
+                transform: translate(-50%, -50%) rotate(1deg);
+            }
         }
 
         /* Apple-style Toggle Switch in Header */
