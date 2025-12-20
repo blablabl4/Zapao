@@ -23,14 +23,14 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 1.5rem 1rem;
+            padding: 1rem 1.5rem;
         }
 
         .site-header.scrolled {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 1.5rem;
             background: var(--bg-card);
         }
 
@@ -122,12 +122,10 @@
             }
         }
 
-        /* Simple Circle Toggle Button */
+        /* Simple Circle Toggle Button - no absolute positioning needed */
         .theme-toggle-container {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
         }
 
         .theme-toggle {
@@ -641,6 +639,9 @@
 <body>
     <!-- Sticky Header with Logo and Toggle -->
     <header class="site-header" id="siteHeader">
+        <!-- Spacer for centering -->
+        <div style="width: 36px;"></div>
+
         <!-- Logo Center -->
         <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
 
