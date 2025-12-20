@@ -53,7 +53,7 @@
             height: 40px;
         }
 
-        /* Toggle button - fixed bottom-left */
+        /* Toggle button - fixed bottom-left, ACIMA do header */
         .theme-toggle {
             position: fixed;
             bottom: 2rem;
@@ -69,7 +69,7 @@
             justify-content: center;
             font-size: 1.3rem;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
+            z-index: 1002;
             transition: all 0.3s ease;
         }
 
@@ -78,14 +78,14 @@
             box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
         }
 
-        /* FALTAM label above timer */
+        /* FALTAM label above timer - MAIOR que o timer */
         .timer-label {
             text-align: center;
             color: var(--accent);
-            font-size: 1.4rem;
-            font-weight: 800;
+            font-size: 2rem;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             margin-bottom: 0.5rem;
         }
 
@@ -188,9 +188,11 @@
             }
         }
 
-        /* Adjust body padding for fixed header */
+        /* Adjust body padding for fixed header + NO horizontal scroll */
         body {
             padding-top: 130px;
+            overflow-x: hidden;
+            max-width: 100vw;
         }
 
         body.scrolled {
@@ -702,9 +704,13 @@
                 <span class="timer-emoji">🚨</span>
             </div>
 
-            <!-- Share Image -->
-            <img src="/images/share-banner.jpg" alt="Sorteio"
+            <!-- Share Video com Áudio -->
+            <video id="shareVideo" autoplay loop playsinline
                 style="width: 100%; max-width: 600px; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+                <source src="/video compartilhamento.mp4" type="video/mp4">
+                <source src="/video compartilhamento.webm" type="video/webm">
+                Seu navegador não suporta vídeo.
+            </video>
 
             <!-- Removed hero text -->
 
@@ -752,6 +758,25 @@
     </div>
 
     <script src="/js/share.js"></script>
+
+    <!-- Video Audio Control -->
+    <script>
+        // Tentar tocar vídeo com áudio
+        const video = document.getElementById('shareVideo');
+        if (video) {
+            // Tentar unmute após primeira interação
+            const enableAudio = () => {
+                video.muted = false;
+                video.play().catch(e => console.log('Autoplay bloqueado:', e));
+                // Remover listeners após primeira tentativa
+                document.removeEventListener('click', enableAudio);
+                document.removeEventListener('touchstart', enableAudio);
+            };
+
+            document.addEventListener('click', enableAudio, { once: true });
+            document.addEventListener('touchstart', enableAudio, { once: true });
+        }
+    </script>
 
     <!-- Header Scroll Behavior -->
     <script>
