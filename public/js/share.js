@@ -179,9 +179,7 @@ function showGroupButton(animate = true) {
     if (infoTip) infoTip.classList.add('hidden');
 
     if (animate && step2) {
-        // Scroll to the group button
-        setTimeout(() => {
-            step2.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300);
+        // Removido scrollIntoView para evitar efeito estilingue
+        step2.classList.add('fade-in');
     }
 }

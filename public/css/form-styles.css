@@ -145,10 +145,7 @@
     scrollbar-color: rgba(212, 175, 55, 0.4) transparent;
 }
 
-/* Smooth scrolling */
-html {
-    scroll-behavior: smooth;
-}
+/* Smooth scrolling removed to avoid elastic scroll effect */
 
 /* Auto-hide scrollbar on containers */
 .modal-content,
