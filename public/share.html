@@ -53,40 +53,65 @@
             height: 40px;
         }
 
-        /* Toggle button - fixed bottom-left, ACIMA do header */
-        .theme-toggle {
+        /* Cordinha de Abajur - estilo pull string */
+        .pull-string-container {
             position: fixed;
-            bottom: 2rem;
-            left: 2rem;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--bg-card);
-            border: 2px solid var(--accent);
+            top: 20px;
+            right: 40px;
+            z-index: 1002;
             cursor: pointer;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            z-index: 1002;
-            transition: all 0.3s ease;
         }
 
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+        .pull-string {
+            width: 2px;
+            height: 60px;
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.8) 100%);
+            margin-bottom: 8px;
+            transition: height 0.2s ease;
         }
 
-        /* FALTAM label above timer - MAIOR que o timer */
+        .pull-string-container:active .pull-string {
+            height: 75px;
+        }
+
+        .pull-knob {
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, #D4AF37 0%, #B8860B 100%);
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.6);
+            transition: all 0.2s ease;
+        }
+
+        .pull-string-container:hover .pull-knob {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.8);
+        }
+
+        .pull-string-container:active .pull-knob {
+            transform: translateY(8px) scale(1.1);
+        }
+
+        /* FALTAM como TÍTULO GRANDE */
         .timer-label {
             text-align: center;
             color: var(--accent);
-            font-size: 2rem;
+            font-size: 3.5rem;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 5px;
-            margin-bottom: 0.5rem;
+            letter-spacing: 8px;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .timer-label {
+                font-size: 2rem;
+                letter-spacing: 5px;
+            }
         }
 
         /* Timer Row in Hero - Between Alert Emojis with shake */
@@ -215,10 +240,17 @@
             border: 1px solid var(--border-color);
             border-radius: 1.5rem;
             padding: 2.5rem 2rem;
-            max-width: 420px;
+            max-width: 900px;
             width: 100%;
             position: relative;
             overflow: hidden;
+        }
+
+        /* Mobile: tamanho menor */
+        @media (max-width: 768px) {
+            .hero-card {
+                max-width: 420px;
+            }
         }
 
         .hero-card::before {
@@ -674,10 +706,11 @@
 </head>
 
 <body>
-    <!-- Toggle button fixed bottom-left -->
-    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar tema">
-        🌙
-    </button>
+    <!-- Cordinha de Abajur para mudar tema -->
+    <div class="pull-string-container" id="pullString" onclick="toggleThemeWithClick()">
+        <div class="pull-string"></div>
+        <div class="pull-knob"></div>
+    </div>
 
     <!-- Sticky Header with Logo -->
     <header class="site-header" id="siteHeader">
@@ -704,9 +737,9 @@
                 <span class="timer-emoji">🚨</span>
             </div>
 
-            <!-- Share Video com Áudio -->
-            <video id="shareVideo" autoplay loop playsinline
-                style="width: 100%; max-width: 600px; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+            <!-- Share Video com Áudio (portrait) -->
+            <video id="shareVideo" autoplay loop muted playsinline
+                style="width: 100%; max-width: 400px; height: auto; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
                 <source src="/video compartilhamento.mp4" type="video/mp4">
                 <source src="/video compartilhamento.webm" type="video/webm">
                 Seu navegador não suporta vídeo.
@@ -761,20 +794,47 @@
 
     <!-- Video Audio Control -->
     <script>
-        // Tentar tocar vídeo com áudio
+        // Controle de áudio do vídeo
         const video = document.getElementById('shareVideo');
-        if (video) {
-            // Tentar unmute após primeira interação
-            const enableAudio = () => {
-                video.muted = false;
-                video.play().catch(e => console.log('Autoplay bloqueado:', e));
-                // Remover listeners após primeira tentativa
-                document.removeEventListener('click', enableAudio);
-                document.removeEventListener('touchstart', enableAudio);
-            };
+        let audioEnabled = false;
 
-            document.addEventListener('click', enableAudio, { once: true });
-            document.addEventListener('touchstart', enableAudio, { once: true });
+        function enableVideoAudio() {
+            if (video && !audioEnabled) {
+                video.muted = false;
+                video.play().catch(e => console.log('Autoplay:', e));
+                audioEnabled = true;
+            }
+        }
+
+        // Tentar habilitar áudio em qualquer interação
+        document.addEventListener('click', enableVideoAudio, { once: true });
+        document.addEventListener('touchstart', enableVideoAudio, { once: true });
+    </script>
+
+    <!-- Pull String Theme Toggle with Sound -->
+    <script>
+        // Criar elemento de áudio para o click
+        const clickSound = new Audio('data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU4AAAA');
+
+        function toggleThemeWithClick() {
+            // Tocar som de click
+            clickSound.currentTime = 0;
+            clickSound.play().catch(() => { });
+
+            // Alternar tema
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Feedback visual na cordinha
+            const pullString = document.getElementById('pullString');
+            pullString.style.transform = 'translateY(5px)';
+            setTimeout(() => {
+                pullString.style.transform = '';
+            }, 100);
         }
     </script>
 
