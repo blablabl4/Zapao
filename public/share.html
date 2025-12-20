@@ -132,38 +132,60 @@
             font-size: 1.5rem;
         }
 
-        /* Floating Countdown Timer */
+        /* Round Countdown Timer - Animated on Scroll */
         .countdown-container {
             position: fixed;
-            top: 130px;
+            top: 140px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.85);
-            border: 2px solid var(--accent);
-            border-radius: 1rem;
-            padding: 0.75rem 1.5rem;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             z-index: 999;
             backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+            box-shadow:
+                0 0 30px rgba(212, 175, 55, 0.4),
+                inset 0 0 20px rgba(212, 175, 55, 0.1);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* When scrolled - move to bottom-left and shrink */
         body.scrolled .countdown-container {
-            top: 80px;
+            top: auto;
+            bottom: 20px;
+            left: 20px;
+            transform: translateX(0);
+            width: 90px;
+            height: 90px;
+            border-width: 2px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
         }
 
         .countdown-label {
             color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.7rem;
+            margin-bottom: 0.25rem;
             text-transform: uppercase;
             letter-spacing: 1px;
+            transition: all 0.5s ease;
+        }
+
+        body.scrolled .countdown-label {
+            display: none;
         }
 
         .countdown-timer {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.15rem;
+            transition: all 0.5s ease;
         }
 
         .timer-unit {
@@ -173,26 +195,42 @@
         }
 
         .timer-value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             font-family: 'Courier New', monospace;
+            transition: font-size 0.5s ease;
+        }
+
+        body.scrolled .timer-value {
+            font-size: 0.9rem;
         }
 
         .timer-label {
-            font-size: 0.7rem;
+            font-size: 0.55rem;
             color: var(--text-secondary);
             text-transform: uppercase;
+            transition: all 0.5s ease;
+        }
+
+        body.scrolled .timer-label {
+            font-size: 0.4rem;
         }
 
         .timer-separator {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: var(--accent);
-            margin-top: -0.5rem;
+            margin-top: -0.3rem;
+            transition: font-size 0.5s ease;
+        }
+
+        body.scrolled .timer-separator {
+            font-size: 0.9rem;
+            margin-top: -0.2rem;
         }
 
         /* Steps Container */
@@ -463,7 +501,7 @@
 
     <!-- Floating Countdown Timer -->
     <div class="countdown-container">
-        <div class="countdown-label">⏰ Sorteio em:</div>
+        <div class="countdown-label">Sorteio em:</div>
         <div class="countdown-timer" id="countdownTimer">
             <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">h</span></span>
             <span class="timer-separator">:</span>
