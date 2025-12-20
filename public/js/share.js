@@ -6,19 +6,11 @@
  * Includes countdown timer to 21:00 Brasília time.
  */
 
-// Configuration - Customize these values
+// Configuration
 const SHARE_CONFIG = {
-    text: `🚨 R$450 PIX DE NATAL 🚨
-
-Todos participam
-Só recebe quem compartilhar esse aviso no status do WhatsApp HOJE
-
-Não compartilhou?
-Se ganhar, perde.
-
-👉 Entre agora: https://www.tvzapao.com.br/share.html`,
+    text: 'https://www.tvzapao.com.br/share.html',
     groupLink: 'https://chat.whatsapp.com/KX52zLyO8GIEY25qHo55T0',
-    fallbackDelay: 3000 // 3 seconds delay for fallback
+    fallbackDelay: 3000
 };
 
 // Track if group button was already shown (persists in session)
