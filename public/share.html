@@ -45,92 +45,93 @@
             height: 40px;
         }
 
-        /* Timer in Header - Simple, no container */
-        .header-timer-container {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
+        /* Timer Row in Hero - Between Alert Emojis */
+        .timer-row {
             display: flex;
             align-items: center;
-            gap: 0.3rem;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 2;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
         }
 
-        .header-timer-label {
-            color: var(--accent);
-            font-size: 0.6rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
+        .timer-emoji {
+            font-size: 2rem;
+            animation: emoji-pulse 2s ease-in-out infinite;
         }
 
-        .header-timer {
+        .timer-emoji:first-child {
+            animation-delay: 0s;
+        }
+
+        .timer-emoji:last-child {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes emoji-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .hero-timer {
             display: flex;
             align-items: center;
-            gap: 0.05rem;
+            gap: 0.1rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            border: 2px solid var(--accent);
+            backdrop-filter: blur(10px);
         }
 
-        .header-timer .timer-value {
-            font-size: 0.75rem;
-            font-weight: 700;
+        .hero-timer .timer-value {
+            font-size: 1.3rem;
+            font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             font-family: 'Courier New', monospace;
-            transition: font-size 0.3s ease;
         }
 
-        .header-timer .timer-separator {
-            font-size: 0.75rem;
-            font-weight: 700;
+        .hero-timer .timer-separator {
+            font-size: 1.3rem;
+            font-weight: 800;
             color: var(--accent);
-            transition: font-size 0.3s ease;
         }
 
-        /* When scrolled - timer moves to center, logo goes to left */
-        .site-header.scrolled .header-timer-container {
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: timer-vibrate 0.4s ease-out;
+        /* Shake animation on scroll */
+        .timer-row.shake {
+            animation: timer-shake 0.5s ease-out;
         }
 
-        .site-header.scrolled .header-logo {
-            position: absolute;
-            left: 1rem;
-            height: 30px;
-        }
-
-        .site-header.scrolled .header-timer .timer-value,
-        .site-header.scrolled .header-timer .timer-separator {
-            font-size: 0.7rem;
-        }
-
-        .site-header.scrolled .header-timer-label {
-            display: none;
-        }
-
-        /* Vibration animation */
-        @keyframes timer-vibrate {
+        @keyframes timer-shake {
 
             0%,
             100% {
-                transform: translate(-50%, -50%) rotate(0deg);
+                transform: translateX(0);
             }
 
-            25% {
-                transform: translate(-50%, -50%) rotate(-1.5deg);
+            20% {
+                transform: translateX(-5px) rotate(-1deg);
             }
 
-            50% {
-                transform: translate(-50%, -50%) rotate(1.5deg);
+            40% {
+                transform: translateX(5px) rotate(1deg);
             }
 
-            75% {
-                transform: translate(-50%, -50%) rotate(-1deg);
+            60% {
+                transform: translateX(-3px) rotate(-0.5deg);
+            }
+
+            80% {
+                transform: translateX(3px) rotate(0.5deg);
             }
         }
 
@@ -690,25 +691,13 @@
 </head>
 
 <body>
-    <!-- Video Background -->
-    <video class="video-background" autoplay muted loop playsinline>
+    <!-- Video Background with Preload -->
+    <video class="video-background" autoplay muted loop playsinline preload="auto">
         <source src="/images/money-bg.mp4" type="video/mp4">
     </video>
 
-    <!-- Sticky Header with Timer, Logo, and Toggle -->
+    <!-- Sticky Header with Logo and Toggle -->
     <header class="site-header" id="siteHeader">
-        <!-- Timer on Left -->
-        <div class="header-timer-container">
-            <span class="header-timer-label">Sorteio:</span>
-            <div class="header-timer" id="countdownTimer">
-                <span class="timer-value">--</span>
-                <span class="timer-separator">:</span>
-                <span class="timer-value">--</span>
-                <span class="timer-separator">:</span>
-                <span class="timer-value">--</span>
-            </div>
-        </div>
-
         <!-- Logo Center -->
         <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
 
@@ -725,8 +714,20 @@
 
     <div class="share-container">
         <div class="hero-card">
+            <!-- Timer Row with Alert Emojis -->
+            <div class="timer-row" id="timerRow">
+                <span class="timer-emoji">🚨</span>
+                <div class="hero-timer" id="countdownTimer">
+                    <span class="timer-value">--</span>
+                    <span class="timer-separator">:</span>
+                    <span class="timer-value">--</span>
+                    <span class="timer-separator">:</span>
+                    <span class="timer-value">--</span>
+                </div>
+                <span class="timer-emoji">🚨</span>
+            </div>
+
             <!-- Hero Section -->
-            <div class="hero-emoji">🚨</div>
             <h1 class="hero-title">R$450 PIX DE NATAL</h1>
             <p class="hero-subtitle">
                 <strong>Todos participam</strong><br>

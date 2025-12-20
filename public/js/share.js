@@ -87,6 +87,18 @@ function startCountdown() {
     // Update immediately and then every second
     updateTimer();
     setInterval(updateTimer, 1000);
+
+    // Scroll shake animation
+    let lastScrollY = 0;
+    const timerRow = document.getElementById('timerRow');
+
+    window.addEventListener('scroll', () => {
+        if (timerRow && Math.abs(window.scrollY - lastScrollY) > 30) {
+            timerRow.classList.add('shake');
+            setTimeout(() => timerRow.classList.remove('shake'), 500);
+            lastScrollY = window.scrollY;
+        }
+    }, { passive: true });
 }
 
 /**
