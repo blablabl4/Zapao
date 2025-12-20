@@ -113,33 +113,31 @@ async function shareToStatus() {
     shareButton.classList.remove('pulse');
 
     // Check if Web Share API is supported
-    if (navigator.share && navigator.canShare) {
+    if (navigator.share) {
         try {
             // Buscar o vídeo
             const videoResp = await fetch('/video-compartilhamento.mp4');
             const videoBlob = await videoResp.blob();
-            const videoFile = new File([videoBlob], 'sorteio-tvzapao.mp4', { type: 'video/mp4' });
+            const videoFile = new File([videoBlob], 'sorteio.mp4', { type: 'video/mp4' });
 
-            const shareData = {
-                files: [videoFile],
-                text: 'https://www.tvzapao.com.br/share.html'
-            };
-
-            // Tentar compartilhar vídeo
-            if (navigator.canShare(shareData)) {
-                await navigator.share(shareData);
-            } else {
-                // Fallback: só texto se não suportar vídeo
-                await navigator.share({ text: shareData.text });
+            // Tentar compartilhar vídeo primeiro
+            try {
+                await navigator.share({
+                    files: [videoFile],
+                    text: 'https://www.tvzapao.com.br/share.html'
+                });
+                console.log('Vídeo compartilhado com sucesso');
+            } catch (videoError) {
+                // Se vídeo falhar, compartilhar só o link
+                console.log('Vídeo não suportado, compartilhando link:', videoError.message);
+                await navigator.share({
+                    text: 'https://www.tvzapao.com.br/share.html'
+                });
             }
 
-            console.log('Share completed successfully');
-
         } catch (error) {
-            // User cancelled or error occurred
             console.log('Share cancelled or failed:', error.message);
         } finally {
-            // Always show the group button when returning to the page
             showGroupButton(true);
         }
     } else {
