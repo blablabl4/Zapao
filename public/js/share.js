@@ -122,7 +122,7 @@ async function shareToStatus() {
 
             const shareData = {
                 files: [videoFile],
-                text: '🚨 R$450 PIX DE NATAL 🚨\n\nTodos participam\n👉 https://www.tvzapao.com.br/share.html'
+                text: 'https://www.tvzapao.com.br/share.html'
             };
 
             // Tentar compartilhar vídeo
