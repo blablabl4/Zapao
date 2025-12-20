@@ -132,13 +132,23 @@
             font-size: 1.5rem;
         }
 
-        /* Countdown Timer */
+        /* Floating Countdown Timer */
         .countdown-container {
-            background: rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
             border: 2px solid var(--accent);
             border-radius: 1rem;
-            padding: 1rem 1.5rem;
-            margin: 1.5rem 0;
+            padding: 0.75rem 1.5rem;
+            z-index: 999;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        body.scrolled .countdown-container {
+            top: 80px;
         }
 
         .countdown-label {
@@ -441,168 +451,27 @@
             }
         }
 
-        /* Golden Money Rain Effect */
-        .money-rain {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .money-note {
-            position: absolute;
-            top: -60px;
-            font-size: 1.5rem;
-            animation: money-fall linear infinite;
-            opacity: 0.7;
-            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4));
-        }
-
-        @keyframes money-fall {
-            0% {
-                transform: translateY(0) rotate(0deg) scale(1);
-                opacity: 0.7;
-            }
-
-            25% {
-                transform: translateY(25vh) rotate(15deg) scale(0.95);
-            }
-
-            50% {
-                transform: translateY(50vh) rotate(-10deg) scale(1.05);
-            }
-
-            75% {
-                transform: translateY(75vh) rotate(20deg) scale(0.9);
-            }
-
-            100% {
-                transform: translateY(110vh) rotate(-15deg) scale(1);
-                opacity: 0.3;
-            }
-        }
-
-        /* Individual timing variations */
-        .money-note:nth-child(1) {
-            left: 5%;
-            animation-duration: 8s;
-            animation-delay: 0s;
-        }
-
-        .money-note:nth-child(2) {
-            left: 15%;
-            animation-duration: 10s;
-            animation-delay: 1s;
-        }
-
-        .money-note:nth-child(3) {
-            left: 25%;
-            animation-duration: 9s;
-            animation-delay: 2s;
-        }
-
-        .money-note:nth-child(4) {
-            left: 35%;
-            animation-duration: 11s;
-            animation-delay: 0.5s;
-        }
-
-        .money-note:nth-child(5) {
-            left: 45%;
-            animation-duration: 8.5s;
-            animation-delay: 3s;
-        }
-
-        .money-note:nth-child(6) {
-            left: 55%;
-            animation-duration: 10.5s;
-            animation-delay: 1.5s;
-        }
-
-        .money-note:nth-child(7) {
-            left: 65%;
-            animation-duration: 9.5s;
-            animation-delay: 2.5s;
-        }
-
-        .money-note:nth-child(8) {
-            left: 75%;
-            animation-duration: 12s;
-            animation-delay: 0.3s;
-        }
-
-        .money-note:nth-child(9) {
-            left: 85%;
-            animation-duration: 7.5s;
-            animation-delay: 4s;
-        }
-
-        .money-note:nth-child(10) {
-            left: 95%;
-            animation-duration: 11.5s;
-            animation-delay: 1.8s;
-        }
-
-        .money-note:nth-child(11) {
-            left: 10%;
-            animation-duration: 9s;
-            animation-delay: 3.5s;
-        }
-
-        .money-note:nth-child(12) {
-            left: 30%;
-            animation-duration: 10s;
-            animation-delay: 4.5s;
-        }
-
-        .money-note:nth-child(13) {
-            left: 50%;
-            animation-duration: 8s;
-            animation-delay: 5s;
-        }
-
-        .money-note:nth-child(14) {
-            left: 70%;
-            animation-duration: 11s;
-            animation-delay: 2.2s;
-        }
-
-        .money-note:nth-child(15) {
-            left: 90%;
-            animation-duration: 9.5s;
-            animation-delay: 3.8s;
-        }
+        /* Background GIF will be added here */
     </style>
 </head>
 
 <body>
-    <!-- Golden Money Rain -->
-    <div class="money-rain">
-        <span class="money-note">💵</span>
-        <span class="money-note">💰</span>
-        <span class="money-note">💵</span>
-        <span class="money-note">💰</span>
-        <span class="money-note">💵</span>
-        <span class="money-note">💰</span>
-        <span class="money-note">💵</span>
-        <span class="money-note">💰</span>
-        <span class="money-note">💵</span>
-        <span class="money-note">💰</span>
-        <span class="money-note">💵</span>
-        <span class="money-note">💰</span>
-        <span class="money-note">💵</span>
-        <span class="money-note">💰</span>
-        <span class="money-note">💵</span>
-    </div>
-
     <!-- Sticky Header with Logo -->
     <header class="site-header" id="siteHeader">
         <img src="/images/logo.png" alt="Logo" class="header-logo" id="headerLogo">
     </header>
+
+    <!-- Floating Countdown Timer -->
+    <div class="countdown-container">
+        <div class="countdown-label">⏰ Sorteio em:</div>
+        <div class="countdown-timer" id="countdownTimer">
+            <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">h</span></span>
+            <span class="timer-separator">:</span>
+            <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">m</span></span>
+            <span class="timer-separator">:</span>
+            <span class="timer-unit"><span class="timer-value">--</span><span class="timer-label">s</span></span>
+        </div>
+    </div>
 
     <!-- Theme Toggle Button -->
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar tema">
@@ -618,21 +487,6 @@
                 <strong>Todos participam</strong><br>
                 Só recebe quem compartilhar no Status do WhatsApp HOJE
             </p>
-
-            <!-- Countdown Timer -->
-            <div class="countdown-container">
-                <div class="countdown-label">⏰ Sorteio em:</div>
-                <div class="countdown-timer" id="countdownTimer">
-                    <span class="timer-unit"><span class="timer-value">--</span><span
-                            class="timer-label">h</span></span>
-                    <span class="timer-separator">:</span>
-                    <span class="timer-unit"><span class="timer-value">--</span><span
-                            class="timer-label">m</span></span>
-                    <span class="timer-separator">:</span>
-                    <span class="timer-unit"><span class="timer-value">--</span><span
-                            class="timer-label">s</span></span>
-                </div>
-            </div>
 
             <div class="prize-highlight">Prêmio: R$ 450,00</div>
 
