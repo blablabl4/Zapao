@@ -515,59 +515,115 @@
         </div>
     </div>
 
-    <!-- Blocking Modal -->
-    <div class="az-modal-overlay" id="mainModal">
-        <div class="az-modal">
-            <h2>🚀 Quase lá!</h2>
+    <!-- STEP 1: Share Modal -->
+    <div class="az-modal-overlay" id="step1Modal">
+        <div class="az-modal" style="text-align: center;">
+            <h2>📤 Passo 1 de 3</h2>
+            <p style="color: #aaa; margin-bottom: 1rem;">Compartilhe no seu status para participar</p>
 
-            <div id="modalStep1">
-                <form id="claimForm" onsubmit="submitClaim(event)">
-                    <!-- Phone FIRST -->
-                    <div class="form-group">
-                        <label>Seu WhatsApp (com DDD)</label>
-                        <input type="tel" id="phone" class="form-control" required placeholder="(11) 99999-9999"
-                            oninput="maskPhone(this)" onblur="checkExistingUser(this.value)">
-                    </div>
-
-                    <!-- Name SECOND (auto-filled if user exists) -->
-                    <div class="form-group">
-                        <label>Seu Nome Completo</label>
-                        <input type="text" id="name" class="form-control" required minlength="3"
-                            placeholder="Ex: Maria Silva" onblur="this.value = capitalizeName(this.value)">
-                    </div>
-
-                    <div class="alert-box">
-                        <span>⚠️</span>
-                        <span>
-                            <strong>Regra de Ouro:</strong><br>
-                            Você já compartilhou a imagem no seu status do WhatsApp hoje?
-                            Sem o print do status, você <strong>não recebe o prêmio</strong> se ganhar.
-                        </span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Você compartilhou no status?</label>
-                        <select id="sharedStatus" class="form-control" required>
-                            <option value="">Selecione...</option>
-                            <option value="yes">Sim, já compartilhei</option>
-                            <option value="no">Não, vou compartilhar agora</option>
-                        </select>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="lgpdConsent" required>
-                        <label for="lgpdConsent">
-                            Concordo com os Termos e Política de Privacidade. Aceito que meus dados sejam usados para
-                            apuração do sorteio.
-                        </label>
-                    </div>
-
-                    <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1.5rem;" id="submitBtn">
-                        Resgatar Agora
-                    </button>
-                    <!-- No cancel button -->
-                </form>
+            <!-- Share Preview Image -->
+            <div style="margin-bottom: 1rem;">
+                <img src="/images/amigos-logo-new.png" alt="Compartilhe"
+                    style="max-width: 120px; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 15px rgba(0,230,118,0.3);">
             </div>
+
+            <p style="color: #ff9800; font-size: 0.9rem; margin-bottom: 1rem;">
+                ⚠️ Tire print do status compartilhado e guarde!<br>
+                <small>Será necessário para receber o prêmio se ganhar</small>
+            </p>
+
+            <button class="az-btn-main" onclick="shareToWhatsApp()" style="width: 100%;" id="shareBtn">
+                Compartilhar no WhatsApp
+            </button>
+
+            <!-- Arrow to next step (hidden initially) -->
+            <button class="az-btn-main az-btn-secondary" onclick="goToStep2()" id="step1NextBtn"
+                style="width: 100%; margin-top: 1rem; display: none;">
+                Continuar ➜
+            </button>
+        </div>
+    </div>
+
+    <!-- STEP 2: Data Entry Modal -->
+    <div class="az-modal-overlay" id="step2Modal">
+        <div class="az-modal">
+            <h2>🎰 Passo 2 de 3</h2>
+            <p style="color: #aaa; margin-bottom: 1rem;">Preencha seus dados para gerar os números</p>
+
+            <form id="claimForm" onsubmit="submitClaimStep2(event)">
+                <div class="form-group">
+                    <label>Seu WhatsApp (com DDD)</label>
+                    <input type="tel" id="phone" class="form-control" required placeholder="(11) 99999-9999"
+                        oninput="maskPhone(this)" onblur="checkExistingUser(this.value)">
+                </div>
+
+                <div class="form-group">
+                    <label>Seu Nome Completo</label>
+                    <input type="text" id="name" class="form-control" required minlength="3"
+                        placeholder="Ex: Maria Silva" onblur="this.value = capitalizeName(this.value)">
+                </div>
+
+                <div class="form-group">
+                    <label>Você já compartilhou no status?</label>
+                    <select id="sharedStatus" class="form-control" required>
+                        <option value="">Selecione...</option>
+                        <option value="yes">Sim, já compartilhei</option>
+                        <option value="no">Não, vou compartilhar agora</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="lgpdConsent" required>
+                    <label for="lgpdConsent">
+                        Concordo com os Termos e Política de Privacidade.
+                    </label>
+                </div>
+
+                <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1rem;" id="submitBtn">
+                    Gerar Meus Números
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- STEP 2B: Reveal Numbers Modal -->
+    <div class="az-modal-overlay" id="revealModal">
+        <div class="az-modal" style="max-width: 400px; text-align: center;">
+            <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
+            <p id="revealStatus" style="color: #aaa; margin-bottom: 1rem;">Revelando...</p>
+            <div id="revealGrid"
+                style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1rem;"></div>
+
+            <!-- Arrow to next step (hidden initially) -->
+            <button class="az-btn-main az-btn-secondary" id="goToStep3Btn" onclick="goToStep3()"
+                style="display: none; width: 100%;">
+                Continuar ➜
+            </button>
+        </div>
+    </div>
+
+    <!-- STEP 3: Join Group Modal -->
+    <div class="az-modal-overlay" id="step3Modal">
+        <div class="az-modal" style="text-align: center;">
+            <h2>🎉 Passo 3 de 3</h2>
+            <p style="color: var(--az-primary); font-size: 1.1rem; margin-bottom: 1rem;">
+                Seus números foram registrados!
+            </p>
+
+            <div
+                style="background: rgba(0,230,118,0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,230,118,0.3); margin-bottom: 1.5rem;">
+                <p style="color: #fff; margin: 0;">
+                    📢 <strong>Fique atento ao grupo!</strong><br>
+                    <span style="color: #aaa; font-size: 0.9rem;">
+                        Sempre postamos links para ganhar números extras da sorte!
+                    </span>
+                </p>
+            </div>
+
+            <a href="https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn" target="_blank" class="az-btn-main"
+                onclick="finishFlow()" style="width: 100%; display: block; text-decoration: none;">
+                Entrar no Grupo
+            </a>
         </div>
     </div>
 
@@ -651,16 +707,17 @@
             } catch (e) { }
         }
 
-        // 1. Initial State Check (Optional, nice to have)
+        // 1. Initial State Check
         // We could check if user is already blocked via localstorage as hint, but backend is source of truth.
 
+        // STEP 1: Start flow - Show share modal first
         async function startFlow() {
             const btn = document.getElementById('generateBtn');
             btn.disabled = true;
-            btn.textContent = 'Gerando...';
+            btn.textContent = 'Carregando...';
 
             try {
-                // Call /start
+                // Call /start to get session
                 const res = await fetch('/api/amigos/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -681,14 +738,82 @@
                     badge.innerHTML = `<span class="promo-badge">Promoção: ${data.promo.name} (+${data.extra_qty})</span>`;
                 }
 
-                // Show Modal
-                document.getElementById('mainModal').style.display = 'flex';
+                // Show Step 1 Modal (Share)
+                document.getElementById('step1Modal').style.display = 'flex';
+                btn.disabled = false;
+                btn.textContent = 'Resgatar Número';
 
             } catch (e) {
                 showAlert(e.message, '❌ Erro');
                 btn.disabled = false;
                 btn.textContent = 'Resgatar Número';
             }
+        }
+
+        // Share to WhatsApp
+        async function shareToWhatsApp() {
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.disabled = true;
+            shareBtn.textContent = 'Preparando...';
+
+            try {
+                // Try Web Share API first
+                if (navigator.share) {
+                    try {
+                        // Try to share the logo image
+                        const imgResp = await fetch('/images/amigos-logo-new.png');
+                        const imgBlob = await imgResp.blob();
+                        const imgFile = new File([imgBlob], 'amigos-zapao.png', { type: 'image/png' });
+
+                        await navigator.share({
+                            files: [imgFile],
+                            text: 'Participe do sorteio diário! https://www.tvzapao.com.br/amigos-do-zapao'
+                        });
+                    } catch (shareErr) {
+                        // Fallback to just text
+                        await navigator.share({
+                            text: 'Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao'
+                        });
+                    }
+                } else {
+                    // Fallback: Open WhatsApp directly
+                    const text = encodeURIComponent('Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao');
+                    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+                }
+            } catch (e) {
+                console.log('Share cancelled:', e.message);
+            } finally {
+                // Show "Continue" button
+                shareBtn.textContent = '✅ Compartilhado!';
+                shareBtn.classList.add('az-btn-secondary');
+                document.getElementById('step1NextBtn').style.display = 'block';
+            }
+        }
+
+        // Go to Step 2 (Data entry)
+        function goToStep2() {
+            document.getElementById('step1Modal').style.display = 'none';
+            document.getElementById('step2Modal').style.display = 'flex';
+
+            // Pre-fill phone if saved
+            const savedPhone = localStorage.getItem('az_phone');
+            if (savedPhone) {
+                document.getElementById('phone').value = savedPhone;
+                checkExistingUser(savedPhone);
+            }
+        }
+
+        // Go to Step 3 (Group join)
+        function goToStep3() {
+            document.getElementById('revealModal').style.display = 'none';
+            document.getElementById('step3Modal').style.display = 'flex';
+        }
+
+        // Finish flow - reload page
+        function finishFlow() {
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
         }
 
         function renderPlaceholders(count) {
@@ -699,20 +824,17 @@
             }
         }
 
-        async function submitClaim(e) {
+        // STEP 2: Submit claim form  
+        async function submitClaimStep2(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.textContent = 'Validando...';
+            btn.textContent = 'Gerando...';
 
             const phone = document.getElementById('phone').value;
             const name = document.getElementById('name').value;
             const shared = document.getElementById('sharedStatus').value;
             const consent = document.getElementById('lgpdConsent').checked;
-
-            if (shared !== 'yes') {
-                showAlert('Compartilhe no status antes de continuar para garantir seu prêmio!', '⚠️ Atenção');
-            }
 
             try {
                 const res = await fetch('/api/amigos/finish', {
@@ -734,28 +856,19 @@
                     if (result.error.includes('bloqueado') || result.error.includes('hoje')) {
                         // Blocked
                         handleBlocked(result.error);
-                        // Note: Backend finishClaim error message usually doesn't return next_unlock_at structure unless I structured error object.
-                        // For MVP I just threw Error.
-                        // I will assume the error string tells user "Volte amanhã".
-                        // Advanced: I could call /status to get the exact time.
-                        checkStatusForTimer(phone);
                         return;
                     }
                     throw new Error(result.error);
                 }
 
-                // Success!
-                // Hide modal
-                document.getElementById('mainModal').style.display = 'none';
-
-                // Show numbers in reveal modal (not success message yet - user will see it after closing reveal)
+                // Success! Hide step2 modal and show reveal modal
+                document.getElementById('step2Modal').style.display = 'none';
                 revealNumbers(result.numbers);
 
-                // Save phone to local for convenience
+                // Save phone to local
                 localStorage.setItem('az_phone', phone);
 
             } catch (err) {
-                // Show error and reload page for critical errors
                 const criticalErrors = ['Sessão', 'expirada', 'Tempo', 'esgotado', 'inválida', 'Recarregue', 'Recomece'];
                 const isCritical = criticalErrors.some(e => err.message.includes(e));
 
@@ -766,7 +879,7 @@
                 } else {
                     showAlert(err.message, '❌ Erro');
                     btn.disabled = false;
-                    btn.textContent = 'Resgatar Agora';
+                    btn.textContent = 'Gerar Meus Números';
                 }
             }
         }
@@ -779,7 +892,7 @@
             // Reset and show reveal modal
             document.getElementById('revealModal').style.display = 'flex';
             document.getElementById('revealStatus').textContent = 'Revelando...';
-            document.getElementById('closeRevealBtn').style.display = 'none';
+            document.getElementById('goToStep3Btn').style.display = 'none';
 
             const grid = document.getElementById('revealGrid');
             grid.innerHTML = '';
@@ -800,8 +913,8 @@
 
             function revealLine() {
                 if (currentLine >= linesCount) {
-                    // All revealed - show close button
-                    document.getElementById('closeRevealBtn').style.display = 'block';
+                    // All revealed - show continue button
+                    document.getElementById('goToStep3Btn').style.display = 'block';
                     document.getElementById('revealStatus').textContent = 'Boa sorte! 🍀';
                     return;
                 }
@@ -843,7 +956,11 @@
         }
 
         function handleBlocked(msg) {
-            document.getElementById('mainModal').style.display = 'none';
+            // Close all step modals
+            document.getElementById('step1Modal').style.display = 'none';
+            document.getElementById('step2Modal').style.display = 'none';
+            document.getElementById('revealModal').style.display = 'none';
+
             document.getElementById('generateBtn').textContent = 'Bloqueado';
             document.getElementById('generateBtn').disabled = true;
             document.getElementById('successMsg').style.display = 'block';
