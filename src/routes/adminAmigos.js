@@ -8,6 +8,26 @@ const AmigosService = require('../services/AmigosService');
 router.get('/campaign', async (req, res) => {
     try {
         const campaign = await AmigosService.getActiveCampaign();
+        res.json(campaign || {}); // Return empty obj if null to avoid client error
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/campaign', async (req, res) => {
+    try {
+        const { name, start_number, end_number, config } = req.body;
+        let campaign = await AmigosService.getActiveCampaign();
+
+        if (campaign) {
+            campaign = await AmigosAdminService.updateCampaign(campaign.id, {
+                name, start_number, end_number, base_qty_config: config
+            });
+        } else {
+            campaign = await AmigosAdminService.createCampaign({
+                name, start_number, end_number, base_qty_config: config
+            });
+        }
         res.json(campaign);
     } catch (e) {
         res.status(500).json({ error: e.message });

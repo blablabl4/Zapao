@@ -2,6 +2,25 @@ const { query } = require('../database/db');
 const AmigosService = require('./AmigosService');
 
 class AmigosAdminService {
+    async updateCampaign(id, data) {
+        const res = await query(`
+            UPDATE az_campaigns 
+            SET name = $1, start_number = $2, end_number = $3, base_qty_config = $4
+            WHERE id = $5
+            RETURNING *
+        `, [data.name, data.start_number, data.end_number, data.base_qty_config, id]);
+        return res.rows[0];
+    }
+
+    async createCampaign(data) {
+        const res = await query(`
+            INSERT INTO az_campaigns (name, start_number, end_number, base_qty_config, is_active)
+            VALUES ($1, $2, $3, $4, true)
+            RETURNING *
+        `, [data.name, data.start_number, data.end_number, data.base_qty_config]);
+        return res.rows[0];
+    }
+
     async createPromotion(campaignId, data) {
         const res = await query(`
             INSERT INTO az_promotions (campaign_id, name, extra_qty, starts_at, ends_at, image_url)
