@@ -451,277 +451,168 @@
             margin-bottom: 1rem;
             display: inline-block;
         }
-    </style>
-</head>
 
-<body>
+        /* Stories Carousel Layout */
+        .stories-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
 
-    <div class="az-hero" style="padding-top: 1.5rem;">
-        <!-- Logo with Glow Effect -->
-        <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-            <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão" class="logo-glow"
-                style="height: 160px; display: block;">
-        </div>
+        .stories-wrapper {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+        }
 
-        <div id="promoBadgeContainer"></div>
-        <p class="az-subtitle" style="margin-bottom: 1.5rem;">Resgate seu número da sorte diário gratuitamente!</p>
+        .stories-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            width: 400%;
+            /* 4 slides */
+        }
 
-        <!-- Cards Area - 5x1 with slot animation -->
-        <div class="az-cards-container" id="cardsContainer">
-            <!-- Placeholders - no blur, animated numbers -->
-            <div class="az-card">
-                <div class="az-card-content">??</div>
-            </div>
-            <div class="az-card">
-                <div class="az-card-content">??</div>
-            </div>
-            <div class="az-card">
-                <div class="az-card-content">??</div>
-            </div>
-            <div class="az-card">
-                <div class="az-card-content">??</div>
-            </div>
-            <div class="az-card">
-                <div class="az-card-content">??</div>
-            </div>
-        </div>
+        .story-slide {
+            width: 25%;
+            /* 100% / 4 */
+            height: 100%;
+            flex-shrink: 0;
+            padding: 2rem 1.5rem;
+            box-sizing: border-box;
+            background: #1a1a1a;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Centraliza vert */
+            overflow-y: auto;
+            text-align: center;
+        }
 
-        <!-- Action Buttons - Same Size, No Line Break -->
-        <div
-            style="display: flex; flex-direction: column; gap: 0.8rem; align-items: center; width: 100%; max-width: 280px; margin: 0.5rem auto 0;">
-            <button class="az-btn-main" id="generateBtn" onclick="startFlow()"
-                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">
-                Resgatar Número
-            </button>
-            <button class="az-btn-main az-btn-secondary" id="lookupBtn" onclick="openLookupModal()"
-                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">
-                Consultar Números
-            </button>
-        </div>
+        /* Nav Buttons */
+        .story-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            border: none;
+            font-size: 1.5rem;
+            backdrop-filter: blur(5px);
+            transition: background 0.2s;
+        }
 
-        <div class="az-success-msg" id="successMsg">
-            <h3 style="color: var(--az-primary); margin-bottom: 0.5rem;">🎉 Sucesso!</h3>
-            <p>Seus números foram registrados!</p>
-            <button class="az-btn-main" onclick="window.location.reload()"
-                style="margin-top: 1rem; font-size: 1rem; padding: 0.8rem 2rem;">
-                Voltar ao Início
-            </button>
-        </div>
-    </div>
+        .story-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
 
-    <!-- Custom Alert Modal (replaces browser alert) -->
-    <div class="az-modal-overlay" id="alertModal">
-        <div class="az-modal" style="text-align: center; max-width: 350px;">
-            <h2 id="alertTitle" style="color: var(--az-primary);">⚠️ Atenção</h2>
-            <p id="alertMessage" style="color: #ccc; margin: 1rem 0;"></p>
-            <button class="az-btn-main" onclick="closeAlertModal()" style="width: 100%;">
-                OK
-            </button>
-        </div>
-    </div>
+        .story-nav-next {
+            right: 10px;
+        }
 
-    <!-- Reveal Numbers Modal (Slot Machine Effect) -->
-    <div class="az-modal-overlay" id="revealModal">
-        <div class="az-modal" style="max-width: 450px; text-align: center;">
-            <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
-            <p id="revealStatus" style="color: #aaa; margin-bottom: 1.5rem;">Revelando...</p>
-            <div id="revealGrid"
-                style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.5rem;"></div>
-            <button class="az-btn-main" id="closeRevealBtn" onclick="window.location.reload()"
-                style="display: none; width: 100%;">
-                Voltar ao Início
-            </button>
-        </div>
-    </div>
+        .story-nav-prev {
+            left: 10px;
+        }
 
-    <!-- Lookup Modal -->
-    <div class="az-modal-overlay" id="lookupModal">
-        <div class="az-modal">
-            <h2>📋 Consultar Números</h2>
+        .story-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            z-index: 30;
+            cursor: pointer;
+            opacity: 0.7;
+        }
 
-            <div class="form-group">
-                <label>Seu WhatsApp (com DDD)</label>
-                <input type="tel" id="lookupPhoneModal" class="form-control" placeholder="(11) 99999-9999"
-                    oninput="maskPhone(this)">
-            </div>
+        .story-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
 
-            <button class="az-btn-main" onclick="doLookup()" style="width: 100%; margin-top: 1rem;">
-                Buscar
-            </button>
+        </head><body><div class="az-hero" style="padding-top: 1.5rem;">< !-- Logo with Glow Effect --><div style="display: flex; justify-content: center; margin-bottom: 1rem;"><img src="/images/amigos-logo-new.png" alt="Amigos do Zapão" class="logo-glow"
+        style="height: 160px; display: block;"></div><div id="promoBadgeContainer"></div><p class="az-subtitle" style="margin-bottom: 1.5rem;">Resgate seu número da sorte diário gratuitamente !</p>< !-- Cards Area - 5x1 with slot animation --><div class="az-cards-container" id="cardsContainer">< !-- Placeholders - no blur,
+        animated numbers --><div class="az-card"><div class="az-card-content">??</div></div><div class="az-card"><div class="az-card-content">??</div></div><div class="az-card"><div class="az-card-content">??</div></div><div class="az-card"><div class="az-card-content">??</div></div><div class="az-card"><div class="az-card-content">??</div></div></div>< !-- Action Buttons - Same Size,
+        No Line Break --><div style="display: flex; flex-direction: column; gap: 0.8rem; align-items: center; width: 100%; max-width: 280px; margin: 0.5rem auto 0;"><button class="az-btn-main" id="generateBtn" onclick="startFlow()"
+        style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">Resgatar Número </button><button class="az-btn-main az-btn-secondary" id="lookupBtn" onclick="openLookupModal()"
+        style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">Consultar Números </button></div><div class="az-success-msg" id="successMsg"><h3 style="color: var(--az-primary); margin-bottom: 0.5rem;">🎉 Sucesso !</h3><p>Seus números foram registrados !</p><button class="az-btn-main" onclick="window.location.reload()"
+        style="margin-top: 1rem; font-size: 1rem; padding: 0.8rem 2rem;">Voltar ao Início </button></div></div>< !-- Custom Alert Modal (replaces browser alert) --><div class="az-modal-overlay" id="alertModal"><div class="az-modal" style="text-align: center; max-width: 350px;"><h2 id="alertTitle" style="color: var(--az-primary);">⚠️ Atenção</h2><p id="alertMessage" style="color: #ccc; margin: 1rem 0;"></p><button class="az-btn-main" onclick="closeAlertModal()" style="width: 100%;">OK </button></div></div>< !-- Reveal Numbers Modal (Slot Machine Effect) --><div class="az-modal-overlay" id="revealModal"><div class="az-modal" style="max-width: 450px; text-align: center;"><h2 style="color: var(--az-primary);">🎰 Seus Números !</h2><p id="revealStatus" style="color: #aaa; margin-bottom: 1.5rem;">Revelando...</p><div id="revealGrid"
+        style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.5rem;"></div><button class="az-btn-main" id="closeRevealBtn" onclick="window.location.reload()"
+        style="display: none; width: 100%;">Voltar ao Início </button></div></div>< !-- Lookup Modal --><div class="az-modal-overlay" id="lookupModal"><div class="az-modal"><h2>📋 Consultar Números</h2><div class="form-group"><label>Seu WhatsApp (com DDD)</label><input type="tel" id="lookupPhoneModal" class="form-control" placeholder="(11) 99999-9999"
+        oninput="maskPhone(this)"></div><button class="az-btn-main" onclick="doLookup()" style="width: 100%; margin-top: 1rem;">Buscar </button><div id="lookupResultModal" style="margin-top: 1.5rem;"></div><button onclick="closeLookupModal()" class="az-btn-main az-btn-secondary"
+        style="width: 100%; margin-top: 1rem;">Voltar ao Início </button></div></div>< !-- STEP 1: Share Modal -->< !-- Unified Stories Overlay --><div class="stories-overlay" id="storiesModal"><div class="stories-wrapper">< !-- Close (X) --><button class="story-close" onclick="closeStories()">×</button>< !-- Navigation Arrows --><button class="story-nav-btn story-nav-prev" onclick="prevStory()">❮</button><button class="story-nav-btn story-nav-next" onclick="nextStory()">❯</button><div class="stories-track" id="storiesTrack">< !-- SLIDE 1: Share --><div class="story-slide" id="slide1"><div class="story-badge">1</div><h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 1rem;">📤 Compartilhe</h2><p style="color: #aaa; margin-bottom: 1.5rem;">Compartilhe no status para continuar !</p><div style="margin-bottom: auto; width: 100%; display: flex; justify-content: center; align-items: center; flex: 1;"><img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
+        style="max-width: 200px; max-height: 200px; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 15px rgba(0,230,118,0.3);"></div><div style="margin-top: auto; width: 100%; padding-top: 1rem;"><button class="az-btn-main" onclick="shareToWhatsApp()" style="width: 100%;">Compartilhar WhatsApp </button><p style="color: #666; font-size: 0.8rem; margin-top: 0.5rem;">Após compartilhar,
+        clique na seta ❯ para prosseguir. </p></div></div>< !-- SLIDE 2: Form --><div class="story-slide" id="slide2"><div class="story-badge">2</div><h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 1rem;">🎰 Seus Dados</h2><p style="color: #aaa; margin-bottom: 1rem;">Preencha para gerar números</p><div style="width: 100%; text-align: left; overflow-y: auto; padding-bottom: 1rem;"><form id="claimFormStories" onsubmit="submitClaimStep2(event)"><div class="form-group"><label>WhatsApp (com DDD)</label><input type="tel" id="phone" class="form-control" required placeholder="(11) 99999-9999" oninput="maskPhone(this)" onblur="checkExistingUser(this.value)"></div><div class="form-group"><label>Nome Completo</label><input type="text" id="name" class="form-control" required minlength="3" onblur="this.value = capitalizeName(this.value)"></div><div class="form-group"><label>Você já compartilhou?</label><select id="sharedStatus" class="form-control" required><option value="">Selecione...</option><option value="yes">Sim,
+        já compartilhei</option><option value="no">Vou compartilhar agora</option></select></div><div class="checkbox-group"><input type="checkbox" id="lgpdConsent" required><label for="lgpdConsent">Aceito os Termos e Política de Privacidade.</label></div><button type="submit" class="az-btn-main" style="width: 100%; margin-top: 2rem;" id="submitBtnStories">Gerar Números ➜ </button></form></div></div>< !-- SLIDE 3: Reveal --><div class="story-slide" id="slideReveal"><div class="story-badge">2</div><h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 0.5rem;">🎰 Sorteio</h2><p id="revealStatus" style="color: #aaa;">Revelando...</p><div style="flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; overflow-y: auto;"><div id="revealGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 320px;">< !-- Grid populated by JS --></div></div><button class="az-btn-main az-btn-secondary" id="goToStep3Btn" onclick="nextStory()"
+        style="width: 100%; margin-top: 1rem; display: none;">Continuar ➜ </button></div>< !-- SLIDE 4: Success --><div class="story-slide" id="slideSuccess"><div class="story-badge">3</div><h2 class="az-title" style="font-size: 1.8rem;">🎉 Sucesso !</h2><p>Números registrados com sucesso</p><div style="background: rgba(0,230,118,0.1); padding: 1.5rem; border-radius: 12px; margin: 2rem 0; width: 100%;"><p style="margin: 0; color: #fff;">📢 <strong>Entre no Grupo VIP !</strong><br><span style="font-size: 0.9rem; color: #ccc;">Para concorrer a prêmios extras !</span></p></div><a href="#" id="groupLinkBtn" target="_blank" class="az-btn-main" onclick="finishFlow()" style="text-decoration: none; display: block; width: 100%;">Entrar no Grupo </a><button class="az-btn-main az-btn-secondary" onclick="finishFlow()" style="width: 100%; margin-top: 1rem;">Finalizar </button></div></div></div></div><script> // State
+        let claimSessionId=null;
+        let promoToken=new URLSearchParams(window.location.search).get('p');
+        let deviceId=localStorage.getItem('az_device_id') || generateDeviceId();
 
-            <div id="lookupResultModal" style="margin-top: 1.5rem;"></div>
-
-            <button onclick="closeLookupModal()" class="az-btn-main az-btn-secondary"
-                style="width: 100%; margin-top: 1rem;">
-                Voltar ao Início
-            </button>
-        </div>
-    </div>
-
-    <!-- STEP 1: Share Modal -->
-    <div class="az-modal-overlay" id="step1Modal">
-        <div class="az-modal">
-            <div class="step-badge">1</div>
-            <div class="az-modal-content">
-                <h2>📤 Compartilhe</h2>
-                <p style="color: #aaa; margin-bottom: 1rem;">Compartilhe no seu status para participar</p>
-
-                <!-- Share Preview Image (dynamic from settings) -->
-                <div style="margin-bottom: auto; display: flex; align-items: center; justify-content: center; width: 100%;"
-                    id="sharePreviewContainer">
-                    <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
-                        style="max-width: 140px; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 15px rgba(0,230,118,0.3);">
-                </div>
-
-                <p style="color: #ff9800; font-size: 0.9rem; margin: 1rem 0;">
-                    ⚠️ Tire print do status compartilhado e guarde!<br>
-                    <small>Será necessário para receber o prêmio. <strong>O botão CONTINUAR aparecerá
-                            abaixo.</strong></small>
-                </p>
-
-                <button class="az-btn-main" onclick="shareToWhatsApp()" style="width: 100%; margin-top: auto;"
-                    id="shareBtn">
-                    Compartilhar no WhatsApp
-                </button>
-
-                <!-- Arrow to next step (hidden initially) -->
-                <button class="az-btn-main az-btn-secondary" onclick="goToStep2()" id="step1NextBtn"
-                    style="width: 100%; margin-top: 10px; display: none;">
-                    Continuar ➜
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- STEP 2: Data Entry Modal -->
-    <div class="az-modal-overlay" id="step2Modal">
-        <div class="az-modal">
-            <div class="step-badge">2</div>
-            <div class="az-modal-content">
-                <h2>🎰 Seus Dados</h2>
-                <p style="color: #aaa; margin-bottom: 1rem;">Preencha para gerar seus números</p>
-
-                <form id="claimForm" onsubmit="submitClaimStep2(event)">
-                    <div class="form-group">
-                        <label>Seu WhatsApp (com DDD)</label>
-                        <input type="tel" id="phone" class="form-control" required placeholder="(11) 99999-9999"
-                            oninput="maskPhone(this)" onblur="checkExistingUser(this.value)">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Seu Nome Completo</label>
-                        <input type="text" id="name" class="form-control" required minlength="3"
-                            placeholder="Ex: Maria Silva" onblur="this.value = capitalizeName(this.value)">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Você já compartilhou no status?</label>
-                        <select id="sharedStatus" class="form-control" required>
-                            <option value="">Selecione...</option>
-                            <option value="yes">Sim, já compartilhei</option>
-                            <option value="no">Não, vou compartilhar agora</option>
-                        </select>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="lgpdConsent" required>
-                        <label for="lgpdConsent">
-                            Concordo com os Termos e Política de Privacidade.
-                        </label>
-                    </div>
-
-                    <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1rem;" id="submitBtn">
-                        Gerar Meus Números
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- STEP 2B: Reveal Numbers Modal -->
-    <div class="az-modal-overlay" id="revealModal">
-        <div class="az-modal">
-            <div class="step-badge">2</div>
-            <div class="az-modal-content">
-                <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
-                <p id="revealStatus" style="color: #aaa; margin-bottom: 1rem;">Revelando...</p>
-
-                <div
-                    style="flex: 1; overflow-y: auto; width: 100%; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
-                    <div id="revealGrid"
-                        style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%;">
-                    </div>
-                </div>
-
-                <!-- Arrow to next step (hidden initially) -->
-                <!-- Arrow to next step (hidden initially) -->
-                <div style="margin-top: auto; width: 100%; padding-top: 10px;">
-                    <button class="az-btn-main az-btn-secondary" id="goToStep3Btn" onclick="goToStep3()"
-                        style="width: 100%;">
-                        Continuar ➜
-                    </button>
-                    <!-- Fallback msg -->
-                    <p id="debugMsg" style="font-size: 10px; color: #555; margin-top: 5px; display: none;">Aguardando...
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- STEP 3: Join Group Modal -->
-    <div class="az-modal-overlay" id="step3Modal">
-        <div class="az-modal">
-            <div class="step-badge">3</div>
-            <div class="az-modal-content">
-                <h2>🎉 Sucesso!</h2>
-                <p style="color: var(--az-primary); font-size: 1.1rem; margin-bottom: 1rem;">
-                    Seus números foram registrados!
-                </p>
-
-                <div
-                    style="background: rgba(0,230,118,0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,230,118,0.3); margin-bottom: 1.5rem;">
-                    <p style="color: #fff; margin: 0;">
-                        📢 <strong>Fique atento ao grupo!</strong><br>
-                        <span style="color: #aaa; font-size: 0.9rem;">
-                            Sempre postamos links para ganhar números extras da sorte!
-                        </span>
-                    </p>
-                </div>
-
-                <a href="#" id="groupLinkBtn" target="_blank" class="az-btn-main" onclick="finishFlow()"
-                    style="width: 100%; display: block; text-decoration: none;">
-                    Entrar no Grupo
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // State
-        let claimSessionId = null;
-        let promoToken = new URLSearchParams(window.location.search).get('p');
-        let deviceId = localStorage.getItem('az_device_id') || generateDeviceId();
-        let shareSettings = {
+        let shareSettings= {
             share_image: '/images/amigos-logo-new.png',
-            share_text: 'Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao',
-            group_link: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
-        };
+                share_text: 'Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao',
+                group_link: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
+        }
+
+        ;
 
         // Load share settings from API
         async function loadSettings() {
             try {
-                const res = await fetch('/api/amigos/settings');
-                const data = await res.json();
-                shareSettings = data;
+                const res=await fetch('/api/amigos/settings');
+                const data=await res.json();
+                shareSettings=data;
 
                 // Update UI with loaded settings
                 if (data.share_image) {
-                    document.getElementById('sharePreviewImg').src = data.share_image;
+                    document.getElementById('sharePreviewImg').src=data.share_image;
                 }
+
                 if (data.group_link) {
-                    document.getElementById('groupLinkBtn').href = data.group_link;
+                    document.getElementById('groupLinkBtn').href=data.group_link;
                 }
-            } catch (e) {
+            }
+
+            catch (e) {
                 console.log('Using default settings');
             }
         }
@@ -730,24 +621,25 @@
         loadSettings();
 
         // Custom Alert Modal (replaces browser alert)
-        function showAlert(message, title = '⚠️ Atenção', callback = null) {
-            document.getElementById('alertTitle').textContent = title;
-            document.getElementById('alertMessage').textContent = message;
-            document.getElementById('alertModal').style.display = 'flex';
-            window.alertCallback = callback;
+        function showAlert(message, title='⚠️ Atenção', callback=null) {
+            document.getElementById('alertTitle').textContent=title;
+            document.getElementById('alertMessage').textContent=message;
+            document.getElementById('alertModal').style.display='flex';
+            window.alertCallback=callback;
         }
 
         function closeAlertModal() {
-            document.getElementById('alertModal').style.display = 'none';
+            document.getElementById('alertModal').style.display='none';
+
             if (window.alertCallback) {
                 window.alertCallback();
-                window.alertCallback = null;
+                window.alertCallback=null;
             }
         }
 
         // Helper: Device ID
         function generateDeviceId() {
-            const id = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+            const id='dev_'+Math.random().toString(36).substr(2, 9)+Date.now().toString(36);
             localStorage.setItem('az_device_id', id);
             return id;
         }
@@ -755,187 +647,271 @@
         // Helper: Mask Phone (simple, allows backspace)
         function maskPhone(input) {
             // Store cursor
-            const cursorPos = input.selectionStart;
-            const oldValue = input.value;
+            const cursorPos=input.selectionStart;
+            const oldValue=input.value;
 
             // Get only digits
-            let digits = input.value.replace(/\D/g, '');
+            let digits=input.value.replace(/\D/g, '');
 
             // Limit to 11 digits
-            if (digits.length > 11) digits = digits.substring(0, 11);
+            if (digits.length > 11) digits=digits.substring(0, 11);
 
             // Apply mask only when adding, not when deleting
-            let formatted = '';
-            if (digits.length === 0) {
-                formatted = '';
-            } else if (digits.length <= 2) {
-                formatted = '(' + digits;
-            } else if (digits.length <= 7) {
-                formatted = '(' + digits.substring(0, 2) + ') ' + digits.substring(2);
-            } else {
-                formatted = '(' + digits.substring(0, 2) + ') ' + digits.substring(2, 7) + '-' + digits.substring(7);
+            let formatted='';
+
+            if (digits.length===0) {
+                formatted='';
             }
 
-            input.value = formatted;
+            else if (digits.length <=2) {
+                formatted='('+digits;
+            }
+
+            else if (digits.length <=7) {
+                formatted='('+digits.substring(0, 2)+') '+digits.substring(2);
+            }
+
+            else {
+                formatted='('+digits.substring(0, 2)+') '+digits.substring(2, 7)+'-'+digits.substring(7);
+            }
+
+            input.value=formatted;
         }
 
         // Helper: Capitalize name
         function capitalizeName(name) {
-            return name
-                .toLowerCase()
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
+            return name .toLowerCase() .split(' ') .map(word=> word.charAt(0).toUpperCase() + word.slice(1)) .join(' ');
         }
 
         // Check if phone has existing data
         async function checkExistingUser(phone) {
             if (phone.length < 14) return;
+
             try {
-                const res = await fetch(`/api/amigos/lookup?phone=${encodeURIComponent(phone)}`);
-                const data = await res.json();
+                const res=await fetch(`/api/amigos/lookup?phone=$ {
+                        encodeURIComponent(phone)
+                    }
+
+                    `);
+                const data=await res.json();
+
                 if (data.found && data.name) {
-                    const nameInput = document.getElementById('name');
+                    const nameInput=document.getElementById('name');
+
                     if (nameInput && !nameInput.value) {
-                        nameInput.value = capitalizeName(data.name);
+                        nameInput.value=capitalizeName(data.name);
                     }
                 }
-            } catch (e) { }
+            }
+
+            catch (e) {}
         }
 
         // 1. Initial State Check
         // We could check if user is already blocked via localstorage as hint, but backend is source of truth.
 
-        // STEP 1: Start flow - Show share modal first
+        // STEP 1: STORIES FLOW LOGIC
+
+        // Initial Flow Trigger
         async function startFlow() {
-            const btn = document.getElementById('generateBtn');
-            btn.disabled = true;
-            btn.textContent = 'Carregando...';
+            const btn=document.getElementById('generateBtn');
+            btn.disabled=true;
+            btn.textContent='Carregando...';
 
             try {
+
                 // Call /start to get session
-                const res = await fetch('/api/amigos/start', {
+                const res=await fetch('/api/amigos/start', {
+
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ promo_token: promoToken, device_id: deviceId })
-                });
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
 
-                const data = await res.json();
+                    ,
+                    body: JSON.stringify({
+                        promo_token: promoToken, device_id: deviceId
+                    })
+            });
 
-                if (!res.ok) throw new Error(data.error || 'Erro ao iniciar');
+        const data=await res.json();
+        if ( !res.ok) throw new Error(data.error || 'Erro ao iniciar');
 
-                claimSessionId = data.claim_session_id;
+        claimSessionId=data.claim_session_id;
 
-                // Update UI based on potential qty
-                renderPlaceholders(data.total_qty);
+        // Open Stories Modal at Slide 0
+        document.getElementById('storiesModal').style.display='flex';
+        currentStoryIndex=0;
+        updateStories();
 
-                if (data.promo) {
-                    const badge = document.getElementById('promoBadgeContainer');
-                    badge.innerHTML = `<span class="promo-badge">Promoção: ${data.promo.name} (+${data.extra_qty})</span>`;
+        // Pre-fill phone if saved
+        const savedPhone=localStorage.getItem('az_phone');
+
+        if (savedPhone) {
+            document.getElementById('phone').value=savedPhone;
+            checkExistingUser(savedPhone);
+        }
+
+        btn.disabled=false;
+        btn.textContent='Resgatar Número';
+
+        }
+
+        catch (e) {
+            showAlert(e.message, '❌ Erro');
+            btn.disabled=false;
+            btn.textContent='Resgatar Número';
+        }
+        }
+
+        // ---- Stories Navigation ----
+        let currentStoryIndex=0;
+        const totalStories=4;
+
+        function updateStories() {
+            const track=document.getElementById('storiesTrack');
+
+            // Using 25% because width is 400%
+            track.style.transform=`translateX(-$ {
+                    currentStoryIndex * 25
                 }
 
-                // Show Step 1 Modal (Share)
-                document.getElementById('step1Modal').style.display = 'flex';
-                btn.disabled = false;
-                btn.textContent = 'Resgatar Número';
+                %)`;
 
-            } catch (e) {
-                showAlert(e.message, '❌ Erro');
-                btn.disabled = false;
-                btn.textContent = 'Resgatar Número';
+            // Manage prev/next buttons
+            const prevBtn=document.querySelector('.story-nav-prev');
+            const nextBtn=document.querySelector('.story-nav-next');
+
+            prevBtn.style.display=currentStoryIndex===0 ? 'none' : 'flex';
+
+            // Hide next button on last slide
+            if (currentStoryIndex===totalStories - 1) {
+                nextBtn.style.display='none';
+            }
+
+            else {
+                nextBtn.style.display='flex';
             }
         }
 
-        // Share to WhatsApp
+        function nextStory() {
+            if (currentStoryIndex < totalStories - 1) {
+
+                // Validation Logic
+                if (currentStoryIndex===1) {
+                    // FORM STEP
+                    // Trigger form submit instead of just moving
+                    // Check validity
+                    const form=document.getElementById('claimFormStories');
+
+                    if(form.checkValidity()) {
+                        document.getElementById('submitBtnStories').click();
+                    }
+
+                    else {
+                        form.reportValidity();
+                    }
+
+                    return;
+                }
+
+                // If on Share step (0), allow move.
+                // If on Reveal step (2), allow move to success (3).
+
+                currentStoryIndex++;
+                updateStories();
+            }
+        }
+
+        function prevStory() {
+            if (currentStoryIndex > 0) {
+                currentStoryIndex--;
+                updateStories();
+            }
+        }
+
+        function closeStories() {
+            document.getElementById('storiesModal').style.display='none';
+            if (currentStoryIndex===3) window.location.reload();
+        }
+
+        // ---- Share Logic ----
         async function shareToWhatsApp() {
-            const shareBtn = document.getElementById('shareBtn');
-            shareBtn.disabled = true;
-            shareBtn.textContent = 'Preparando...';
+            const shareBtn=document.querySelector('#slide1 button');
+            const originalText=shareBtn.textContent;
+            shareBtn.textContent='Preparando...';
+            shareBtn.disabled=true;
 
             try {
-                // Try Web Share API first
                 if (navigator.share) {
                     try {
-                        // Try to share the configured image
-                        const imgResp = await fetch(shareSettings.share_image);
-                        const imgBlob = await imgResp.blob();
-                        const imgFile = new File([imgBlob], 'amigos-zapao.png', { type: 'image/png' });
+                        const imgResp=await fetch(shareSettings.share_image);
+                        const imgBlob=await imgResp.blob();
 
-                        await navigator.share({
-                            files: [imgFile],
-                            text: shareSettings.share_text
+                        const imgFile=new File([imgBlob], 'amigos-zapao.png', {
+                            type: 'image/png'
                         });
-                    } catch (shareErr) {
-                        // Fallback to just text
-                        await navigator.share({
-                            text: shareSettings.share_text
-                        });
+
+                    await navigator.share({
+                        files: [imgFile], text: shareSettings.share_text
+                    });
+            }
+
+            catch (shareErr) {
+                await navigator.share({
+                    text: shareSettings.share_text
+                });
+        }
+        }
+
+        else {
+            const text=encodeURIComponent(shareSettings.share_text);
+            window.open(`https: //api.whatsapp.com/send?text=${text}`, '_blank');
+            }
+        }
+
+        catch (e) {
+            console.log(e);
+        }
+
+        finally {
+            shareBtn.textContent='✅ Compartilhado!';
+            shareBtn.classList.add('az-btn-secondary');
+
+            // Auto advance after 1 second
+            setTimeout(()=> {
+                    if(currentStoryIndex===0) {
+                        currentStoryIndex++;
+                        updateStories();
                     }
-                } else {
-                    // Fallback: Open WhatsApp directly
-                    const text = encodeURIComponent(shareSettings.share_text);
-                    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
                 }
-            } catch (e) {
-                console.log('Share cancelled:', e.message);
-            } finally {
-                // Show "Continue" button
-                shareBtn.textContent = '✅ Compartilhado!';
-                shareBtn.classList.add('az-btn-secondary');
-                document.getElementById('step1NextBtn').style.display = 'block';
-            }
+
+                , 1000);
+        }
         }
 
-        // Go to Step 2 (Data entry)
-        function goToStep2() {
-            document.getElementById('step1Modal').style.display = 'none';
-            document.getElementById('step2Modal').style.display = 'flex';
-
-            // Pre-fill phone if saved
-            const savedPhone = localStorage.getItem('az_phone');
-            if (savedPhone) {
-                document.getElementById('phone').value = savedPhone;
-                checkExistingUser(savedPhone);
-            }
-        }
-
-        // Go to Step 3 (Group join)
-        function goToStep3() {
-            document.getElementById('revealModal').style.display = 'none';
-            document.getElementById('step3Modal').style.display = 'flex';
-        }
-
-        // Finish flow - reload page
-        function finishFlow() {
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-
-        function renderPlaceholders(count) {
-            const container = document.getElementById('cardsContainer');
-            container.innerHTML = '';
-            for (let i = 0; i < count; i++) {
-                container.innerHTML += `<div class="az-card blur"><div class="az-card-content">??</div></div>`;
-            }
-        }
-
-        // STEP 2: Submit claim form  
+        // ---- Form Submit Logic ----
         async function submitClaimStep2(e) {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Gerando...';
+            const btn=document.getElementById('submitBtnStories');
+            const originalText=btn.textContent;
+            btn.disabled=true;
+            btn.textContent='Gerando...';
 
-            const phone = document.getElementById('phone').value;
-            const name = document.getElementById('name').value;
-            const shared = document.getElementById('sharedStatus').value;
-            const consent = document.getElementById('lgpdConsent').checked;
+            const phone=document.getElementById('phone').value;
+            const name=document.getElementById('name').value;
+            const shared=document.getElementById('sharedStatus').value;
+            const consent=document.getElementById('lgpdConsent').checked;
 
             try {
-                const res = await fetch('/api/amigos/finish', {
+                const res=await fetch('/api/amigos/finish', {
+
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+
+                    ,
                     body: JSON.stringify({
                         claim_session_id: claimSessionId,
                         phone, name,
@@ -944,200 +920,197 @@
                         lgpd_consent: consent,
                         device_id: deviceId
                     })
-                });
-
-                const result = await res.json();
-
-                if (!res.ok) {
-                    if (result.error.includes('bloqueado') || result.error.includes('hoje')) {
-                        // Blocked
-                        handleBlocked(result.error);
-                        return;
-                    }
-                    throw new Error(result.error);
-                }
-
-                // Success! Hide step2 modal and show reveal modal
-                document.getElementById('step2Modal').style.display = 'none';
-                revealNumbers(result.numbers);
-
-                // Save phone to local
-                localStorage.setItem('az_phone', phone);
-
-            } catch (err) {
-                const criticalErrors = ['Sessão', 'expirada', 'Tempo', 'esgotado', 'inválida', 'Recarregue', 'Recomece'];
-                const isCritical = criticalErrors.some(e => err.message.includes(e));
-
-                if (isCritical) {
-                    showAlert(err.message, '❌ Erro', () => {
-                        window.location.href = '/amigos-do-zapao';
-                    });
-                } else {
-                    showAlert(err.message, '❌ Erro');
-                    btn.disabled = false;
-                    btn.textContent = 'Gerar Meus Números';
-                }
-            }
-        }
-
-        // Slot Machine Reveal - Line by Line with Carousel Effect
-        function revealNumbers(numbers) {
-            // Sort numbers
-            const sorted = numbers.sort((a, b) => a - b);
-
-            // Reset and show reveal modal
-            document.getElementById('revealModal').style.display = 'flex';
-            document.getElementById('revealStatus').textContent = 'Revelando...';
-            document.getElementById('goToStep3Btn').style.display = 'none';
-
-            const grid = document.getElementById('revealGrid');
-            grid.innerHTML = '';
-
-            // Create all cards with blur
-            sorted.forEach((num, i) => {
-                const card = document.createElement('div');
-                card.className = 'az-card blur';
-                card.id = `reveal-card-${i}`;
-                card.style.opacity = '0.3';
-                card.innerHTML = `<div class="az-card-content">${num.toString().padStart(4, '0')}</div>`;
-                grid.appendChild(card);
             });
 
-            // Reveal line by line (5 per line)
-            const linesCount = Math.ceil(sorted.length / 5);
-            let currentLine = 0;
+        const result=await res.json();
 
-            function revealLine() {
-                console.log('Revealing line:', currentLine + 1, 'of', linesCount);
-                if (currentLine >= linesCount) {
-                    console.log('All lines revealed. Showing button.');
-                    // All revealed - show continue button
-                    const btn = document.getElementById('goToStep3Btn');
-                    if (btn) {
-                        btn.style.display = 'block';
-                        btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                    } else {
-                        console.error('Button goToStep3Btn not found!');
-                    }
-
-                    document.getElementById('revealStatus').textContent = 'Boa sorte! 🍀';
-                    return;
-                }
-
-                const startIdx = currentLine * 5;
-                const endIdx = Math.min(startIdx + 5, sorted.length);
-
-                // Carousel animation for this line - staggered for better effect
-                for (let i = startIdx; i < endIdx; i++) {
-                    const delay = (i - startIdx) * 80; // Stagger each card
-                    setTimeout(() => {
-                        const card = document.getElementById(`reveal-card-${i}`);
-                        if (card) {
-                            card.style.opacity = '1';
-                            card.classList.remove('blur');
-                            card.classList.add('slot-spinning');
-
-                            // After spin completes, mark as revealed
-                            setTimeout(() => {
-                                card.classList.remove('slot-spinning');
-                                card.classList.add('slot-revealed');
-                            }, 600);
-                        }
-                    }, delay);
-                }
-
-                currentLine++;
-                setTimeout(revealLine, 1200); // 1.2 seconds per line
-            }
-
-            // Start revealing after 400ms
-            setTimeout(revealLine, 400);
-        }
-
-        function closeRevealModal() {
-            document.getElementById('revealModal').style.display = 'none';
-            // Show success
-            document.getElementById('generateBtn').style.display = 'none';
-            document.getElementById('lookupBtn').style.display = 'none';
-            document.getElementById('successMsg').style.display = 'block';
-        }
-
-        function handleBlocked(msg) {
-            // Close all step modals
-            document.getElementById('step1Modal').style.display = 'none';
-            document.getElementById('step2Modal').style.display = 'none';
-            document.getElementById('revealModal').style.display = 'none';
-
-            document.getElementById('generateBtn').textContent = 'Bloqueado';
-            document.getElementById('generateBtn').disabled = true;
-            document.getElementById('successMsg').style.display = 'block';
-            document.getElementById('successMsg').querySelector('h3').textContent = '✋ Volte amanhã!';
-            document.getElementById('successMsg').querySelector('p').textContent = 'Você já garantiu seus números de hoje.';
-        }
-
-        async function checkStatusForTimer(phone) {
-            // Timer removed - no longer needed
-        }
-
-        // Lookup Modal Functions
-        function openLookupModal() {
-            document.getElementById('lookupModal').style.display = 'flex';
-            document.getElementById('lookupResultModal').innerHTML = '';
-            // Pre-fill with saved phone
-            const savedPhone = localStorage.getItem('az_phone');
-            if (savedPhone) {
-                document.getElementById('lookupPhoneModal').value = savedPhone;
-            }
-        }
-
-        function closeLookupModal() {
-            document.getElementById('lookupModal').style.display = 'none';
-        }
-
-        async function doLookup() {
-            const phone = document.getElementById('lookupPhoneModal').value;
-            const resultEl = document.getElementById('lookupResultModal');
-
-            if (!phone || phone.length < 14) {
-                resultEl.innerHTML = '<p style="color: #f44336;">Digite um telefone válido.</p>';
+        if ( !res.ok) {
+            if (result.error.includes('bloqueado') || result.error.includes('hoje')) {
+                handleBlocked(result.error);
                 return;
             }
 
-            resultEl.innerHTML = '<p style="color: #aaa;">Buscando...</p>';
+            throw new Error(result.error);
+        }
 
-            try {
-                const res = await fetch(`/api/amigos/lookup?phone=${encodeURIComponent(phone)}`);
-                const data = await res.json();
+        // Success! Save phone and advance
+        localStorage.setItem('az_phone', phone);
 
-                if (!data.found) {
-                    resultEl.innerHTML = '<p style="color: #ff9800;">Nenhum número encontrado para este telefone.</p>';
+        btn.textContent='Sucesso!';
+
+        // Move to Reveal Slide (Index 2)
+        setTimeout(()=> {
+                currentStoryIndex=2;
+                updateStories();
+                revealNumbers(result.numbers);
+            }
+
+            , 500);
+
+        }
+
+        catch (err) {
+            const criticalErrors=['Sessão', 'expirada', 'Tempo', 'esgotado', 'inválida', 'Recarregue', 'Recomece'];
+            const isCritical=criticalErrors.some(e=> err.message.includes(e));
+
+            if (isCritical) {
+                showAlert(err.message, '❌ Erro', ()=> window.location.reload());
+            }
+
+            else {
+                showAlert(err.message, '❌ Erro');
+                btn.disabled=false;
+                btn.textContent=originalText;
+            }
+        }
+        }
+
+        // ---- Reveal Logic ----
+        function revealNumbers(numbers) {
+            const sorted=numbers.sort((a, b)=> a - b);
+            const grid=document.getElementById('revealGrid');
+            grid.innerHTML='';
+
+            // Populate grid
+            sorted.forEach((num, i)=> {
+                    const card=document.createElement('div');
+                    card.className='az-card blur';
+
+                    card.id=`reveal-card-$ {
+                        i
+                    }
+
+                    `;
+                    card.style.opacity='0.3';
+
+                    card.innerHTML=`<div class="az-card-content" >$ {
+                        num.toString().padStart(4, '0')
+                    }
+
+                    </div>`;
+                    grid.appendChild(card);
+                });
+
+            // Animate
+            const linesCount=Math.ceil(sorted.length / 5);
+            let currentLine=0;
+
+            function revealLine() {
+                if(currentLine >=linesCount) {
+                    document.getElementById('revealStatus').textContent='Boa sorte! 🍀';
+                    // Show next button inside reveal slide
+                    document.getElementById('goToStep3Btn').style.display='block';
                     return;
                 }
 
-                // Sort numbers ascending and format
-                const sortedNumbers = data.numbers.sort((a, b) => a - b);
-                const numbersGrid = sortedNumbers.map(n =>
-                    `<span style="background: #1e1e1e; padding: 6px 10px; border-radius: 4px; font-family: monospace; color: var(--az-primary); font-weight: bold;">${String(n).padStart(4, '0')}</span>`
-                ).join('');
+                const startIdx=currentLine * 5;
+                const endIdx=Math.min(startIdx + 5, sorted.length);
 
-                resultEl.innerHTML = `
-                    <div style="background: rgba(0,230,118,0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.3);">
-                        <p style="color: var(--az-primary); font-weight: bold; font-size: 1.1rem;">👋 ${capitalizeName(data.name)}</p>
-                        <p style="color: white; margin-top: 10px;">Você tem <strong style="color: var(--az-primary); font-size: 1.3rem;">${data.total_numbers}</strong> números da sorte:</p>
-                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px;">
-                            ${numbersGrid}
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                resultEl.innerHTML = '<p style="color: #f44336;">Erro ao buscar. Tente novamente.</p>';
+                for (let i=startIdx; i < endIdx; i++) {
+                    const delay=(i - startIdx) * 80;
+
+                    setTimeout(()=> {
+                            const card=document.getElementById(`reveal-card-$ {
+                                    i
+                                }
+
+                                `);
+
+                            if(card) {
+                                card.style.opacity='1';
+                                card.classList.remove('blur');
+                                card.classList.add('slot-spinning');
+
+                                setTimeout(()=> {
+                                        card.classList.remove('slot-spinning');
+                                        card.classList.add('slot-revealed');
+                                    }
+
+                                    , 600);
+                            }
+                        }
+
+                        , delay);
+                }
+
+                currentLine++;
+                setTimeout(revealLine, 1200);
             }
+
+            setTimeout(revealLine, 400);
+        }
+
+        function finishFlow() {
+            window.location.reload();
+        }
+
+        function handleBlocked(msg) {
+            showAlert(msg || 'Você já participou hoje!', '⛔ Atenção', ()=> window.location.reload());
+        }
+
+        function renderPlaceholders(count) {
+            const container=document.getElementById('cardsContainer');
+            container.innerHTML='';
+
+            for (let i=0; i < count; i++) {
+                container.innerHTML +=`<div class="az-card blur" ><div class="az-card-content" >??</div></div>`;
+            }
+        }
+
+        // Lookup Modal Calls
+        function doLookup() {
+            const phone=document.getElementById('lookupPhoneModal').value;
+            const resultEl=document.getElementById('lookupResultModal');
+
+            if( !phone || phone.length < 14) {
+                resultEl.innerHTML='<p style="color: #f44336;">Digite um telefone válido.</p>';
+                return;
+            }
+
+            resultEl.innerHTML='<p style="color: #aaa;">Buscando...</p>';
+
+            // ... existing lookup logic is mostly fetch, keep if possible or recreate
+            fetch(`/api/amigos/lookup?phone=$ {
+                    encodeURIComponent(phone)
+                }
+
+                `) .then(r=> r.json()) .then(data=> {
+                    if( !data.found) {
+                        resultEl.innerHTML='<p style="color: #ff9800;">Nenhum número encontrado.</p>';
+                        return;
+                    }
+
+                    const sorted=data.numbers.sort((a, b)=>a-b);
+
+                    const nums=sorted.map(n=> `<span style="background:#1e1e1e;padding:6px;border-radius:4px;color:#00E676;" >$ {
+                            String(n).padStart(4, '0')
+                        }
+
+                        </span>`).join(' ');
+
+                    resultEl.innerHTML=`<div style="background: rgba(0,230,118,0.1); padding: 15px; border-radius: 8px;" > <p style="color:white;" >Olá <strong>$ {
+                        data.name
+                    }
+
+                    </strong>, você tem $ {
+                        data.total_numbers
+                    }
+
+                    números:</p> <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;" >$ {
+                        nums
+                    }
+
+                    </div> </div>`;
+
+                }) .catch(()=> {
+                    resultEl.innerHTML='<p style="color: #f44336;">Erro ao buscar.</p>';
+                });
         }
 
         // Continuous carousel animation for placeholders
         function animatePlaceholders() {
-            const container = document.getElementById('cardsContainer');
-            const cards = Array.from(container.querySelectorAll('.az-card'));
+            const container=document.getElementById('cardsContainer');
+            const cards=Array.from(container.querySelectorAll('.az-card'));
 
             function randomNumber() {
                 return Math.floor(Math.random() * 10000).toString().padStart(4, '0');
@@ -1145,27 +1118,33 @@
 
             // Animate each card with carousel effect
             function animateCard(card, delay) {
-                const content = card.querySelector('.az-card-content');
-                let speed = 50; // Start fast
-                let accelerating = false;
-                let cycles = 0;
-                const maxCycles = 15 + Math.floor(Math.random() * 10); // Random stop point
+                const content=card.querySelector('.az-card-content');
+                let speed=50; // Start fast
+                let accelerating=false;
+                let cycles=0;
+                const maxCycles=15 + Math.floor(Math.random() * 10); // Random stop point
 
                 function spin() {
-                    content.textContent = randomNumber();
+                    content.textContent=randomNumber();
                     cycles++;
 
                     // Carousel effect: fast -> slow -> fast
                     if (cycles < 5) {
-                        speed = 50; // Fast start
-                    } else if (cycles < maxCycles - 5) {
-                        speed = 80; // Medium
-                    } else if (cycles < maxCycles) {
-                        speed = 150 + (cycles - maxCycles + 5) * 30; // Slow down
-                    } else {
+                        speed=50; // Fast start
+                    }
+
+                    else if (cycles < maxCycles - 5) {
+                        speed=80; // Medium
+                    }
+
+                    else if (cycles < maxCycles) {
+                        speed=150 + (cycles - maxCycles + 5) * 30; // Slow down
+                    }
+
+                    else {
                         // Reset and restart
-                        cycles = 0;
-                        speed = 50;
+                        cycles=0;
+                        speed=50;
                         setTimeout(spin, 800 + Math.random() * 500); // Pause before restart
                         return;
                     }
@@ -1177,14 +1156,11 @@
             }
 
             // Stagger animation start for each card
-            cards.forEach((card, i) => {
-                animateCard(card, i * 200);
-            });
+            cards.forEach((card, i)=> {
+                    animateCard(card, i * 200);
+                });
         }
 
         // Start placeholder animation
         animatePlaceholders();
-    </script>
-</body>
-
-</html>
+        </script> </body> </html>
