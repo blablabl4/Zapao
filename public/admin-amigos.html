@@ -208,6 +208,32 @@
                     <h4>Quantidade Base por Dia</h4>
                     <div style="display: flex; gap: 5px; flex-wrap: wrap;" id="daysContainer"></div>
 
+                    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+                    <h3>Configuração de Compartilhamento (Passo 1 & 3)</h3>
+
+                    <div class="form-group">
+                        <label>URL da Imagem de Compartilhamento</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button type="button" class="btn" onclick="document.getElementById('sFile').click()">📤
+                                Upload</button>
+                            <input type="file" id="sFile" style="display: none" accept="image/*"
+                                onchange="uploadShareImage(this)">
+                            <input type="text" id="sImage" class="form-control"
+                                placeholder="URL da imagem (ex: /images/logo.png)" style="flex:1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Texto de Compartilhamento (WhatsApp)</label>
+                        <textarea id="sText" class="form-control" rows="2"
+                            placeholder="Texto que aparecerá no WhatsApp"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Link do Grupo de WhatsApp (Botão Passo 3)</label>
+                        <input type="text" id="sGroup" class="form-control" placeholder="https://chat.whatsapp.com/...">
+                    </div>
+
                     <button type="submit" class="btn btn-green" style="margin-top: 15px;">Salvar Configuração</button>
                 </form>
 
@@ -369,6 +395,12 @@
                         const el = document.getElementById('qty_' + d);
                         if (el) el.value = data.base_qty_config[d] || 1;
                     });
+
+                    if (data.base_qty_config.share_settings) {
+                        document.getElementById('sImage').value = data.base_qty_config.share_settings.image || '';
+                        document.getElementById('sText').value = data.base_qty_config.share_settings.text || '';
+                        document.getElementById('sGroup').value = data.base_qty_config.share_settings.group_link || '';
+                    }
                 }
             } catch (e) {
                 console.error(e);
@@ -389,6 +421,13 @@
             e.preventDefault();
             const config = {};
             daysMap.forEach(d => config[d] = parseInt(document.getElementById('qty_' + d).value));
+
+            // Add Share Settings to config
+            config.share_settings = {
+                image: document.getElementById('sImage').value,
+                text: document.getElementById('sText').value,
+                group_link: document.getElementById('sGroup').value
+            };
 
             const payload = {
                 name: document.getElementById('cName').value,
@@ -433,6 +472,19 @@
                 } catch (e) {
                     alert('❌ Erro de conexão: ' + e.message);
                 }
+            }
+        }
+
+        async function uploadShareImage(input) {
+            if (!input.files || !input.files[0]) return;
+            const fd = new FormData();
+            fd.append('image', input.files[0]);
+
+            const res = await fetch('/api/admin/amigos/upload', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            if (data.url) {
+                document.getElementById('sImage').value = data.url;
             }
         }
 

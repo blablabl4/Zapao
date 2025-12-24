@@ -298,6 +298,29 @@
             overflow: hidden;
         }
 
+        /* Step indicator badge - top left corner */
+        .step-badge {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 36px;
+            height: 36px;
+            background: var(--az-primary);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 230, 118, 0.5);
+        }
+
+        /* Modal needs relative positioning for badge */
+        .az-modal {
+            position: relative;
+        }
+
         /* Secondary button style - grey with green text */
         .az-btn-secondary {
             background: linear-gradient(135deg, #333 0%, #222 100%);
@@ -518,12 +541,13 @@
     <!-- STEP 1: Share Modal -->
     <div class="az-modal-overlay" id="step1Modal">
         <div class="az-modal" style="text-align: center;">
-            <h2>📤 Passo 1 de 3</h2>
+            <div class="step-badge">1</div>
+            <h2>📤 Compartilhe</h2>
             <p style="color: #aaa; margin-bottom: 1rem;">Compartilhe no seu status para participar</p>
 
-            <!-- Share Preview Image -->
-            <div style="margin-bottom: 1rem;">
-                <img src="/images/amigos-logo-new.png" alt="Compartilhe"
+            <!-- Share Preview Image (dynamic from settings) -->
+            <div style="margin-bottom: 1rem;" id="sharePreviewContainer">
+                <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
                     style="max-width: 120px; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 15px rgba(0,230,118,0.3);">
             </div>
 
@@ -547,8 +571,9 @@
     <!-- STEP 2: Data Entry Modal -->
     <div class="az-modal-overlay" id="step2Modal">
         <div class="az-modal">
-            <h2>🎰 Passo 2 de 3</h2>
-            <p style="color: #aaa; margin-bottom: 1rem;">Preencha seus dados para gerar os números</p>
+            <div class="step-badge">2</div>
+            <h2>🎰 Seus Dados</h2>
+            <p style="color: #aaa; margin-bottom: 1rem;">Preencha para gerar seus números</p>
 
             <form id="claimForm" onsubmit="submitClaimStep2(event)">
                 <div class="form-group">
@@ -589,6 +614,7 @@
     <!-- STEP 2B: Reveal Numbers Modal -->
     <div class="az-modal-overlay" id="revealModal">
         <div class="az-modal" style="max-width: 400px; text-align: center;">
+            <div class="step-badge">2</div>
             <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
             <p id="revealStatus" style="color: #aaa; margin-bottom: 1rem;">Revelando...</p>
             <div id="revealGrid"
@@ -605,7 +631,8 @@
     <!-- STEP 3: Join Group Modal -->
     <div class="az-modal-overlay" id="step3Modal">
         <div class="az-modal" style="text-align: center;">
-            <h2>🎉 Passo 3 de 3</h2>
+            <div class="step-badge">3</div>
+            <h2>🎉 Sucesso!</h2>
             <p style="color: var(--az-primary); font-size: 1.1rem; margin-bottom: 1rem;">
                 Seus números foram registrados!
             </p>
@@ -620,8 +647,8 @@
                 </p>
             </div>
 
-            <a href="https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn" target="_blank" class="az-btn-main"
-                onclick="finishFlow()" style="width: 100%; display: block; text-decoration: none;">
+            <a href="#" id="groupLinkBtn" target="_blank" class="az-btn-main" onclick="finishFlow()"
+                style="width: 100%; display: block; text-decoration: none;">
                 Entrar no Grupo
             </a>
         </div>
@@ -632,6 +659,33 @@
         let claimSessionId = null;
         let promoToken = new URLSearchParams(window.location.search).get('p');
         let deviceId = localStorage.getItem('az_device_id') || generateDeviceId();
+        let shareSettings = {
+            share_image: '/images/amigos-logo-new.png',
+            share_text: 'Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao',
+            group_link: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
+        };
+
+        // Load share settings from API
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/amigos/settings');
+                const data = await res.json();
+                shareSettings = data;
+
+                // Update UI with loaded settings
+                if (data.share_image) {
+                    document.getElementById('sharePreviewImg').src = data.share_image;
+                }
+                if (data.group_link) {
+                    document.getElementById('groupLinkBtn').href = data.group_link;
+                }
+            } catch (e) {
+                console.log('Using default settings');
+            }
+        }
+
+        // Load settings on page load
+        loadSettings();
 
         // Custom Alert Modal (replaces browser alert)
         function showAlert(message, title = '⚠️ Atenção', callback = null) {
@@ -760,24 +814,24 @@
                 // Try Web Share API first
                 if (navigator.share) {
                     try {
-                        // Try to share the logo image
-                        const imgResp = await fetch('/images/amigos-logo-new.png');
+                        // Try to share the configured image
+                        const imgResp = await fetch(shareSettings.share_image);
                         const imgBlob = await imgResp.blob();
                         const imgFile = new File([imgBlob], 'amigos-zapao.png', { type: 'image/png' });
 
                         await navigator.share({
                             files: [imgFile],
-                            text: 'Participe do sorteio diário! https://www.tvzapao.com.br/amigos-do-zapao'
+                            text: shareSettings.share_text
                         });
                     } catch (shareErr) {
                         // Fallback to just text
                         await navigator.share({
-                            text: 'Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao'
+                            text: shareSettings.share_text
                         });
                     }
                 } else {
                     // Fallback: Open WhatsApp directly
-                    const text = encodeURIComponent('Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao');
+                    const text = encodeURIComponent(shareSettings.share_text);
                     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
                 }
             } catch (e) {

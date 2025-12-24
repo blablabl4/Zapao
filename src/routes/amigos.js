@@ -9,6 +9,39 @@ const getRequestInfo = (req) => ({
     deviceId: req.headers['x-device-id'] || req.body.device_id
 });
 
+// Public settings for frontend (share content, group link, etc.)
+router.get('/settings', async (req, res) => {
+    try {
+        const campaign = await AmigosService.getActiveCampaign();
+
+        // Default settings
+        const defaults = {
+            share_image: '/images/amigos-logo-new.png',
+            share_text: 'Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao',
+            group_link: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
+        };
+
+        // If campaign has config with share settings, use those
+        if (campaign && campaign.base_qty_config && campaign.base_qty_config.share_settings) {
+            const settings = campaign.base_qty_config.share_settings;
+            res.json({
+                share_image: settings.image || defaults.share_image,
+                share_text: settings.text || defaults.share_text,
+                group_link: settings.group_link || defaults.group_link
+            });
+        } else {
+            res.json(defaults);
+        }
+    } catch (e) {
+        console.error('[Amigos] Settings error:', e);
+        res.json({
+            share_image: '/images/amigos-logo-new.png',
+            share_text: 'Participe do sorteio diário GRÁTIS!',
+            group_link: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
+        });
+    }
+});
+
 router.get('/status', async (req, res) => {
     try {
         const { phone } = req.query;
