@@ -251,13 +251,14 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.95);
-            /* High opacity */
             z-index: 9999;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 1rem;
             backdrop-filter: blur(5px);
+            overflow-y: auto;
+            /* Allow scroll if needed */
         }
 
         .az-modal {
@@ -266,10 +267,30 @@
             border-radius: 16px;
             width: 100%;
             max-width: 400px;
+            max-height: 90vh;
+            /* Limit height */
+            overflow-y: auto;
+            /* Scroll inside modal */
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             text-align: left;
             border: 1px solid #333;
             animation: slideUp 0.3s ease-out;
+            margin: auto;
+            /* Center vertically */
+        }
+
+        /* Hide scrollbar inside modal but keep functionality */
+        .az-modal::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .az-modal::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .az-modal::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 3px;
         }
 
         @keyframes slideUp {
@@ -380,7 +401,7 @@
         <!-- Logo with Glow Effect -->
         <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
             <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão" class="logo-glow"
-                style="height: 140px; display: block;">
+                style="height: 160px; display: block;">
         </div>
 
         <div id="promoBadgeContainer"></div>
@@ -406,14 +427,15 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center;">
-            <button class="az-btn-main" id="generateBtn" onclick="startFlow()">
+        <!-- Action Buttons - Same Width -->
+        <div
+            style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; max-width: 320px; margin: 0 auto;">
+            <button class="az-btn-main" id="generateBtn" onclick="startFlow()" style="width: 100%;">
                 Gerar Números
             </button>
             <button class="az-btn-main" id="lookupBtn" onclick="openLookupModal()"
-                style="background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: 0 0 10px rgba(0,0,0,0.5);">
-                Consultar Meus Números
+                style="width: 100%; background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                Consultar Números
             </button>
         </div>
 
@@ -845,20 +867,51 @@
             }
         }
 
-        // Initial slot animation for placeholders
+        // Continuous carousel animation for placeholders
         function animatePlaceholders() {
             const container = document.getElementById('cardsContainer');
-            const cards = container.querySelectorAll('.az-card');
+            const cards = Array.from(container.querySelectorAll('.az-card'));
 
             function randomNumber() {
                 return Math.floor(Math.random() * 10000).toString().padStart(4, '0');
             }
 
-            cards.forEach(card => {
+            // Animate each card with carousel effect
+            function animateCard(card, delay) {
                 const content = card.querySelector('.az-card-content');
-                setInterval(() => {
+                let speed = 50; // Start fast
+                let accelerating = false;
+                let cycles = 0;
+                const maxCycles = 15 + Math.floor(Math.random() * 10); // Random stop point
+
+                function spin() {
                     content.textContent = randomNumber();
-                }, 100);
+                    cycles++;
+
+                    // Carousel effect: fast -> slow -> fast
+                    if (cycles < 5) {
+                        speed = 50; // Fast start
+                    } else if (cycles < maxCycles - 5) {
+                        speed = 80; // Medium
+                    } else if (cycles < maxCycles) {
+                        speed = 150 + (cycles - maxCycles + 5) * 30; // Slow down
+                    } else {
+                        // Reset and restart
+                        cycles = 0;
+                        speed = 50;
+                        setTimeout(spin, 800 + Math.random() * 500); // Pause before restart
+                        return;
+                    }
+
+                    setTimeout(spin, speed);
+                }
+
+                setTimeout(spin, delay);
+            }
+
+            // Stagger animation start for each card
+            cards.forEach((card, i) => {
+                animateCard(card, i * 200);
             });
         }
 
