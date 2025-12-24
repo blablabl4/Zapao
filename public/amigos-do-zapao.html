@@ -427,14 +427,15 @@
             </div>
         </div>
 
-        <!-- Action Buttons - Same Width -->
+        <!-- Action Buttons - Same Size, No Line Break -->
         <div
-            style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; max-width: 320px; margin: 0 auto;">
-            <button class="az-btn-main" id="generateBtn" onclick="startFlow()" style="width: 100%;">
-                Gerar Números
+            style="display: flex; flex-direction: column; gap: 0.8rem; align-items: center; width: 100%; max-width: 280px; margin: 0.5rem auto 0;">
+            <button class="az-btn-main" id="generateBtn" onclick="startFlow()"
+                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">
+                Resgatar Número
             </button>
             <button class="az-btn-main" id="lookupBtn" onclick="openLookupModal()"
-                style="width: 100%; background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap; background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: 0 0 10px rgba(0,0,0,0.5);">
                 Consultar Números
             </button>
         </div>
@@ -445,6 +446,17 @@
             <button class="az-btn-main" onclick="window.location.reload()"
                 style="margin-top: 1rem; font-size: 1rem; padding: 0.8rem 2rem;">
                 Voltar ao Início
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal (replaces browser alert) -->
+    <div class="az-modal-overlay" id="alertModal">
+        <div class="az-modal" style="text-align: center; max-width: 350px;">
+            <h2 id="alertTitle" style="color: var(--az-primary);">⚠️ Atenção</h2>
+            <p id="alertMessage" style="color: #ccc; margin: 1rem 0;"></p>
+            <button class="az-btn-main" onclick="closeAlertModal()" style="width: 100%;">
+                OK
             </button>
         </div>
     </div>
@@ -549,6 +561,22 @@
         let promoToken = new URLSearchParams(window.location.search).get('p');
         let deviceId = localStorage.getItem('az_device_id') || generateDeviceId();
 
+        // Custom Alert Modal (replaces browser alert)
+        function showAlert(message, title = '⚠️ Atenção', callback = null) {
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertMessage').textContent = message;
+            document.getElementById('alertModal').style.display = 'flex';
+            window.alertCallback = callback;
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alertModal').style.display = 'none';
+            if (window.alertCallback) {
+                window.alertCallback();
+                window.alertCallback = null;
+            }
+        }
+
         // Helper: Device ID
         function generateDeviceId() {
             const id = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -641,9 +669,9 @@
                 document.getElementById('mainModal').style.display = 'flex';
 
             } catch (e) {
-                alert('Erro: ' + e.message);
+                showAlert(e.message, '❌ Erro');
                 btn.disabled = false;
-                btn.textContent = 'Gerar Número da Sorte';
+                btn.textContent = 'Resgatar Número';
             }
         }
 
@@ -667,8 +695,7 @@
             const consent = document.getElementById('lgpdConsent').checked;
 
             if (shared !== 'yes') {
-                alert('⚠️ Atenção: Compartilhe no status antes de continuar para garantir seu prêmio!');
-                // We let them proceed but warned them.
+                showAlert('Compartilhe no status antes de continuar para garantir seu prêmio!', '⚠️ Atenção');
             }
 
             try {
@@ -717,10 +744,11 @@
                 const isCritical = criticalErrors.some(e => err.message.includes(e));
 
                 if (isCritical) {
-                    alert(err.message + '\n\nA página será recarregada.');
-                    window.location.href = '/amigos-do-zapao';
+                    showAlert(err.message, '❌ Erro', () => {
+                        window.location.href = '/amigos-do-zapao';
+                    });
                 } else {
-                    alert(err.message);
+                    showAlert(err.message, '❌ Erro');
                     btn.disabled = false;
                     btn.textContent = 'Resgatar Agora';
                 }
@@ -800,7 +828,6 @@
 
         function handleBlocked(msg) {
             document.getElementById('mainModal').style.display = 'none';
-            alert(msg);
             document.getElementById('generateBtn').textContent = 'Bloqueado';
             document.getElementById('generateBtn').disabled = true;
             document.getElementById('successMsg').style.display = 'block';
@@ -856,7 +883,7 @@
                 resultEl.innerHTML = `
                     <div style="background: rgba(0,230,118,0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.3);">
                         <p style="color: var(--az-primary); font-weight: bold; font-size: 1.1rem;">👋 ${capitalizeName(data.name)}</p>
-                        <p style="color: white; margin-top: 10px;">Você tem <strong style="color: var(--az-primary); font-size: 1.3rem;">${data.total_numbers}</strong> números</p>
+                        <p style="color: white; margin-top: 10px;">Você tem <strong style="color: var(--az-primary); font-size: 1.3rem;">${data.total_numbers}</strong> números da sorte:</p>
                         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px;">
                             ${numbersGrid}
                         </div>
