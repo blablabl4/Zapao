@@ -408,15 +408,31 @@
         });
 
         async function initTickets() {
-            if (confirm('Isso pode demorar alguns segundos. Confirmar?')) {
-                const res = await fetch('/api/admin/amigos/campaign');
-                const data = await res.json();
-                await fetch('/api/admin/amigos/campaign/tickets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ campaignId: data.id })
-                });
-                alert('Tickets inicializados!');
+            if (confirm('Isso pode demorar alguns segundos para gerar todos os números. Confirmar?')) {
+                try {
+                    const btn = event.target;
+                    btn.disabled = true;
+                    btn.textContent = 'Gerando...';
+
+                    const res = await fetch('/api/admin/amigos/campaign/tickets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({}) // Backend will use active campaign
+                    });
+
+                    const result = await res.json();
+
+                    if (res.ok) {
+                        alert('✅ ' + (result.message || 'Tickets inicializados com sucesso!'));
+                    } else {
+                        alert('❌ Erro: ' + (result.error || 'Erro desconhecido'));
+                    }
+
+                    btn.disabled = false;
+                    btn.textContent = 'Inicializar Tickets agora';
+                } catch (e) {
+                    alert('❌ Erro de conexão: ' + e.message);
+                }
             }
         }
 
