@@ -24,11 +24,24 @@
             box-sizing: border-box;
         }
 
+        /* Hide scrollbar but allow scroll */
+        html {
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        html::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Edge */
+        }
+
         html,
         body {
             margin: 0;
             padding: 0;
             min-height: 100%;
+            -ms-overflow-style: none;
+            /* IE */
         }
 
         body {
@@ -37,13 +50,56 @@
             font-family: 'Inter', sans-serif;
             min-height: 100dvh;
             min-height: 100vh;
-            /* Fallback */
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            /* Prevent horizontal scroll */
             overflow-y: auto;
-            /* Allow vertical scroll when needed */
+        }
+
+        /* Slot Machine Animation */
+        @keyframes slotSpin {
+            0% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            20% {
+                transform: translateY(0);
+                opacity: 0.3;
+            }
+
+            40% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            60% {
+                transform: translateY(-50%);
+                opacity: 0.5;
+            }
+
+            80% {
+                transform: translateY(20%);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .slot-spinning .az-card-content {
+            animation: slotSpin 0.8s ease-out forwards;
+        }
+
+        .slot-revealed {
+            border: 2px solid var(--az-primary) !important;
+        }
+
+        .slot-revealed .az-card-content {
+            color: var(--az-primary);
+            font-weight: bold;
         }
 
         /* Hero Section */
@@ -326,28 +382,62 @@
             </div>
         </div>
 
-        <!-- Main Button -->
-        <button class="az-btn-main" id="generateBtn" onclick="startFlow()">
-            Gerar Número da Sorte
-        </button>
+        <!-- Action Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+            <button class="az-btn-main" id="generateBtn" onclick="startFlow()">
+                Gerar Números
+            </button>
+            <button class="az-btn-main" id="lookupBtn" onclick="openLookupModal()"
+                style="background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                Consultar Meus Números
+            </button>
+        </div>
 
         <div class="az-success-msg" id="successMsg">
             <h3 style="color: var(--az-primary); margin-bottom: 0.5rem;">🎉 Sucesso!</h3>
             <p>Seus números foram registrados!</p>
+            <button class="az-btn-main" onclick="window.location.reload()"
+                style="margin-top: 1rem; font-size: 1rem; padding: 0.8rem 2rem;">
+                Voltar ao Início
+            </button>
         </div>
+    </div>
 
-        <!-- Lookup Section -->
-        <div id="lookupSection"
-            style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; max-width: 400px; margin-left: auto; margin-right: auto;">
-            <h4 style="color: #aaa; margin-bottom: 1rem; font-size: 0.9rem;">📋 Consultar meus números</h4>
-            <div style="display: flex; gap: 10px;">
-                <input type="tel" id="lookupPhone" class="form-control" placeholder="(11) 99999-9999"
-                    oninput="maskPhone(this)"
-                    style="flex: 1; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px;">
-                <button onclick="lookupNumbers()"
-                    style="padding: 10px 15px; background: #333; color: white; border: none; border-radius: 6px; cursor: pointer;">Buscar</button>
+    <!-- Reveal Numbers Modal (Slot Machine Effect) -->
+    <div class="az-modal-overlay" id="revealModal">
+        <div class="az-modal" style="max-width: 450px; text-align: center;">
+            <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
+            <p style="color: #aaa; margin-bottom: 1.5rem;">Revelando...</p>
+            <div id="revealGrid"
+                style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.5rem;"></div>
+            <button class="az-btn-main" id="closeRevealBtn" onclick="closeRevealModal()"
+                style="display: none; width: 100%;">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- Lookup Modal -->
+    <div class="az-modal-overlay" id="lookupModal">
+        <div class="az-modal" style="text-align: center;">
+            <h2>📋 Consultar Números</h2>
+            <p style="color: #aaa; margin-bottom: 1rem;">Digite seu telefone para ver seus números</p>
+
+            <div class="form-group">
+                <input type="tel" id="lookupPhoneModal" class="form-control" placeholder="(11) 99999-9999"
+                    oninput="maskPhone(this)" style="text-align: center; font-size: 1.2rem;">
             </div>
-            <div id="lookupResult" style="margin-top: 1rem; font-size: 0.9rem;"></div>
+
+            <button class="az-btn-main" onclick="doLookup()" style="width: 100%; margin-bottom: 1rem;">
+                Buscar
+            </button>
+
+            <div id="lookupResultModal" style="margin-top: 1rem;"></div>
+
+            <button onclick="closeLookupModal()"
+                style="background: transparent; border: 1px solid #444; color: #aaa; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 1rem;">
+                Voltar
+            </button>
         </div>
     </div>
 
@@ -603,24 +693,74 @@
             }
         }
 
+        // Slot Machine Reveal - Line by Line
         function revealNumbers(numbers) {
-            const container = document.getElementById('cardsContainer');
-            container.innerHTML = ''; // Clear placeholders
+            // Sort numbers
+            const sorted = numbers.sort((a, b) => a - b);
 
-            numbers.forEach((num, index) => {
-                setTimeout(() => {
-                    const el = document.createElement('div');
-                    el.className = 'az-card reveal';
-                    el.innerHTML = `<div class="az-card-content">${num.toString().padStart(4, '0')}</div>`; // 4 digits? Campaign 0-9999?
-                    container.appendChild(el);
-                }, index * 200);
+            // Show reveal modal
+            document.getElementById('revealModal').style.display = 'flex';
+            const grid = document.getElementById('revealGrid');
+            grid.innerHTML = '';
+
+            // Create all cards with blur
+            sorted.forEach((num, i) => {
+                const card = document.createElement('div');
+                card.className = 'az-card blur';
+                card.id = `reveal-card-${i}`;
+                card.innerHTML = `<div class="az-card-content">${num.toString().padStart(4, '0')}</div>`;
+                grid.appendChild(card);
             });
+
+            // Reveal line by line (5 per line)
+            const linesCount = Math.ceil(sorted.length / 5);
+            let currentLine = 0;
+
+            function revealLine() {
+                if (currentLine >= linesCount) {
+                    // All revealed - show close button
+                    document.getElementById('closeRevealBtn').style.display = 'block';
+                    document.getElementById('revealModal').querySelector('p').textContent = 'Boa sorte! 🍀';
+                    return;
+                }
+
+                const startIdx = currentLine * 5;
+                const endIdx = Math.min(startIdx + 5, sorted.length);
+
+                // Spin animation for this line
+                for (let i = startIdx; i < endIdx; i++) {
+                    const card = document.getElementById(`reveal-card-${i}`);
+                    card.classList.remove('blur');
+                    card.classList.add('slot-spinning');
+
+                    // After spin completes, mark as revealed
+                    setTimeout(() => {
+                        card.classList.remove('slot-spinning');
+                        card.classList.add('slot-revealed');
+                    }, 800);
+                }
+
+                currentLine++;
+                setTimeout(revealLine, 1500); // 1.5 seconds per line
+            }
+
+            // Start revealing after 500ms
+            setTimeout(revealLine, 500);
+        }
+
+        function closeRevealModal() {
+            document.getElementById('revealModal').style.display = 'none';
+            // Show success
+            document.getElementById('generateBtn').style.display = 'none';
+            document.getElementById('lookupBtn').style.display = 'none';
+            document.getElementById('successMsg').style.display = 'block';
         }
 
         function handleBlocked(msg) {
             document.getElementById('mainModal').style.display = 'none';
             alert(msg);
             document.getElementById('generateBtn').textContent = 'Bloqueado';
+            document.getElementById('generateBtn').disabled = true;
             document.getElementById('successMsg').style.display = 'block';
             document.getElementById('successMsg').querySelector('h3').textContent = '✋ Volte amanhã!';
             document.getElementById('successMsg').querySelector('p').textContent = 'Você já garantiu seus números de hoje.';
@@ -630,10 +770,24 @@
             // Timer removed - no longer needed
         }
 
-        // Lookup existing numbers
-        async function lookupNumbers() {
-            const phone = document.getElementById('lookupPhone').value;
-            const resultEl = document.getElementById('lookupResult');
+        // Lookup Modal Functions
+        function openLookupModal() {
+            document.getElementById('lookupModal').style.display = 'flex';
+            document.getElementById('lookupResultModal').innerHTML = '';
+            // Pre-fill with saved phone
+            const savedPhone = localStorage.getItem('az_phone');
+            if (savedPhone) {
+                document.getElementById('lookupPhoneModal').value = savedPhone;
+            }
+        }
+
+        function closeLookupModal() {
+            document.getElementById('lookupModal').style.display = 'none';
+        }
+
+        async function doLookup() {
+            const phone = document.getElementById('lookupPhoneModal').value;
+            const resultEl = document.getElementById('lookupResultModal');
 
             if (!phone || phone.length < 14) {
                 resultEl.innerHTML = '<p style="color: #f44336;">Digite um telefone válido.</p>';
@@ -654,17 +808,16 @@
                 // Sort numbers ascending and format
                 const sortedNumbers = data.numbers.sort((a, b) => a - b);
                 const numbersGrid = sortedNumbers.map(n =>
-                    `<span style="background: #1e1e1e; padding: 4px 8px; border-radius: 4px; font-family: monospace; color: var(--az-primary);">${String(n).padStart(4, '0')}</span>`
+                    `<span style="background: #1e1e1e; padding: 6px 10px; border-radius: 4px; font-family: monospace; color: var(--az-primary); font-weight: bold;">${String(n).padStart(4, '0')}</span>`
                 ).join('');
 
                 resultEl.innerHTML = `
-                    <div style="background: rgba(0,230,118,0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.3);">
-                        <p style="color: var(--az-primary); font-weight: bold;">👋 Olá, ${capitalizeName(data.name)}!</p>
-                        <p style="color: white; margin-top: 8px;">Você tem <strong style="color: var(--az-primary);">${data.total_numbers}</strong> números da sorte:</p>
-                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px;">
+                    <div style="background: rgba(0,230,118,0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.3);">
+                        <p style="color: var(--az-primary); font-weight: bold; font-size: 1.1rem;">👋 ${capitalizeName(data.name)}</p>
+                        <p style="color: white; margin-top: 10px;">Você tem <strong style="color: var(--az-primary); font-size: 1.3rem;">${data.total_numbers}</strong> números</p>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px;">
                             ${numbersGrid}
                         </div>
-                        <p style="color: #888; font-size: 0.8rem; margin-top: 12px;">Último resgate: ${new Date(data.last_claim).toLocaleDateString('pt-BR')}</p>
                     </div>
                 `;
             } catch (e) {
@@ -672,11 +825,25 @@
             }
         }
 
-        // Pre-fill lookup with saved phone
-        const savedPhone = localStorage.getItem('az_phone');
-        if (savedPhone) {
-            document.getElementById('lookupPhone').value = savedPhone;
+        // Initial slot animation for placeholders
+        function animatePlaceholders() {
+            const container = document.getElementById('cardsContainer');
+            const cards = container.querySelectorAll('.az-card');
+
+            function randomNumber() {
+                return Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            }
+
+            cards.forEach(card => {
+                const content = card.querySelector('.az-card-content');
+                setInterval(() => {
+                    content.textContent = randomNumber();
+                }, 100);
+            });
         }
+
+        // Start placeholder animation
+        animatePlaceholders();
     </script>
 </body>
 
