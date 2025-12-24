@@ -322,9 +322,23 @@
 
         <div class="az-success-msg" id="successMsg">
             <h3 style="color: var(--az-primary); margin-bottom: 0.5rem;">🎉 Sucesso!</h3>
-            <p>Tire um print desta tela agora!</p>
+            <p>Seus números foram registrados!</p>
             <p id="nextUnlockText" style="color: #888; font-size: 0.9rem; margin-top: 1rem;"></p>
             <div class="az-countdown" id="countdown"></div>
+        </div>
+
+        <!-- Lookup Section -->
+        <div id="lookupSection"
+            style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; max-width: 400px; margin-left: auto; margin-right: auto;">
+            <h4 style="color: #aaa; margin-bottom: 1rem; font-size: 0.9rem;">📋 Consultar meus números</h4>
+            <div style="display: flex; gap: 10px;">
+                <input type="tel" id="lookupPhone" class="form-control" placeholder="(11) 99999-9999"
+                    oninput="maskPhone(this)"
+                    style="flex: 1; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px;">
+                <button onclick="lookupNumbers()"
+                    style="padding: 10px 15px; background: #333; color: white; border: none; border-radius: 6px; cursor: pointer;">Buscar</button>
+            </div>
+            <div id="lookupResult" style="margin-top: 1rem; font-size: 0.9rem;"></div>
         </div>
     </div>
 
@@ -595,6 +609,49 @@
 
             setInterval(update, 1000);
             update();
+        }
+
+        // Lookup existing numbers
+        async function lookupNumbers() {
+            const phone = document.getElementById('lookupPhone').value;
+            const resultEl = document.getElementById('lookupResult');
+
+            if (!phone || phone.length < 14) {
+                resultEl.innerHTML = '<p style="color: #f44336;">Digite um telefone válido.</p>';
+                return;
+            }
+
+            resultEl.innerHTML = '<p style="color: #aaa;">Buscando...</p>';
+
+            try {
+                const res = await fetch(`/api/amigos/lookup?phone=${encodeURIComponent(phone)}`);
+                const data = await res.json();
+
+                if (!data.found) {
+                    resultEl.innerHTML = '<p style="color: #ff9800;">Nenhum número encontrado para este telefone.</p>';
+                    return;
+                }
+
+                // Format numbers nicely
+                const numbersFormatted = data.numbers.map(n => String(n).padStart(4, '0')).join(', ');
+
+                resultEl.innerHTML = `
+                    <div style="background: rgba(0,230,118,0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.3);">
+                        <p style="color: var(--az-primary); font-weight: bold;">👋 Olá, ${data.name}!</p>
+                        <p style="color: white; margin-top: 8px;">Você tem <strong style="color: var(--az-primary);">${data.total_numbers}</strong> números da sorte:</p>
+                        <p style="color: var(--az-primary); font-family: monospace; margin-top: 8px; word-break: break-all;">${numbersFormatted}</p>
+                        <p style="color: #888; font-size: 0.8rem; margin-top: 8px;">Último resgate: ${new Date(data.last_claim).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                `;
+            } catch (e) {
+                resultEl.innerHTML = '<p style="color: #f44336;">Erro ao buscar. Tente novamente.</p>';
+            }
+        }
+
+        // Pre-fill lookup with saved phone
+        const savedPhone = localStorage.getItem('az_phone');
+        if (savedPhone) {
+            document.getElementById('lookupPhone').value = savedPhone;
         }
     </script>
 </body>

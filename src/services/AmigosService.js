@@ -45,39 +45,33 @@ class AmigosService {
     }
 
     /**
-     * Calculate unlock time: Tomorrow 11:00 AM (Sao Paulo)
+     * Calculate unlock time: Tomorrow 11:00 AM (Brasília - UTC-3)
      */
     calculateNextUnlock() {
-        // Use BRT timezone logic
-        // Get current time in Sao Paulo
+        // Current time in UTC
         const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        // Sao Paulo is roughly UTC-3 (ignoring DST which is abolished mostly)
-        // Better to rely on library or fixed offset if simple environment.
-        // Assuming strict "add 1 day, set 11:00"
 
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(11, 0, 0, 0);
+        // Calculate current time in São Paulo (UTC-3)
+        // São Paulo offset is -3 hours from UTC
+        const spOffset = -3;
+        const spNow = new Date(now.getTime() + (spOffset * 60 * 60 * 1000));
 
-        // If system is UTC, we need to adjust.
-        // Let's assume server is UTC. Tomorrow 11:00 SP is Tomorrow 14:00 UTC.
-        // Ideally use date-fns-tz or similar, but for MVP:
-
-        // We want 11:00 BRT.
-        // 11:00 BRT = 14:00 UTC.
-        // So target is Tomorrow 14:00 UTC.
-
-        // Ensure "Tomorrow" relative to SP time.
-        // Current SP time: UTC - 3.
-        const spTime = new Date(utc - (3 * 3600000));
-
-        const nextUnlockSP = new Date(spTime);
+        // Set to tomorrow 11:00 AM in SP time
+        const nextUnlockSP = new Date(spNow);
         nextUnlockSP.setDate(nextUnlockSP.getDate() + 1);
-        nextUnlockSP.setHours(11, 0, 0, 0);
+        nextUnlockSP.setUTCHours(11, 0, 0, 0); // 11:00 in SP
 
-        // Convert back to UTC for storage
-        return new Date(nextUnlockSP.getTime() + (3 * 3600000));
+        // Convert back to UTC by subtracting the offset (since we set it as SP time)
+        // 11:00 SP = 14:00 UTC
+        const nextUnlockUTC = new Date(nextUnlockSP.getTime() - (spOffset * 60 * 60 * 1000));
+
+        console.log('[AmigosService] Next unlock calculated:', {
+            now: now.toISOString(),
+            spNow: spNow.toISOString(),
+            nextUnlockUTC: nextUnlockUTC.toISOString()
+        });
+
+        return nextUnlockUTC;
     }
 
     /**

@@ -21,6 +21,51 @@ router.get('/status', async (req, res) => {
     }
 });
 
+// Lookup user's numbers by phone
+router.get('/lookup', async (req, res) => {
+    try {
+        const { phone } = req.query;
+        if (!phone) return res.status(400).json({ error: 'Telefone obrigatório' });
+
+        const { query } = require('../database/db');
+
+        // Get all claims for this phone
+        const claimsRes = await query(`
+            SELECT c.id, c.name, c.claimed_at, c.total_qty, c.next_unlock_at,
+                   array_agg(t.number ORDER BY t.number) as numbers
+            FROM az_claims c
+            LEFT JOIN az_tickets t ON t.assigned_claim_id = c.id
+            WHERE c.phone = $1
+            GROUP BY c.id
+            ORDER BY c.claimed_at DESC
+        `, [phone]);
+
+        if (claimsRes.rows.length === 0) {
+            return res.json({ found: false, message: 'Nenhum número encontrado para este telefone.' });
+        }
+
+        // Flatten all numbers
+        const allNumbers = claimsRes.rows.flatMap(c => c.numbers || []);
+        const lastName = claimsRes.rows[0].name;
+        const lastClaim = claimsRes.rows[0].claimed_at;
+        const nextUnlock = claimsRes.rows[0].next_unlock_at;
+
+        res.json({
+            found: true,
+            name: lastName,
+            phone,
+            total_numbers: allNumbers.length,
+            numbers: allNumbers,
+            last_claim: lastClaim,
+            next_unlock_at: nextUnlock,
+            claims_count: claimsRes.rows.length
+        });
+    } catch (e) {
+        console.error('[Amigos] Lookup error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.post('/start', async (req, res) => {
     try {
         const { phone, promo_token, device_id } = req.body;
