@@ -56,50 +56,66 @@
             overflow-y: auto;
         }
 
-        /* Slot Machine Animation */
-        @keyframes slotSpin {
+        /* Carousel Slot Animation - Right to Left, accelerate then decelerate */
+        @keyframes carouselSpin {
             0% {
-                transform: translateY(-100%);
+                transform: translateX(200%);
                 opacity: 0;
             }
 
-            20% {
-                transform: translateY(0);
+            10% {
+                transform: translateX(150%);
                 opacity: 0.3;
             }
 
-            40% {
-                transform: translateY(100%);
-                opacity: 0;
+            30% {
+                transform: translateX(50%);
+                opacity: 0.6;
             }
 
-            60% {
-                transform: translateY(-50%);
-                opacity: 0.5;
+            50% {
+                transform: translateX(-50%);
+                opacity: 0.6;
             }
 
-            80% {
-                transform: translateY(20%);
-                opacity: 0.7;
+            70% {
+                transform: translateX(-150%);
+                opacity: 0.3;
+            }
+
+            85% {
+                transform: translateX(-30%);
+                opacity: 0.8;
+            }
+
+            95% {
+                transform: translateX(10%);
+                opacity: 0.9;
             }
 
             100% {
-                transform: translateY(0);
+                transform: translateX(0);
                 opacity: 1;
             }
         }
 
-        .slot-spinning .az-card-content {
-            animation: slotSpin 0.8s ease-out forwards;
+        .slot-spinning {
+            animation: carouselSpin 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
         }
 
         .slot-revealed {
             border: 2px solid var(--az-primary) !important;
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
         }
 
         .slot-revealed .az-card-content {
             color: var(--az-primary);
             font-weight: bold;
+        }
+
+        /* Logo Glow Effect */
+        .logo-glow {
+            filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.5)) drop-shadow(0 0 40px rgba(0, 230, 118, 0.3));
         }
 
         /* Hero Section */
@@ -360,18 +376,15 @@
 
 <body>
 
-    <div class="az-hero" style="padding-top: 2rem;">
-        <!-- New Logo in Glass Container -->
-        <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
-            <div
-                style="padding: 5px; border: 5px solid rgba(0,230,118,0.5); border-radius: 16px; background: rgba(30,30,30,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
-                <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão"
-                    style="height: 100px; display: block; border-radius: 10px;">
-            </div>
+    <div class="az-hero" style="padding-top: 1.5rem;">
+        <!-- Logo with Glow Effect -->
+        <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+            <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão" class="logo-glow"
+                style="height: 140px; display: block;">
         </div>
 
         <div id="promoBadgeContainer"></div>
-        <p class="az-subtitle">Resgate seu número da sorte diário gratuitamente!</p>
+        <p class="az-subtitle" style="margin-bottom: 1.5rem;">Resgate seu número da sorte diário gratuitamente!</p>
 
         <!-- Cards Area - 5x1 with slot animation -->
         <div class="az-cards-container" id="cardsContainer">
@@ -418,12 +431,12 @@
     <div class="az-modal-overlay" id="revealModal">
         <div class="az-modal" style="max-width: 450px; text-align: center;">
             <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
-            <p style="color: #aaa; margin-bottom: 1.5rem;">Revelando...</p>
+            <p id="revealStatus" style="color: #aaa; margin-bottom: 1.5rem;">Revelando...</p>
             <div id="revealGrid"
                 style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.5rem;"></div>
-            <button class="az-btn-main" id="closeRevealBtn" onclick="closeRevealModal()"
+            <button class="az-btn-main" id="closeRevealBtn" onclick="window.location.reload()"
                 style="display: none; width: 100%;">
-                Fechar
+                Voltar ao Início
             </button>
         </div>
     </div>
@@ -675,17 +688,10 @@
                 // Hide modal
                 document.getElementById('mainModal').style.display = 'none';
 
-                // Show numbers
+                // Show numbers in reveal modal (not success message yet - user will see it after closing reveal)
                 revealNumbers(result.numbers);
 
-                // Show success message
-                document.getElementById('generateBtn').style.display = 'none';
-                document.getElementById('successMsg').style.display = 'block';
-
-                // Show countdown for next unlock
-                startCountdown(new Date(result.next_unlock_at));
-
-                // Save phone to local for convenience or check status
+                // Save phone to local for convenience
                 localStorage.setItem('az_phone', phone);
 
             } catch (err) {
@@ -704,13 +710,16 @@
             }
         }
 
-        // Slot Machine Reveal - Line by Line
+        // Slot Machine Reveal - Line by Line with Carousel Effect
         function revealNumbers(numbers) {
             // Sort numbers
             const sorted = numbers.sort((a, b) => a - b);
 
-            // Show reveal modal
+            // Reset and show reveal modal
             document.getElementById('revealModal').style.display = 'flex';
+            document.getElementById('revealStatus').textContent = 'Revelando...';
+            document.getElementById('closeRevealBtn').style.display = 'none';
+
             const grid = document.getElementById('revealGrid');
             grid.innerHTML = '';
 
@@ -719,6 +728,7 @@
                 const card = document.createElement('div');
                 card.className = 'az-card blur';
                 card.id = `reveal-card-${i}`;
+                card.style.opacity = '0.3';
                 card.innerHTML = `<div class="az-card-content">${num.toString().padStart(4, '0')}</div>`;
                 grid.appendChild(card);
             });
@@ -731,32 +741,36 @@
                 if (currentLine >= linesCount) {
                     // All revealed - show close button
                     document.getElementById('closeRevealBtn').style.display = 'block';
-                    document.getElementById('revealModal').querySelector('p').textContent = 'Boa sorte! 🍀';
+                    document.getElementById('revealStatus').textContent = 'Boa sorte! 🍀';
                     return;
                 }
 
                 const startIdx = currentLine * 5;
                 const endIdx = Math.min(startIdx + 5, sorted.length);
 
-                // Spin animation for this line
+                // Carousel animation for this line - staggered for better effect
                 for (let i = startIdx; i < endIdx; i++) {
-                    const card = document.getElementById(`reveal-card-${i}`);
-                    card.classList.remove('blur');
-                    card.classList.add('slot-spinning');
-
-                    // After spin completes, mark as revealed
+                    const delay = (i - startIdx) * 80; // Stagger each card
                     setTimeout(() => {
-                        card.classList.remove('slot-spinning');
-                        card.classList.add('slot-revealed');
-                    }, 800);
+                        const card = document.getElementById(`reveal-card-${i}`);
+                        card.style.opacity = '1';
+                        card.classList.remove('blur');
+                        card.classList.add('slot-spinning');
+
+                        // After spin completes, mark as revealed
+                        setTimeout(() => {
+                            card.classList.remove('slot-spinning');
+                            card.classList.add('slot-revealed');
+                        }, 600);
+                    }, delay);
                 }
 
                 currentLine++;
-                setTimeout(revealLine, 1500); // 1.5 seconds per line
+                setTimeout(revealLine, 1200); // 1.2 seconds per line
             }
 
-            // Start revealing after 500ms
-            setTimeout(revealLine, 500);
+            // Start revealing after 400ms
+            setTimeout(revealLine, 400);
         }
 
         function closeRevealModal() {
