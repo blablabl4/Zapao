@@ -203,12 +203,32 @@
         }
 
         async function loadCampaign() {
-            const res = await fetch('/api/admin/amigos/campaign');
-            const data = await res.json();
-            document.getElementById('campaignStats').innerHTML = `
-                <p><strong>Campanha Ativa:</strong> ${data.name || 'Nenhuma'}</p>
-                <p><strong>Range:</strong> ${data.start_number} - ${data.end_number}</p>
-            `;
+            try {
+                const res = await fetch('/api/admin/amigos/campaign');
+                const data = await res.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // If data is null/empty
+                if (!data || !data.id) {
+                    document.getElementById('campaignStats').innerHTML = `
+                        <p><strong>Nenhuma campanha ativa encontrada.</strong></p>
+                        <p>Verifique o banco de dados.</p>
+                    `;
+                    return;
+                }
+
+                document.getElementById('campaignStats').innerHTML = `
+                    <p><strong>Campanha Ativa:</strong> ${data.name || 'Nenhuma'}</p>
+                    <p><strong>Range:</strong> ${data.start_number} - ${data.end_number}</p>
+                `;
+            } catch (e) {
+                document.getElementById('campaignStats').innerHTML = `
+                    <p style="color: red">Erro ao carregar: ${e.message}</p>
+                `;
+            }
         }
 
         async function initTickets() {
@@ -261,36 +281,36 @@
         }
 
         async function genToken(id) {
-            const res = await fetch(\`/api/admin/amigos/promotions/\${id}/token\`, { method: 'POST' });
+            const res = await fetch(`/api/admin/amigos/promotions/${id}/token`, { method: 'POST' });
             const data = await res.json();
             prompt('Copie o link promocional:', data.link);
         }
 
         async function doSearch() {
             const term = document.getElementById('searchTerm').value;
-            const res = await fetch(\`/api/admin/amigos/search?term=\${encodeURIComponent(term)}\`);
+            const res = await fetch(`/api/admin/amigos/search?term=${encodeURIComponent(term)}`);
             const data = await res.json();
-            
+
             const out = document.getElementById('searchOutput');
             if (data.participant) {
                 let historyHtml = '<ul class="print-list">';
                 data.history.forEach(h => {
                     historyHtml += `
-                < li class= "print-item" >
-                <strong>${new Date(h.claimed_at).toLocaleDateString()}</strong> - ${ h.description } < br >
-            Tickets: ${ h.tickets ? h.tickets.join(', ') : 'N/A' } < br >
-            <span style="color: red;">🛑 ${h.print_required}</span>
-                        </li >
-                `;
+                        <li class="print-item">
+                            <strong>${new Date(h.claimed_at).toLocaleDateString()}</strong> - ${h.description}<br>
+                            Tickets: ${h.tickets ? h.tickets.join(', ') : 'N/A'}<br>
+                            <span style="color: red;">🛑 ${h.print_required}</span>
+                        </li>
+                    `;
                 });
                 historyHtml += '</ul>';
 
                 out.innerHTML = `
-                < div class="search-result" >
+                    <div class="search-result">
                         <h3>${data.participant.name} (${data.participant.phone})</h3>
                         <h4>Histórico e Prints Obrigatórios:</h4>
-                        ${ historyHtml }
-                    </div >
+                        ${historyHtml}
+                    </div>
                 `;
             } else {
                 out.innerHTML = '<p>Nada encontrado.</p>';
