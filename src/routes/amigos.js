@@ -80,7 +80,7 @@ router.post('/finish', async (req, res) => {
             promo_token,
             info.ip,
             info.ua,
-            deviceId || info.deviceId
+            device_id || info.deviceId
         );
 
         // Clear session logic? Maybe keep to prevent replay

@@ -136,22 +136,32 @@ class AmigosService {
                 WHERE t.token = $1 AND t.expires_at > NOW()
             `, [promoToken]);
 
-            if (promoRes.rows.length > 0) {
-                const p = promoRes.rows[0];
-                // Check if user already redeemed this promo
-                if (phone) {
-                    const redRes = await query('SELECT * FROM az_promo_redemptions WHERE promotion_id = $1 AND phone = $2', [p.id, phone]);
-                    if (redRes.rows.length === 0) {
-                        // Eligible
-                        extraQty = p.extra_qty;
-                        promo = p;
-                    }
-                } else {
-                    // If no phone yet, assume eligible for display, re-verify at finish
-                    extraQty = p.extra_qty;
-                    promo = p;
+            if (promoRes.rows.length === 0) {
+                // Token is invalid, expired, or promotion was deleted
+                throw new Error('Link promocional inválido ou expirado. Acesse a página principal.');
+            }
+
+            const p = promoRes.rows[0];
+
+            // Check if promo dates are valid
+            const now = new Date();
+            if (p.starts_at && new Date(p.starts_at) > now) {
+                throw new Error('Esta promoção ainda não começou.');
+            }
+            if (p.ends_at && new Date(p.ends_at) < now) {
+                throw new Error('Esta promoção já encerrou.');
+            }
+
+            // Check if user already redeemed this promo
+            if (phone) {
+                const redRes = await query('SELECT * FROM az_promo_redemptions WHERE promotion_id = $1 AND phone = $2', [p.id, phone]);
+                if (redRes.rows.length > 0) {
+                    throw new Error('Você já utilizou esta promoção antes.');
                 }
             }
+
+            extraQty = p.extra_qty;
+            promo = p;
         }
 
         const totalQty = baseQty + extraQty;
