@@ -293,6 +293,22 @@
             border-radius: 3px;
         }
 
+        /* Prevent scroll leak during animations */
+        .az-modal-overlay {
+            overflow: hidden;
+        }
+
+        /* Secondary button style - grey with green text */
+        .az-btn-secondary {
+            background: linear-gradient(135deg, #333 0%, #222 100%);
+            color: var(--az-primary) !important;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .az-btn-secondary:hover {
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
+        }
+
         @keyframes slideUp {
             from {
                 transform: translateY(50px);
@@ -434,8 +450,8 @@
                 style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">
                 Resgatar Número
             </button>
-            <button class="az-btn-main" id="lookupBtn" onclick="openLookupModal()"
-                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap; background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+            <button class="az-btn-main az-btn-secondary" id="lookupBtn" onclick="openLookupModal()"
+                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">
                 Consultar Números
             </button>
         </div>
@@ -492,8 +508,8 @@
 
             <div id="lookupResultModal" style="margin-top: 1.5rem;"></div>
 
-            <button onclick="closeLookupModal()" class="az-btn-main"
-                style="width: 100%; margin-top: 1rem; background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: none;">
+            <button onclick="closeLookupModal()" class="az-btn-main az-btn-secondary"
+                style="width: 100%; margin-top: 1rem;">
                 Voltar ao Início
             </button>
         </div>
