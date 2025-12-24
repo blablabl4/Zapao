@@ -48,6 +48,11 @@ app.get('/admin', requireAdmin, (req, res) => {
     res.sendFile('admin.html', { root: path.join(__dirname, '../public') });
 });
 
+// Amigos do Zapão page
+app.get('/amigos-do-zapao', (req, res) => {
+    res.sendFile('amigos-do-zapao.html', { root: path.join(__dirname, '../public') });
+});
+
 // Public routes
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/webhooks', require('./routes/webhooks'));
