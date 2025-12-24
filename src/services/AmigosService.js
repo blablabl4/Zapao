@@ -274,11 +274,11 @@ class AmigosService {
             ]);
             const claimId = claimRes.rows[0].id;
 
-            // 4. Allocate Tickets
-            // Select available
+            // 4. Allocate Tickets - RANDOM selection
             const ticketsRes = await client.query(`
                 SELECT id, number FROM az_tickets 
                 WHERE campaign_id = $1 AND status = 'AVAILABLE'
+                ORDER BY RANDOM()
                 LIMIT $2
                 FOR UPDATE SKIP LOCKED
             `, [campaign.id, totalQty]);
