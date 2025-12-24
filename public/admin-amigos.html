@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Amigos do Zapão</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 80px;
+            background: #f4f4f4;
+            color: #333;
+        }
+
+        .admin-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1,
+        h2 {
+            color: #333;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: #ddd;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .nav-tab.active {
+            background: #00E676;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-green {
+            background: #00E676;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .table th,
+        .table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        .search-result {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .print-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .print-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-left: 4px solid #00E676;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="site-header" style="background: #333;">
+        <div class="logo">Admin Amigos do Zapão</div>
+        <a href="/admin" style="color: white; margin-left: auto;">Voltar ao Painel Geral</a>
+    </header>
+
+    <div class="admin-container">
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</div>
+            <div class="nav-tab" onclick="switchTab('promotions')">Promoções</div>
+            <div class="nav-tab" onclick="switchTab('search')">Consulta & Apuração</div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="tab-dashboard" class="tab-content">
+            <div class="card">
+                <h2>📊 Status da Campanha</h2>
+                <div id="campaignStats">Carregando...</div>
+                <button class="btn" onclick="initTickets()" style="margin-top: 10px; background: #f00;">Inicializar
+                    Tickets (Se vazio)</button>
+            </div>
+        </div>
+
+        <!-- Promotions -->
+        <div id="tab-promotions" class="tab-content" style="display: none;">
+            <div class="card">
+                <h2>Nova Promoção</h2>
+                <form onsubmit="createPromo(event)">
+                    <div class="form-group">
+                        <label>Nome</label>
+                        <input type="text" id="pName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Qtd Extra</label>
+                        <input type="number" id="pQty" class="form-control" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data Início</label>
+                        <input type="datetime-local" id="pStart" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data Fim</label>
+                        <input type="datetime-local" id="pEnd" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-green">Criar Promoção</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Promoções Ativas</h2>
+                <table class="table" id="promoTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Extra</th>
+                            <th>Fim</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div id="tab-search" class="tab-content" style="display: none;">
+            <div class="card">
+                <h2>🔎 Consultar Participante</h2>
+                <div class="form-group">
+                    <label>Telefone ou Número do Ticket</label>
+                    <input type="text" id="searchTerm" class="form-control" placeholder="Ex: (11)99999-9999 ou 1234">
+                </div>
+                <button class="btn" onclick="doSearch()">Buscar</button>
+
+                <div id="searchOutput"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tab).style.display = 'block';
+            event.target.classList.add('active');
+
+            if (tab === 'dashboard') loadCampaign();
+            if (tab === 'promotions') loadPromos();
+        }
+
+        async function loadCampaign() {
+            const res = await fetch('/api/admin/amigos/campaign');
+            const data = await res.json();
+            document.getElementById('campaignStats').innerHTML = `
+                <p><strong>Campanha Ativa:</strong> ${data.name || 'Nenhuma'}</p>
+                <p><strong>Range:</strong> ${data.start_number} - ${data.end_number}</p>
+            `;
+        }
+
+        async function initTickets() {
+            const res = await fetch('/api/admin/amigos/campaign');
+            const data = await res.json();
+            if (data.id) {
+                if (confirm('Isso vai gerar tickets para toda a range. Confirmar?')) {
+                    await fetch('/api/admin/amigos/campaign/tickets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ campaignId: data.id })
+                    });
+                    alert('Processo iniciado.');
+                }
+            }
+        }
+
+        async function loadPromos() {
+            const res = await fetch('/api/admin/amigos/promotions');
+            const promos = await res.json();
+            const tbody = document.querySelector('#promoTable tbody');
+            tbody.innerHTML = '';
+            promos.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.name}</td>
+                        <td>+${p.extra_qty}</td>
+                        <td>${new Date(p.ends_at).toLocaleString()}</td>
+                        <td>
+                            <button class="btn" onclick="genToken(${p.id})">Gerar Link</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function createPromo(e) {
+            e.preventDefault();
+            const name = document.getElementById('pName').value;
+            const extra_qty = document.getElementById('pQty').value;
+            const starts_at = document.getElementById('pStart').value;
+            const ends_at = document.getElementById('pEnd').value;
+
+            await fetch('/api/admin/amigos/promotions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, extra_qty, starts_at, ends_at })
+            });
+            loadPromos();
+        }
+
+        async function genToken(id) {
+            const res = await fetch(\`/api/admin/amigos/promotions/\${id}/token\`, { method: 'POST' });
+            const data = await res.json();
+            prompt('Copie o link promocional:', data.link);
+        }
+
+        async function doSearch() {
+            const term = document.getElementById('searchTerm').value;
+            const res = await fetch(\`/api/admin/amigos/search?term=\${encodeURIComponent(term)}\`);
+            const data = await res.json();
+            
+            const out = document.getElementById('searchOutput');
+            if (data.participant) {
+                let historyHtml = '<ul class="print-list">';
+                data.history.forEach(h => {
+                    historyHtml += `
+                < li class= "print-item" >
+                <strong>${new Date(h.claimed_at).toLocaleDateString()}</strong> - ${ h.description } < br >
+            Tickets: ${ h.tickets ? h.tickets.join(', ') : 'N/A' } < br >
+            <span style="color: red;">🛑 ${h.print_required}</span>
+                        </li >
+                `;
+                });
+                historyHtml += '</ul>';
+
+                out.innerHTML = `
+                < div class="search-result" >
+                        <h3>${data.participant.name} (${data.participant.phone})</h3>
+                        <h4>Histórico e Prints Obrigatórios:</h4>
+                        ${ historyHtml }
+                    </div >
+                `;
+            } else {
+                out.innerHTML = '<p>Nada encontrado.</p>';
+            }
+        }
+
+        // Init
+        loadCampaign();
+    </script>
+</body>
+
+</html>

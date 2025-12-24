@@ -53,10 +53,20 @@ app.get('/amigos-do-zapao', (req, res) => {
     res.sendFile('amigos-do-zapao.html', { root: path.join(__dirname, '../public') });
 });
 
+// Admin Amigos Manager
+app.get('/admin/amigos', requireAdmin, (req, res) => {
+    res.sendFile('admin-amigos.html', { root: path.join(__dirname, '../public') });
+});
+
 // Public routes
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/webhooks', require('./routes/webhooks'));
 app.use('/api/history', require('./routes/history'));
+app.use('/api/amigos', require('./routes/amigos'));
+
+// Protected admin API routes
+app.use('/api/admin', requireAdmin, require('./routes/admin'));
+app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
