@@ -20,14 +20,28 @@
             --az-blur: 10px;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             background-color: var(--az-dark);
             color: var(--az-text);
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            min-height: 100vh;
+            height: 100dvh;
+            height: 100vh;
+            /* Fallback */
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         /* Hero Section */
@@ -44,6 +58,7 @@
             margin-bottom: 0.5rem;
             background: linear-gradient(135deg, #00E676 0%, #00B0FF 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -509,12 +524,17 @@
                 localStorage.setItem('az_phone', phone);
 
             } catch (err) {
-                alert(err.message);
-                btn.disabled = false;
-                btn.textContent = 'Resgatar Agora';
-                if (err.message.includes('Sessão expirada')) {
-                    // Reload to restart
-                    window.location.reload();
+                // Show error and reload page for critical errors
+                const criticalErrors = ['Sessão', 'expirada', 'Tempo', 'esgotado', 'inválida', 'Recarregue', 'Recomece'];
+                const isCritical = criticalErrors.some(e => err.message.includes(e));
+
+                if (isCritical) {
+                    alert(err.message + '\n\nA página será recarregada.');
+                    window.location.href = '/amigos-do-zapao';
+                } else {
+                    alert(err.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Resgatar Agora';
                 }
             }
         }
