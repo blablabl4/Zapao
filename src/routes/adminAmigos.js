@@ -21,11 +21,13 @@ router.post('/campaign', async (req, res) => {
 
         if (campaign) {
             campaign = await AmigosAdminService.updateCampaign(campaign.id, {
-                name, start_number, end_number, base_qty_config: config
+                name, start_number, end_number, base_qty_config: config,
+                is_active: req.body.is_active // Add this
             });
         } else {
             campaign = await AmigosAdminService.createCampaign({
-                name, start_number, end_number, base_qty_config: config
+                name, start_number, end_number, base_qty_config: config,
+                is_active: req.body.is_active // Add this
             });
         }
         res.json(campaign);
@@ -68,6 +70,49 @@ router.post('/promotions', async (req, res) => {
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
+});
+
+router.put('/promotions/:id', async (req, res) => {
+    try {
+        const promo = await AmigosAdminService.updatePromotion(req.params.id, req.body);
+        res.json(promo);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.delete('/promotions/:id', async (req, res) => {
+    try {
+        await AmigosAdminService.deletePromotion(req.params.id);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+// Image Upload Configuration
+const multer = require('multer');
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const fs = require('fs');
+        const path = require('path');
+        const dir = path.join(__dirname, '../../public/uploads');
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir)
+    },
+    filename: function (req, file, cb) {
+        const ext = file.originalname.split('.').pop();
+        cb(null, 'promo-' + Date.now() + '.' + ext)
+    }
+});
+const upload = multer({ storage: storage });
+
+router.post('/upload', upload.single('image'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file' });
+    // Return relative URL
+    res.json({ url: '/uploads/' + req.file.filename });
 });
 
 router.post('/promotions/:id/token', async (req, res) => {

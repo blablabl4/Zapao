@@ -61,6 +61,7 @@
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box;
         }
 
         .btn {
@@ -107,6 +108,53 @@
             margin-bottom: 5px;
             border-left: 4px solid #00E676;
         }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            vertical-align: middle;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #00E676;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 
@@ -117,7 +165,6 @@
     </header>
 
     <div class="admin-container">
-
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</div>
             <div class="nav-tab" onclick="switchTab('promotions')">Promoções</div>
@@ -132,8 +179,17 @@
                     style="margin-bottom: 20px; padding: 10px; background: #eee; border-radius: 4px;">Carregando...
                 </div>
 
-                <h3>Editar Campanha</h3>
-                <form onsubmit="saveCampaign(event)">
+                <h3>Controle Geral</h3>
+                <div style="margin-bottom: 20px;">
+                    <label class="switch">
+                        <input type="checkbox" id="cActive">
+                        <span class="slider round"></span>
+                    </label>
+                    <span id="activeLabel" style="font-weight: bold; margin-left: 10px;">Inativo</span>
+                </div>
+
+                <h3>Editar Configuração</h3>
+                <form id="campaignForm">
                     <div class="form-group">
                         <label>Nome da Campanha</label>
                         <input type="text" id="cName" class="form-control" required>
@@ -150,71 +206,82 @@
                     </div>
 
                     <h4>Quantidade Base por Dia</h4>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                        <div class="form-group" style="flex:1; min-width: 80px;">
-                            <label>Seg</label>
-                            <input type="number" id="qty_mon" class="form-control" value="1">
-                        </div>
-                        <div class="form-group" style="flex:1; min-width: 80px;">
-                            <label>Ter</label>
-                            <input type="number" id="qty_tue" class="form-control" value="1">
-                        </div>
-                        <div class="form-group" style="flex:1; min-width: 80px;">
-                            <label>Qua</label>
-                            <input type="number" id="qty_wed" class="form-control" value="1">
-                        </div>
-                        <div class="form-group" style="flex:1; min-width: 80px;">
-                            <label>Qui</label>
-                            <input type="number" id="qty_thu" class="form-control" value="1">
-                        </div>
-                        <div class="form-group" style="flex:1; min-width: 80px;">
-                            <label>Sex</label>
-                            <input type="number" id="qty_fri" class="form-control" value="1">
-                        </div>
-                        <div class="form-group" style="flex:1; min-width: 80px;">
-                            <label>Sáb</label>
-                            <input type="number" id="qty_sat" class="form-control" value="1">
-                        </div>
-                        <div class="form-group" style="flex:1; min-width: 80px;">
-                            <label>Dom</label>
-                            <input type="number" id="qty_sun" class="form-control" value="1">
-                        </div>
-                    </div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;" id="daysContainer"></div>
 
-                    <button type="submit" class="btn btn-green">Salvar Configuração</button>
+                    <button type="submit" class="btn btn-green" style="margin-top: 15px;">Salvar Configuração</button>
                 </form>
 
                 <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
 
-                <button class="btn" onclick="initTickets()" style="background: #f00;">Inicializar Tickets (Range
-                    Atual)</button>
-                <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">* Clique após alterar o Range para garantir
-                    que os números existam.</p>
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border: 1px solid #ffe0b2;">
+                    <h4>ℹ️ Inicializar Tickets</h4>
+                    <p style="font-size: 0.9rem; margin-bottom: 10px;">
+                        Esta ação gera todos os números no banco de dados (do número inicial ao final) para garantir que
+                        eles existam e possam ser sorteados.
+                        <strong>Deve ser executado sempre que você alterar o Range (Início/Fim).</strong>
+                    </p>
+                    <button class="btn" onclick="initTickets()" style="background: #f00;">Inicializar Tickets
+                        agora</button>
+                </div>
             </div>
         </div>
 
         <!-- Promotions -->
         <div id="tab-promotions" class="tab-content" style="display: none;">
             <div class="card">
-                <h2>Nova Promoção</h2>
-                <form onsubmit="createPromo(event)">
+                <h2 id="promoTitle">Nova Promoção</h2>
+                <form id="promoForm">
+                    <input type="hidden" id="pId">
                     <div class="form-group">
                         <label>Nome</label>
                         <input type="text" id="pName" class="form-control" required>
                     </div>
+
                     <div class="form-group">
-                        <label>Qtd Extra</label>
-                        <input type="number" id="pQty" class="form-control" value="1" required>
+                        <label>Banner Promocional</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button type="button" class="btn" onclick="document.getElementById('pFile').click()">📤
+                                Upload Imagem</button>
+                            <input type="file" id="pFile" style="display: none" accept="image/*"
+                                onchange="uploadImage(this)">
+                            <input type="text" id="pImgUrl" class="form-control" placeholder="URL da imagem (ou upload)"
+                                readonly style="flex:1">
+                            <img id="pPreview" src="" style="height: 40px; display: none;">
+                        </div>
                     </div>
+
                     <div class="form-group">
-                        <label>Data Início</label>
-                        <input type="datetime-local" id="pStart" class="form-control" required>
+                        <label>Qtd Extra de Números</label>
+                        <input type="number" id="pQty" class="form-control" value="1" required min="1">
                     </div>
-                    <div class="form-group">
-                        <label>Data Fim</label>
-                        <input type="datetime-local" id="pEnd" class="form-control" required>
+
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex:1">
+                            <label>Data Início</label>
+                            <input type="date" id="pStartDate" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Hora Início</label>
+                            <input type="time" id="pStartTime" class="form-control" required>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-green">Criar Promoção</button>
+
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex:1">
+                            <label>Data Fim</label>
+                            <input type="date" id="pEndDate" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Hora Fim</label>
+                            <input type="time" id="pEndTime" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-green" id="btnSavePromo">Criar Promoção</button>
+                        <button type="button" class="btn" id="btnCancelEdit" style="display:none; background: #666;"
+                            onclick="resetPromoForm()">Cancelar Edição</button>
+                    </div>
                 </form>
             </div>
 
@@ -225,7 +292,8 @@
                         <tr>
                             <th>Nome</th>
                             <th>Extra</th>
-                            <th>Fim</th>
+                            <th>Validade</th>
+                            <th>Acessos / Resgates</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -243,7 +311,6 @@
                     <input type="text" id="searchTerm" class="form-control" placeholder="Ex: (11)99999-9999 ou 1234">
                 </div>
                 <button class="btn" onclick="doSearch()">Buscar</button>
-
                 <div id="searchOutput"></div>
             </div>
         </div>
@@ -251,6 +318,20 @@
     </div>
 
     <script>
+        // Days Configuration
+        const daysMap = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const daysLabel = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        const dc = document.getElementById('daysContainer');
+        daysMap.forEach((d, i) => {
+            dc.innerHTML += `
+                <div class="form-group" style="flex:1; min-width: 60px;">
+                    <label>${daysLabel[i]}</label>
+                    <input type="number" id="qty_${d}" class="form-control" value="1" min="0">
+                </div>
+            `;
+        });
+
+        // Tab Navigation
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
@@ -261,138 +342,234 @@
             if (tab === 'promotions') loadPromos();
         }
 
+        // === DASHBOARD ===
         async function loadCampaign() {
             try {
                 const res = await fetch('/api/admin/amigos/campaign');
                 const data = await res.json();
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                // If data is null/empty
                 if (!data || !data.id) {
-                    document.getElementById('campaignStats').innerHTML = `
-                        <p><strong>Nenhuma campanha ativa encontrada.</strong></p>
-                        <p>Verifique o banco de dados.</p>
-                    `;
+                    document.getElementById('campaignStats').innerHTML = '<p>Nenhuma campanha ativa.</p>';
                     return;
                 }
 
                 document.getElementById('campaignStats').innerHTML = `
-                    <p><strong>Campanha Ativa:</strong> ${data.name || 'Nenhuma'}</p>
-                    <p><strong>Range:</strong> ${data.start_number} - ${data.end_number}</p>
+                    <p><strong>Campanha:</strong> ${data.name || 'Nenhuma'}</p>
+                    <p><strong>Range Global:</strong> ${data.start_number || 0} - ${data.end_number || 0}</p>
                 `;
 
-                // Populate Form
                 document.getElementById('cName').value = data.name || '';
                 document.getElementById('cStart').value = data.start_number || 0;
                 document.getElementById('cEnd').value = data.end_number || 0;
+                document.getElementById('cActive').checked = data.is_active;
+                updateActiveLabel(data.is_active);
 
                 if (data.base_qty_config) {
-                    const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-                    days.forEach(d => {
+                    daysMap.forEach(d => {
                         const el = document.getElementById('qty_' + d);
                         if (el) el.value = data.base_qty_config[d] || 1;
                     });
                 }
             } catch (e) {
-                document.getElementById('campaignStats').innerHTML = `
-                    <p style="color: red">Erro ao carregar: ${e.message}</p>
-                `;
+                console.error(e);
             }
         }
 
-        async function saveCampaign(e) {
+        function updateActiveLabel(isActive) {
+            const l = document.getElementById('activeLabel');
+            l.textContent = isActive ? 'ATIVA (Vendas Liberadas)' : 'INATIVA (Vendas Pausadas)';
+            l.style.color = isActive ? '#00c853' : '#d32f2f';
+        }
+
+        document.getElementById('cActive').addEventListener('change', function () {
+            updateActiveLabel(this.checked);
+        });
+
+        document.getElementById('campaignForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+            const config = {};
+            daysMap.forEach(d => config[d] = parseInt(document.getElementById('qty_' + d).value));
+
             const payload = {
                 name: document.getElementById('cName').value,
                 start_number: parseInt(document.getElementById('cStart').value),
                 end_number: parseInt(document.getElementById('cEnd').value),
-                config: {
-                    sun: parseInt(document.getElementById('qty_sun').value),
-                    mon: parseInt(document.getElementById('qty_mon').value),
-                    tue: parseInt(document.getElementById('qty_tue').value),
-                    wed: parseInt(document.getElementById('qty_wed').value),
-                    thu: parseInt(document.getElementById('qty_thu').value),
-                    fri: parseInt(document.getElementById('qty_fri').value),
-                    sat: parseInt(document.getElementById('qty_sat').value)
-                }
+                config: config,
+                is_active: document.getElementById('cActive').checked
             };
 
-            try {
-                const res = await fetch('/api/admin/amigos/campaign', {
+            await fetch('/api/admin/amigos/campaign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            alert('Configuração Salva!');
+            loadCampaign();
+        });
+
+        async function initTickets() {
+            if (confirm('Isso pode demorar alguns segundos. Confirmar?')) {
+                const res = await fetch('/api/admin/amigos/campaign');
+                const data = await res.json();
+                await fetch('/api/admin/amigos/campaign/tickets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ campaignId: data.id })
                 });
-                const data = await res.json();
-                if (res.ok) {
-                    alert('Salvo com sucesso!');
-                    loadCampaign();
-                } else {
-                    alert('Erro: ' + (data.error || 'Unknown'));
-                }
-            } catch (err) {
-                alert('Erro de conexão');
+                alert('Tickets inicializados!');
             }
         }
 
-        async function initTickets() {
-            const res = await fetch('/api/admin/amigos/campaign');
+        // === PROMOTIONS ===
+        async function uploadImage(input) {
+            if (!input.files || !input.files[0]) return;
+            const fd = new FormData();
+            fd.append('image', input.files[0]);
+
+            const res = await fetch('/api/admin/amigos/upload', { method: 'POST', body: fd });
             const data = await res.json();
-            if (data.id) {
-                if (confirm('Isso vai gerar tickets para toda a range. Confirmar?')) {
-                    await fetch('/api/admin/amigos/campaign/tickets', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ campaignId: data.id })
-                    });
-                    alert('Processo iniciado.');
-                }
+
+            if (data.url) {
+                document.getElementById('pImgUrl').value = data.url;
+                document.getElementById('pPreview').src = data.url;
+                document.getElementById('pPreview').style.display = 'block';
             }
         }
 
         async function loadPromos() {
             const res = await fetch('/api/admin/amigos/promotions');
-            const promos = await res.json();
+            const list = await res.json();
             const tbody = document.querySelector('#promoTable tbody');
             tbody.innerHTML = '';
-            promos.forEach(p => {
+
+            list.forEach(p => {
+                const start = new Date(p.starts_at).toLocaleString();
+                const end = new Date(p.ends_at).toLocaleString();
+                const pJson = JSON.stringify(p).replace(/'/g, "\\'");
+
                 tbody.innerHTML += `
                     <tr>
-                        <td>${p.name}</td>
-                        <td>+${p.extra_qty}</td>
-                        <td>${new Date(p.ends_at).toLocaleString()}</td>
                         <td>
-                            <button class="btn" onclick="genToken(${p.id})">Gerar Link</button>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                ${p.image_url ? `<img src="${p.image_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;">` : ''}
+                                ${p.name}
+                            </div>
+                        </td>
+                        <td>+${p.extra_qty}</td>
+                        <td style="font-size:0.85rem;">${start}<br>até<br>${end}</td>
+                        <td>👁️ ${p.views_count || 0} / ✅ ${p.redemptions_count || 0}</td>
+                        <td>
+                            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                                <button class="btn" style="padding:5px 10px; font-size:0.8rem;" onclick="copyLink(${p.id})">🔗 Copiar</button>
+                                <button class="btn" style="padding:5px 10px; font-size:0.8rem; background:#FF9800;" onclick='editPromo(${pJson})'>✏️</button>
+                                <button class="btn" style="padding:5px 10px; font-size:0.8rem; background:#f44336;" onclick="deletePromo(${p.id})">🗑️</button>
+                            </div>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        async function createPromo(e) {
+        document.getElementById('promoForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            const name = document.getElementById('pName').value;
-            const extra_qty = document.getElementById('pQty').value;
-            const starts_at = document.getElementById('pStart').value;
-            const ends_at = document.getElementById('pEnd').value;
 
-            await fetch('/api/admin/amigos/promotions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, extra_qty, starts_at, ends_at })
-            });
+            const sDate = document.getElementById('pStartDate').value;
+            const sTime = document.getElementById('pStartTime').value;
+            const eDate = document.getElementById('pEndDate').value;
+            const eTime = document.getElementById('pEndTime').value;
+
+            const start = new Date(sDate + 'T' + sTime);
+            const end = new Date(eDate + 'T' + eTime);
+            const now = new Date();
+            const tolerance = 5 * 60 * 1000;
+            const pId = document.getElementById('pId').value;
+
+            if (!pId && start < (now - tolerance)) {
+                if (!confirm('A data de início está no passado. Deseja continuar mesmo assim?')) return;
+            }
+            if (end <= start) {
+                alert('Data Fim deve ser maior que Data Início');
+                return;
+            }
+
+            const payload = {
+                name: document.getElementById('pName').value,
+                image_url: document.getElementById('pImgUrl').value,
+                extra_qty: parseInt(document.getElementById('pQty').value),
+                starts_at: start.toISOString(),
+                ends_at: end.toISOString()
+            };
+
+            if (pId) {
+                await fetch('/api/admin/amigos/promotions/' + pId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await fetch('/api/admin/amigos/promotions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            resetPromoForm();
+            loadPromos();
+        });
+
+        function editPromo(p) {
+            document.getElementById('promoTitle').innerText = 'Editar Promoção (Link Continua Válido)';
+            document.getElementById('pId').value = p.id;
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pQty').value = p.extra_qty;
+            document.getElementById('pImgUrl').value = p.image_url || '';
+            if (p.image_url) {
+                document.getElementById('pPreview').src = p.image_url;
+                document.getElementById('pPreview').style.display = 'block';
+            }
+
+            const s = new Date(p.starts_at);
+            const e = new Date(p.ends_at);
+            const sIso = new Date(s.getTime() - (s.getTimezoneOffset() * 60000)).toISOString();
+            const eIso = new Date(e.getTime() - (e.getTimezoneOffset() * 60000)).toISOString();
+
+            document.getElementById('pStartDate').value = sIso.slice(0, 10);
+            document.getElementById('pStartTime').value = sIso.slice(11, 16);
+            document.getElementById('pEndDate').value = eIso.slice(0, 10);
+            document.getElementById('pEndTime').value = eIso.slice(11, 16);
+
+            document.getElementById('btnSavePromo').textContent = 'Salvar Alterações';
+            document.getElementById('btnCancelEdit').style.display = 'inline-block';
+        }
+
+        function resetPromoForm() {
+            document.getElementById('promoForm').reset();
+            document.getElementById('pId').value = '';
+            document.getElementById('promoTitle').innerText = 'Nova Promoção';
+            document.getElementById('btnSavePromo').textContent = 'Criar Promoção';
+            document.getElementById('btnCancelEdit').style.display = 'none';
+            document.getElementById('pPreview').style.display = 'none';
+            document.getElementById('pImgUrl').value = '';
+        }
+
+        async function deletePromo(id) {
+            if (!confirm('Tem certeza? O link deixará de funcionar.')) return;
+            await fetch('/api/admin/amigos/promotions/' + id, { method: 'DELETE' });
             loadPromos();
         }
 
-        async function genToken(id) {
+        async function copyLink(id) {
             const res = await fetch(`/api/admin/amigos/promotions/${id}/token`, { method: 'POST' });
             const data = await res.json();
-            prompt('Copie o link promocional:', data.link);
+            navigator.clipboard.writeText(data.link).then(() => {
+                alert('Link copiado!\n\n' + data.link);
+            }).catch(() => {
+                prompt('Copie o link:', data.link);
+            });
         }
 
+        // === SEARCH ===
         async function doSearch() {
             const term = document.getElementById('searchTerm').value;
             const res = await fetch(`/api/admin/amigos/search?term=${encodeURIComponent(term)}`);

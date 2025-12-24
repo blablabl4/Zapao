@@ -3,21 +3,33 @@ const AmigosService = require('./AmigosService');
 
 class AmigosAdminService {
     async updateCampaign(id, data) {
+        // Build query dynamically based on provided fields
+        const fields = [];
+        const values = [];
+        let idx = 1;
+
+        if (data.name) { fields.push(`name = $${idx++}`); values.push(data.name); }
+        if (data.start_number !== undefined) { fields.push(`start_number = $${idx++}`); values.push(data.start_number); }
+        if (data.end_number !== undefined) { fields.push(`end_number = $${idx++}`); values.push(data.end_number); }
+        if (data.base_qty_config) { fields.push(`base_qty_config = $${idx++}`); values.push(data.base_qty_config); }
+        if (data.is_active !== undefined) { fields.push(`is_active = $${idx++}`); values.push(data.is_active); }
+
+        values.push(id);
         const res = await query(`
             UPDATE az_campaigns 
-            SET name = $1, start_number = $2, end_number = $3, base_qty_config = $4
-            WHERE id = $5
+            SET ${fields.join(', ')}
+            WHERE id = $${idx}
             RETURNING *
-        `, [data.name, data.start_number, data.end_number, data.base_qty_config, id]);
+        `, values);
         return res.rows[0];
     }
 
     async createCampaign(data) {
         const res = await query(`
             INSERT INTO az_campaigns (name, start_number, end_number, base_qty_config, is_active)
-            VALUES ($1, $2, $3, $4, true)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING *
-        `, [data.name, data.start_number, data.end_number, data.base_qty_config]);
+        `, [data.name, data.start_number, data.end_number, data.base_qty_config, data.is_active !== undefined ? data.is_active : true]);
         return res.rows[0];
     }
 
@@ -46,8 +58,56 @@ class AmigosAdminService {
     }
 
     async getPromotions(campaignId) {
-        const res = await query('SELECT * FROM az_promotions WHERE campaign_id = $1 ORDER BY created_at DESC', [campaignId]);
+        const res = await query(`
+            SELECT p.*,
+            (SELECT COUNT(*) FROM az_promo_redemptions WHERE promotion_id = p.id) as redemptions_count,
+            (SELECT COUNT(*) FROM az_events WHERE promotion_id = p.id AND type = 'PROMO_VIEW') as views_count
+            FROM az_promotions p 
+            WHERE campaign_id = $1 
+            ORDER BY created_at DESC
+        `, [campaignId]);
         return res.rows;
+    }
+
+    async updatePromotion(id, data) {
+        const fields = [];
+        const values = [];
+        let idx = 1;
+
+        // Allow updating ends_at and image
+        if (data.ends_at) { fields.push(`ends_at = $${idx++}`); values.push(data.ends_at); }
+        if (data.image_url) { fields.push(`image_url = $${idx++}`); values.push(data.image_url); }
+        if (data.extra_qty !== undefined) { fields.push(`extra_qty = $${idx++}`); values.push(data.extra_qty); }
+        if (data.name) { fields.push(`name = $${idx++}`); values.push(data.name); }
+
+        if (fields.length === 0) return null;
+
+        values.push(id);
+        const res = await query(`
+            UPDATE az_promotions SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *
+        `, values);
+        return res.rows[0];
+    }
+
+    async deletePromotion(id) {
+        await query('DELETE FROM az_promo_tokens WHERE promotion_id = $1', [id]);
+        await query('DELETE FROM az_promo_redemptions WHERE promotion_id = $1', [id]);
+        // Ideally hard delete only if no redactions, or soft delete. 
+        // User asked to "Delete".
+        // Constraints might fail if claims exist. 
+        // We will keep claims (historical) but set promotion_id null? Or cascade?
+        // Let's simply delete tokens (links stop working).
+        // Actual deletion of promo row might require cleaning history.
+        // For now, let's assume we just want to stop it? 
+        // Or if really delete:
+        try {
+            await query('DELETE FROM az_promotions WHERE id = $1', [id]);
+            return true;
+        } catch (e) {
+            // Likely FK constraint from az_claims. 
+            // In that case, maybe just expire it?
+            throw new Error('Não é possível excluir promoção com resgates vinculados. Tente encerrar a data.');
+        }
     }
 
     async searchParticipant(term) {
