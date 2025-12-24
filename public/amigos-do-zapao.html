@@ -28,20 +28,22 @@
         body {
             margin: 0;
             padding: 0;
-            height: 100%;
-            overflow: hidden;
+            min-height: 100%;
         }
 
         body {
             background-color: var(--az-dark);
             color: var(--az-text);
             font-family: 'Inter', sans-serif;
-            height: 100dvh;
-            height: 100vh;
+            min-height: 100dvh;
+            min-height: 100vh;
             /* Fallback */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-x: hidden;
+            /* Prevent horizontal scroll */
+            overflow-y: auto;
+            /* Allow vertical scroll when needed */
         }
 
         /* Hero Section */
