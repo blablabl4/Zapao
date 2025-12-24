@@ -14,6 +14,38 @@ router.get('/campaign', async (req, res) => {
     }
 });
 
+// Diagnostic endpoint
+router.get('/debug', async (req, res) => {
+    try {
+        const { query } = require('../database/db');
+
+        // Get all campaigns
+        const campaigns = await query('SELECT id, name, is_active, start_number, end_number FROM az_campaigns ORDER BY id');
+
+        // Get active campaign
+        const active = await AmigosService.getActiveCampaign();
+
+        // Count available tickets per campaign
+        const ticketCounts = await query(`
+            SELECT campaign_id, status, COUNT(*) as count 
+            FROM az_tickets 
+            GROUP BY campaign_id, status
+        `);
+
+        // Total tickets
+        const totalTickets = await query('SELECT COUNT(*) as total FROM az_tickets');
+
+        res.json({
+            campaigns: campaigns.rows,
+            active_campaign: active,
+            ticket_counts: ticketCounts.rows,
+            total_tickets: totalTickets.rows[0].total
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message, stack: e.stack });
+    }
+});
+
 router.post('/campaign', async (req, res) => {
     try {
         const { name, start_number, end_number, config } = req.body;
