@@ -263,24 +263,40 @@
 
         .az-modal {
             background: #252525;
-            padding: 2.5rem 2rem;
+            /* padding removido para o wrapper interno */
+            padding: 0;
             border-radius: 20px;
             width: 90%;
             max-width: 380px;
-            min-height: 480px;
-            /* Altura mínima fixa para consistência */
+            height: 550px;
+            /* Altura fixa para todos */
             max-height: 85vh;
-            overflow-y: auto;
-            overflow-x: hidden;
+
+            /* CRÍTICO: Overflow visible para o badge sair da caixa */
+            overflow: visible !important;
+
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-            text-align: center;
+            /* text-align: center; */
             border: 1px solid #333;
             animation: slideUp 0.3s ease-out;
             margin: auto;
             position: relative;
             display: flex;
             flex-direction: column;
-            /* justify-content: space-between; */
+        }
+
+        /* Novo wrapper para o conteúdo interno ter scroll se precisar */
+        .az-modal-content {
+            padding: 2.5rem 2rem;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            /* Segue a borda do pai */
+            text-align: center;
         }
 
         /* Hide scrollbar inside modal but keep functionality */
@@ -546,32 +562,34 @@
     <div class="az-modal-overlay" id="step1Modal">
         <div class="az-modal">
             <div class="step-badge">1</div>
-            <h2>📤 Compartilhe</h2>
-            <p style="color: #aaa; margin-bottom: 1rem;">Compartilhe no seu status para participar</p>
+            <div class="az-modal-content">
+                <h2>📤 Compartilhe</h2>
+                <p style="color: #aaa; margin-bottom: 1rem;">Compartilhe no seu status para participar</p>
 
-            <!-- Share Preview Image (dynamic from settings) -->
-            <div style="margin-bottom: auto; display: flex; align-items: center; justify-content: center; width: 100%;"
-                id="sharePreviewContainer">
-                <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
-                    style="max-width: 140px; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 15px rgba(0,230,118,0.3);">
+                <!-- Share Preview Image (dynamic from settings) -->
+                <div style="margin-bottom: auto; display: flex; align-items: center; justify-content: center; width: 100%;"
+                    id="sharePreviewContainer">
+                    <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
+                        style="max-width: 140px; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 15px rgba(0,230,118,0.3);">
+                </div>
+
+                <p style="color: #ff9800; font-size: 0.9rem; margin: 1rem 0;">
+                    ⚠️ Tire print do status compartilhado e guarde!<br>
+                    <small>Será necessário para receber o prêmio. <strong>O botão CONTINUAR aparecerá
+                            abaixo.</strong></small>
+                </p>
+
+                <button class="az-btn-main" onclick="shareToWhatsApp()" style="width: 100%; margin-top: auto;"
+                    id="shareBtn">
+                    Compartilhar no WhatsApp
+                </button>
+
+                <!-- Arrow to next step (hidden initially) -->
+                <button class="az-btn-main az-btn-secondary" onclick="goToStep2()" id="step1NextBtn"
+                    style="width: 100%; margin-top: 10px; display: none;">
+                    Continuar ➜
+                </button>
             </div>
-
-            <p style="color: #ff9800; font-size: 0.9rem; margin: 1rem 0;">
-                ⚠️ Tire print do status compartilhado e guarde!<br>
-                <small>Será necessário para receber o prêmio. <strong>O botão CONTINUAR aparecerá
-                        abaixo.</strong></small>
-            </p>
-
-            <button class="az-btn-main" onclick="shareToWhatsApp()" style="width: 100%; margin-top: auto;"
-                id="shareBtn">
-                Compartilhar no WhatsApp
-            </button>
-
-            <!-- Arrow to next step (hidden initially) -->
-            <button class="az-btn-main az-btn-secondary" onclick="goToStep2()" id="step1NextBtn"
-                style="width: 100%; margin-top: 10px; display: none;">
-                Continuar ➜
-            </button>
         </div>
     </div>
 
@@ -579,65 +597,69 @@
     <div class="az-modal-overlay" id="step2Modal">
         <div class="az-modal">
             <div class="step-badge">2</div>
-            <h2>🎰 Seus Dados</h2>
-            <p style="color: #aaa; margin-bottom: 1rem;">Preencha para gerar seus números</p>
+            <div class="az-modal-content">
+                <h2>🎰 Seus Dados</h2>
+                <p style="color: #aaa; margin-bottom: 1rem;">Preencha para gerar seus números</p>
 
-            <form id="claimForm" onsubmit="submitClaimStep2(event)">
-                <div class="form-group">
-                    <label>Seu WhatsApp (com DDD)</label>
-                    <input type="tel" id="phone" class="form-control" required placeholder="(11) 99999-9999"
-                        oninput="maskPhone(this)" onblur="checkExistingUser(this.value)">
-                </div>
+                <form id="claimForm" onsubmit="submitClaimStep2(event)">
+                    <div class="form-group">
+                        <label>Seu WhatsApp (com DDD)</label>
+                        <input type="tel" id="phone" class="form-control" required placeholder="(11) 99999-9999"
+                            oninput="maskPhone(this)" onblur="checkExistingUser(this.value)">
+                    </div>
 
-                <div class="form-group">
-                    <label>Seu Nome Completo</label>
-                    <input type="text" id="name" class="form-control" required minlength="3"
-                        placeholder="Ex: Maria Silva" onblur="this.value = capitalizeName(this.value)">
-                </div>
+                    <div class="form-group">
+                        <label>Seu Nome Completo</label>
+                        <input type="text" id="name" class="form-control" required minlength="3"
+                            placeholder="Ex: Maria Silva" onblur="this.value = capitalizeName(this.value)">
+                    </div>
 
-                <div class="form-group">
-                    <label>Você já compartilhou no status?</label>
-                    <select id="sharedStatus" class="form-control" required>
-                        <option value="">Selecione...</option>
-                        <option value="yes">Sim, já compartilhei</option>
-                        <option value="no">Não, vou compartilhar agora</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label>Você já compartilhou no status?</label>
+                        <select id="sharedStatus" class="form-control" required>
+                            <option value="">Selecione...</option>
+                            <option value="yes">Sim, já compartilhei</option>
+                            <option value="no">Não, vou compartilhar agora</option>
+                        </select>
+                    </div>
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="lgpdConsent" required>
-                    <label for="lgpdConsent">
-                        Concordo com os Termos e Política de Privacidade.
-                    </label>
-                </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="lgpdConsent" required>
+                        <label for="lgpdConsent">
+                            Concordo com os Termos e Política de Privacidade.
+                        </label>
+                    </div>
 
-                <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1rem;" id="submitBtn">
-                    Gerar Meus Números
-                </button>
-            </form>
+                    <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1rem;" id="submitBtn">
+                        Gerar Meus Números
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- STEP 2B: Reveal Numbers Modal -->
-    <!-- STEP 2B: Reveal Numbers Modal -->
     <div class="az-modal-overlay" id="revealModal">
         <div class="az-modal">
             <div class="step-badge">2</div>
-            <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
-            <p id="revealStatus" style="color: #aaa; margin-bottom: 1rem;">Revelando...</p>
+            <div class="az-modal-content">
+                <h2 style="color: var(--az-primary);">🎰 Seus Números!</h2>
+                <p id="revealStatus" style="color: #aaa; margin-bottom: 1rem;">Revelando...</p>
 
-            <div
-                style="flex: 1; overflow-y: auto; width: 100%; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
-                <div id="revealGrid"
-                    style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%;"></div>
-            </div>
+                <div
+                    style="flex: 1; overflow-y: auto; width: 100%; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                    <div id="revealGrid"
+                        style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%;">
+                    </div>
+                </div>
 
-            <!-- Arrow to next step (hidden initially) -->
-            <div style="margin-top: auto; width: 100%;">
-                <button class="az-btn-main az-btn-secondary" id="goToStep3Btn" onclick="goToStep3()"
-                    style="display: none; width: 100%;">
-                    Continuar ➜
-                </button>
+                <!-- Arrow to next step (hidden initially) -->
+                <div style="margin-top: auto; width: 100%;">
+                    <button class="az-btn-main az-btn-secondary" id="goToStep3Btn" onclick="goToStep3()"
+                        style="display: none; width: 100%;">
+                        Continuar ➜
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -646,25 +668,27 @@
     <div class="az-modal-overlay" id="step3Modal">
         <div class="az-modal">
             <div class="step-badge">3</div>
-            <h2>🎉 Sucesso!</h2>
-            <p style="color: var(--az-primary); font-size: 1.1rem; margin-bottom: 1rem;">
-                Seus números foram registrados!
-            </p>
-
-            <div
-                style="background: rgba(0,230,118,0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,230,118,0.3); margin-bottom: 1.5rem;">
-                <p style="color: #fff; margin: 0;">
-                    📢 <strong>Fique atento ao grupo!</strong><br>
-                    <span style="color: #aaa; font-size: 0.9rem;">
-                        Sempre postamos links para ganhar números extras da sorte!
-                    </span>
+            <div class="az-modal-content">
+                <h2>🎉 Sucesso!</h2>
+                <p style="color: var(--az-primary); font-size: 1.1rem; margin-bottom: 1rem;">
+                    Seus números foram registrados!
                 </p>
-            </div>
 
-            <a href="#" id="groupLinkBtn" target="_blank" class="az-btn-main" onclick="finishFlow()"
-                style="width: 100%; display: block; text-decoration: none;">
-                Entrar no Grupo
-            </a>
+                <div
+                    style="background: rgba(0,230,118,0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,230,118,0.3); margin-bottom: 1.5rem;">
+                    <p style="color: #fff; margin: 0;">
+                        📢 <strong>Fique atento ao grupo!</strong><br>
+                        <span style="color: #aaa; font-size: 0.9rem;">
+                            Sempre postamos links para ganhar números extras da sorte!
+                        </span>
+                    </p>
+                </div>
+
+                <a href="#" id="groupLinkBtn" target="_blank" class="az-btn-main" onclick="finishFlow()"
+                    style="width: 100%; display: block; text-decoration: none;">
+                    Entrar no Grupo
+                </a>
+            </div>
         </div>
     </div>
 
