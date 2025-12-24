@@ -388,20 +388,20 @@
 
         <!-- Cards Area - 5x1 with slot animation -->
         <div class="az-cards-container" id="cardsContainer">
-            <!-- Placeholders -->
-            <div class="az-card blur">
+            <!-- Placeholders - no blur, animated numbers -->
+            <div class="az-card">
                 <div class="az-card-content">??</div>
             </div>
-            <div class="az-card blur">
+            <div class="az-card">
                 <div class="az-card-content">??</div>
             </div>
-            <div class="az-card blur">
+            <div class="az-card">
                 <div class="az-card-content">??</div>
             </div>
-            <div class="az-card blur">
+            <div class="az-card">
                 <div class="az-card-content">??</div>
             </div>
-            <div class="az-card blur">
+            <div class="az-card">
                 <div class="az-card-content">??</div>
             </div>
         </div>
@@ -443,24 +443,24 @@
 
     <!-- Lookup Modal -->
     <div class="az-modal-overlay" id="lookupModal">
-        <div class="az-modal" style="text-align: center;">
+        <div class="az-modal">
             <h2>📋 Consultar Números</h2>
-            <p style="color: #aaa; margin-bottom: 1rem;">Digite seu telefone para ver seus números</p>
 
             <div class="form-group">
+                <label>Seu WhatsApp (com DDD)</label>
                 <input type="tel" id="lookupPhoneModal" class="form-control" placeholder="(11) 99999-9999"
-                    oninput="maskPhone(this)" style="text-align: center; font-size: 1.2rem;">
+                    oninput="maskPhone(this)">
             </div>
 
-            <button class="az-btn-main" onclick="doLookup()" style="width: 100%; margin-bottom: 1rem;">
+            <button class="az-btn-main" onclick="doLookup()" style="width: 100%; margin-top: 1rem;">
                 Buscar
             </button>
 
-            <div id="lookupResultModal" style="margin-top: 1rem;"></div>
+            <div id="lookupResultModal" style="margin-top: 1.5rem;"></div>
 
-            <button onclick="closeLookupModal()"
-                style="background: transparent; border: 1px solid #444; color: #aaa; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 1rem;">
-                Voltar
+            <button onclick="closeLookupModal()" class="az-btn-main"
+                style="width: 100%; margin-top: 1rem; background: linear-gradient(135deg, #333 0%, #222 100%); box-shadow: none;">
+                Voltar ao Início
             </button>
         </div>
     </div>
@@ -497,15 +497,10 @@
 
                     <div class="form-group">
                         <label>Você compartilhou no status?</label>
-                        <select id="sharedStatus" class="form-control" required
-                            style="background: #2a2a2a; color: white; border: 1px solid #444; padding: 12px; font-size: 1rem; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=\"
-                            white\" height=\"24\" viewBox=\"0 0 24 24\" width=\"24\"
-                            xmlns=\"http://www.w3.org/2000/svg\">
-                            <path d=\"M7 10l5 5 5-5z\" /></svg>'); background-repeat: no-repeat; background-position:
-                            right 10px center;">
+                        <select id="sharedStatus" class="form-control" required>
                             <option value="">Selecione...</option>
-                            <option value="yes">SIM, JÁ COMPARTILHEI</option>
-                            <option value="no">NÃO (Vou compartilhar agora)</option>
+                            <option value="yes">Sim, já compartilhei</option>
+                            <option value="no">Não, vou compartilhar agora</option>
                         </select>
                     </div>
 
