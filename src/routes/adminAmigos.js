@@ -73,19 +73,27 @@ router.post('/campaign/tickets', async (req, res) => {
         const { campaignId } = req.body;
         console.log('[AdminAmigos] Initializing tickets for campaign:', campaignId);
 
+        let result;
+        let campaign;
+
         if (!campaignId) {
             // If no campaignId provided, get active campaign
-            const campaign = await AmigosService.getActiveCampaign();
+            campaign = await AmigosService.getActiveCampaign();
             if (!campaign) {
                 return res.status(400).json({ error: 'Nenhuma campanha ativa encontrada' });
             }
             console.log('[AdminAmigos] Using active campaign:', campaign.id, campaign.name);
-            await AmigosService.populateTickets(campaign.id);
-            res.json({ success: true, message: `Tickets do ${campaign.start_number} ao ${campaign.end_number} inicializados!` });
+            result = await AmigosService.populateTickets(campaign.id);
         } else {
-            await AmigosService.populateTickets(campaignId);
-            res.json({ success: true, message: 'Tickets populated' });
+            result = await AmigosService.populateTickets(campaignId);
         }
+
+        console.log('[AdminAmigos] populateTickets result:', result);
+        res.json({
+            success: true,
+            message: `✅ ${result.inserted} tickets criados! Total: ${result.total}`,
+            details: result
+        });
     } catch (e) {
         console.error('[AdminAmigos] Error initializing tickets:', e);
         res.status(500).json({ error: e.message });

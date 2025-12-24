@@ -85,26 +85,40 @@ class AmigosService {
      * POPULATES az_tickets based on range. Be careful with large ranges.
      */
     async populateTickets(campaignId) {
+        console.log('[AmigosService] populateTickets called with campaignId:', campaignId);
         const client = await getClient();
         try {
             await client.query('BEGIN');
 
             const campRes = await client.query('SELECT * FROM az_campaigns WHERE id = $1', [campaignId]);
             const camp = campRes.rows[0];
+            console.log('[AmigosService] Campaign found:', camp ? `${camp.name} (${camp.start_number} - ${camp.end_number})` : 'NOT FOUND');
+
             if (!camp) throw new Error('Campaign not found');
 
-            // Generate sequence
-            // This might be heavy if 100k, but PG handles it well.
-            await client.query(`
+            // Generate sequence - using direct values to debug
+            const startNum = parseInt(camp.start_number);
+            const endNum = parseInt(camp.end_number);
+            console.log('[AmigosService] Generating tickets from', startNum, 'to', endNum);
+
+            const insertResult = await client.query(`
                 INSERT INTO az_tickets (campaign_id, number, status)
                 SELECT $1, s.a, 'AVAILABLE'
-                FROM generate_series($2, $3) AS s(a)
+                FROM generate_series($2::int, $3::int) AS s(a)
                 ON CONFLICT (campaign_id, number) DO NOTHING
-            `, [campaignId, camp.start_number, camp.end_number]);
+            `, [campaignId, startNum, endNum]);
+
+            console.log('[AmigosService] INSERT result rowCount:', insertResult.rowCount);
 
             await client.query('COMMIT');
-            return true;
+
+            // Verify count
+            const countRes = await client.query('SELECT COUNT(*) as c FROM az_tickets WHERE campaign_id = $1', [campaignId]);
+            console.log('[AmigosService] Final ticket count for campaign:', countRes.rows[0].c);
+
+            return { inserted: insertResult.rowCount, total: countRes.rows[0].c };
         } catch (e) {
+            console.error('[AmigosService] populateTickets ERROR:', e);
             await client.query('ROLLBACK');
             throw e;
         } finally {
