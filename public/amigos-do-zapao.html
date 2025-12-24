@@ -654,11 +654,15 @@
                 </div>
 
                 <!-- Arrow to next step (hidden initially) -->
-                <div style="margin-top: auto; width: 100%;">
+                <!-- Arrow to next step (hidden initially) -->
+                <div style="margin-top: auto; width: 100%; padding-top: 10px;">
                     <button class="az-btn-main az-btn-secondary" id="goToStep3Btn" onclick="goToStep3()"
-                        style="display: none; width: 100%;">
+                        style="width: 100%;">
                         Continuar ➜
                     </button>
+                    <!-- Fallback msg -->
+                    <p id="debugMsg" style="font-size: 10px; color: #555; margin-top: 5px; display: none;">Aguardando...
+                    </p>
                 </div>
             </div>
         </div>
@@ -1004,9 +1008,18 @@
             let currentLine = 0;
 
             function revealLine() {
+                console.log('Revealing line:', currentLine + 1, 'of', linesCount);
                 if (currentLine >= linesCount) {
+                    console.log('All lines revealed. Showing button.');
                     // All revealed - show continue button
-                    document.getElementById('goToStep3Btn').style.display = 'block';
+                    const btn = document.getElementById('goToStep3Btn');
+                    if (btn) {
+                        btn.style.display = 'block';
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    } else {
+                        console.error('Button goToStep3Btn not found!');
+                    }
+
                     document.getElementById('revealStatus').textContent = 'Boa sorte! 🍀';
                     return;
                 }
@@ -1019,15 +1032,17 @@
                     const delay = (i - startIdx) * 80; // Stagger each card
                     setTimeout(() => {
                         const card = document.getElementById(`reveal-card-${i}`);
-                        card.style.opacity = '1';
-                        card.classList.remove('blur');
-                        card.classList.add('slot-spinning');
+                        if (card) {
+                            card.style.opacity = '1';
+                            card.classList.remove('blur');
+                            card.classList.add('slot-spinning');
 
-                        // After spin completes, mark as revealed
-                        setTimeout(() => {
-                            card.classList.remove('slot-spinning');
-                            card.classList.add('slot-revealed');
-                        }, 600);
+                            // After spin completes, mark as revealed
+                            setTimeout(() => {
+                                card.classList.remove('slot-spinning');
+                                card.classList.add('slot-revealed');
+                            }, 600);
+                        }
                     }, delay);
                 }
 
