@@ -2,21 +2,57 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
+const helmet = require('helmet');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+
+// Internal modules
+const config = require('./config');
 const { initializeDatabase, closeDatabase, getPool } = require('./database/db');
 const expirationJob = require('./jobs/expirationJob');
 const drawExpirationJob = require('./jobs/drawExpirationJob');
 const { requireAdmin } = require('./middleware/adminAuth');
 
-// Load environment variables
-require('dotenv').config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Trust proxy (required for secure cookies on Railway/Cloud providers)
 app.set('trust proxy', 1);
 
-// Middleware
+// === SECURITY MIDDLEWARE ===
+// Helmet - Secure HTTP headers
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable for inline scripts in HTML
+    crossOriginEmbedderPolicy: false
+}));
+
+// CORS - Only allow our domain
+app.use(cors({
+    origin: config.IS_PRODUCTION
+        ? ['https://www.tvzapao.com.br', 'https://tvzapao.com.br']
+        : true, // Allow all in development
+    credentials: true
+}));
+
+// Rate limiting - General API
+const apiLimiter = rateLimit({
+    windowMs: config.RATE_LIMIT_WINDOW_MS,
+    max: config.RATE_LIMIT_MAX_REQUESTS,
+    message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+app.use('/api/', apiLimiter);
+
+// Rate limiting - Stricter for sensitive routes
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 min
+    max: config.RATE_LIMIT_LOGIN_MAX,
+    message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' }
+});
+app.use('/admin/login', authLimiter);
+app.use('/admin/authenticate', authLimiter);
+
+// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -27,28 +63,85 @@ app.use(session({
         tableName: 'session',
         createTableIfMissing: true
     }),
-    secret: process.env.SESSION_SECRET || 'tvzapao-super-secret-key-change-this',
+    secret: config.SESSION_SECRET, // Now required via config
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: config.IS_PRODUCTION,
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: config.SESSION_MAX_AGE
     }
 }));
 
 // Static files
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files (disabled cache for updates)
+app.use(express.static(path.join(__dirname, '../public'), {
+    maxAge: '0',
+    etag: false
+}));
+
+// Serve uploads folder
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Admin authentication routes (unprotected)
 app.use('/admin', require('./routes/adminAuth'));
 
-// Protected admin API routes
-app.use('/api/admin', requireAdmin, require('./routes/admin'));
-
-// Admin panel page (protected)
+// Admin Panel - redirect to Amigos Admin
 app.get('/admin', requireAdmin, (req, res) => {
-    res.sendFile('admin.html', { root: path.join(__dirname, '../public') });
+    res.redirect('/admin/amigos');
+});
+
+// ARCHIVED: admin-hub, admin-luck routes removed (not in use)
+
+// Dynamic Share Route for Promotions (OG Tags injection)
+app.get('/p/:token', async (req, res) => {
+    try {
+        const token = req.params.token;
+        const { query } = require('./database/db');
+        const pRes = await query(`
+            SELECT p.* FROM az_promo_tokens t
+            JOIN az_promotions p ON t.promotion_id = p.id
+            WHERE t.token = $1
+        `, [token]);
+
+        let ogImage = 'https://www.tvzapao.com.br/images/amigos-logo-new.png';
+        let ogTitle = 'Amigos do Zapão';
+        let ogDesc = 'Resgate seu número da sorte diário gratuitamente!';
+
+        if (pRes.rows.length > 0) {
+            const p = pRes.rows[0];
+            if (p.image_url) ogImage = p.image_url.startsWith('http') ? p.image_url : `https://www.tvzapao.com.br${p.image_url}`;
+            ogTitle = p.name;
+            ogDesc = 'Participe desta promoção especial e ganhe números extras!';
+        }
+
+        const fs = require('fs');
+        const filePath = path.join(__dirname, '../public/amigos-do-zapao.html');
+        let html = fs.readFileSync(filePath, 'utf8');
+
+        // Simple injection - assumes these tags exist or head exists
+        const metaTags = `
+            <meta property="og:title" content="${ogTitle}" />
+            <meta property="og:description" content="${ogDesc}" />
+            <meta property="og:image" content="${ogImage}" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta name="twitter:card" content="summary_large_image" />
+        `;
+
+        // Replace head or append
+        html = html.replace('</head>', `${metaTags}\n</head>`);
+
+        res.send(html);
+    } catch (e) {
+        console.error('Error serving promo link:', e);
+        res.redirect('/amigos-do-zapao');
+    }
+});
+
+// Root redirect to main app
+app.get('/', (req, res) => {
+    res.redirect('/amigos-do-zapao');
 });
 
 // Amigos do Zapão page
@@ -61,24 +154,20 @@ app.get('/admin/amigos', requireAdmin, (req, res) => {
     res.sendFile('admin-amigos.html', { root: path.join(__dirname, '../public') });
 });
 
-// Public routes
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/webhooks', require('./routes/webhooks'));
-app.use('/api/history', require('./routes/history'));
+// === ACTIVE API ROUTES ===
 app.use('/api/amigos', require('./routes/amigos'));
-
-// Protected admin API routes
-app.use('/api/admin', requireAdmin, require('./routes/admin'));
 app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
+
+// ARCHIVED: orders, webhooks, history routes removed (not in use)
+
+// Health check endpoints (/health, /health/detailed, /health/ready, /health/live)
+app.use('/health', require('./routes/health'));
+
+// === ERROR HANDLING ===
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+app.use(notFoundHandler); // 404 for unmatched routes
+app.use(errorHandler);    // Centralized error handler
 
 // Initialize and start server
 async function startServer() {
@@ -90,11 +179,15 @@ async function startServer() {
         expirationJob.start();
         drawExpirationJob.start();
 
+        // Start WhatsApp Bot (Bot Phase 9) - PAUSED
+        // const { startBot } = require('./bot');
+        // startBot();
+
         // Start HTTP server
-        const server = app.listen(PORT, () => {
-            console.log(`\n🎰 TVZapão Server running on http://localhost:${PORT}`);
-            console.log(`📊 Admin panel: http://localhost:${PORT}/admin`);
-            console.log(`💚 Health check: http://localhost:${PORT}/health\n`);
+        const server = app.listen(config.PORT, () => {
+            console.log(`\n🎰 TVZapão Server running on http://localhost:${config.PORT}`);
+            console.log(`📊 Admin panel: http://localhost:${config.PORT}/admin`);
+            console.log(`💚 Health check: http://localhost:${config.PORT}/health\n`);
         });
 
         // Graceful shutdown

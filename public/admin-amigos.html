@@ -5,307 +5,628 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Amigos do Zapão</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --az-primary: #00E676;
+            /* WhatsApp Green */
+            --az-dark: #121212;
+            --az-card-bg: #1E1E1E;
+            --az-text: #FFFFFF;
+            --az-text-muted: #AAAAAA;
+            --az-danger: #ff4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            padding-top: 80px;
-            background: #f4f4f4;
-            color: #333;
-        }
-
-        .admin-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            background-color: var(--az-dark);
+            color: var(--az-text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
         }
 
         h1,
-        h2 {
-            color: #333;
+        h2,
+        h3 {
+            margin-top: 0;
         }
 
+        /* Header */
+        header {
+            padding: 1rem 2rem;
+            background: #000;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--az-primary);
+            margin: 0;
+        }
+
+        /* Container */
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--az-card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--az-primary);
+            margin-top: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--az-text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Chart Section */
+        .chart-container {
+            background: var(--az-card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #333;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-controls button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .chart-controls button.active {
+            background: var(--az-primary);
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Tabs */
         .nav-tabs {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            overflow-x: auto;
         }
 
         .nav-tab {
             padding: 10px 20px;
-            background: #ddd;
+            background: transparent;
+            color: var(--az-text-muted);
             cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
         }
 
         .nav-tab.active {
-            background: #00E676;
-            color: white;
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--az-primary);
+            border: 1px solid var(--az-primary);
+        }
+
+        /* Content Sections */
+        .section-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Card / Form */
+        .card {
+            background: var(--az-card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #333;
+            margin-bottom: 1.5rem;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
         }
 
         .form-control {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+            padding: 0.8rem;
+            background: #121212;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--az-primary);
         }
 
         .btn {
-            padding: 10px 20px;
-            background: #333;
-            color: white;
+            background: var(--az-primary);
+            color: #000;
             border: none;
-            border-radius: 4px;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: bold;
             cursor: pointer;
+            font-size: 1rem;
+            transition: opacity 0.2s;
         }
 
-        .btn-green {
-            background: #00E676;
+        .btn:hover {
+            opacity: 0.9;
         }
 
-        .table {
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--az-primary);
+            color: var(--az-primary);
+        }
+
+        .btn-danger {
+            background: var(--az-danger);
+            color: #fff;
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            min-width: 600px;
         }
 
-        .table th,
-        .table td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+        th,
+        td {
+            padding: 1rem;
             text-align: left;
+            border-bottom: 1px solid #333;
+            color: #ddd;
         }
 
-        .search-result {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 10px;
+        th {
+            color: var(--az-primary);
+            font-weight: 600;
         }
 
-        .print-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .print-item {
-            background: white;
-            padding: 10px;
-            margin-bottom: 5px;
-            border-left: 4px solid #00E676;
-        }
-
-        /* Toggle Switch */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-            vertical-align: middle;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
+        /* Modal */
+        .az-modal-overlay {
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
         }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+        .az-modal {
+            background: #252525;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid #444;
+            text-align: center;
         }
 
-        input:checked+.slider {
-            background-color: #00E676;
+        .az-modal h3 {
+            color: var(--az-primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
         }
 
-        input:checked+.slider:before {
-            transform: translateX(26px);
+        .az-modal p {
+            color: #ccc;
+            margin-bottom: 2rem;
+        }
+
+        /* Action Buttons - improved for mobile */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            margin: 2px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.1s, opacity 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-btns {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .tabs button {
+                flex: 1 1 45%;
+                padding: 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            table {
+                min-width: auto;
+                font-size: 0.9rem;
+            }
+
+            th,
+            td {
+                padding: 0.6rem;
+            }
+
+            /* Make action buttons bigger on mobile */
+            .action-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 18px;
+            }
+
+            .form-group label {
+                font-size: 0.9rem;
+            }
+
+            .form-control {
+                font-size: 16px;
+                /* Prevents zoom on iOS */
+            }
+
+            .btn {
+                width: 100%;
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <header class="site-header" style="background: #333;">
-        <div class="logo">Admin Amigos do Zapão</div>
-        <a href="/admin" style="color: white; margin-left: auto;">Voltar ao Painel Geral</a>
+
+    <header>
+        <h1>Admin ⚡ Amigos do Zapão</h1>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="/admin" class="btn btn-outline">← Voltar ao Hub</a>
+            <a href="/amigos-do-zapao" target="_blank" class="btn btn-outline">Ver App</a>
+            <button onclick="logout()" class="btn" style="background:#333; color:#aaa;">Sair</button>
+        </div>
     </header>
 
     <div class="admin-container">
-        <div class="nav-tabs">
-            <div class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</div>
-            <div class="nav-tab" onclick="switchTab('promotions')">Promoções</div>
-            <div class="nav-tab" onclick="switchTab('search')">Consulta & Apuração</div>
+
+        <!-- KPI Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Números Distribuídos</span>
+                <span class="stat-value" id="kpiTotalNumbers">...</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Usuários Ativos</span>
+                <span class="stat-value" id="kpiTotalUsers">...</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Resgates de Promoção</span>
+                <span class="stat-value" id="kpiTotalPromos">...</span>
+            </div>
         </div>
 
-        <!-- Dashboard -->
-        <div id="tab-dashboard" class="tab-content">
+        <!-- Chart -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Fluxo de Resgates</h3>
+                <div class="chart-controls">
+                    <button onclick="loadStats('24h')" id="btn24h" class="active">24h</button>
+                    <button onclick="loadStats('7d')" id="btn7d">7 Dias</button>
+                </div>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchTab('config')">Configuração</div>
+            <div class="nav-tab" onclick="switchTab('promos')">Promoções</div>
+            <div class="nav-tab" onclick="switchTab('search')">Buscar Usuário</div>
+            <div class="nav-tab" onclick="switchTab('admins')">Administradores</div>
+        </div>
+
+        <!-- TAB: CONFIG -->
+        <div id="tab-config" class="section-content active">
             <div class="card">
-                <h2>📊 Status e Configuração</h2>
-                <div id="campaignStats"
-                    style="margin-bottom: 20px; padding: 10px; background: #eee; border-radius: 4px;">Carregando...
-                </div>
-
-                <h3>Controle Geral</h3>
-                <div style="margin-bottom: 20px;">
-                    <label class="switch">
-                        <input type="checkbox" id="cActive">
-                        <span class="slider round"></span>
-                    </label>
-                    <span id="activeLabel" style="font-weight: bold; margin-left: 10px;">Inativo</span>
-                </div>
-
-                <h3>Editar Configuração</h3>
-                <form id="campaignForm">
+                <h2 style="color: var(--az-text);">Configuração da Campanha Atual</h2>
+                <form id="campaignForm" onsubmit="saveCampaign(event)">
                     <div class="form-group">
                         <label>Nome da Campanha</label>
-                        <input type="text" id="cName" class="form-control" required>
+                        <input type="text" id="campName" class="form-control" required>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Range Inicial</label>
+                            <input type="number" id="startNum" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Range Final</label>
+                            <input type="number" id="endNum" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="isActive" style="width: 20px; height: 20px;">
+                            Campanha Ativa/Rodando
+                        </label>
+                        <small style="color: #666;">Desmarque para pausar as distribuições (dados não serão
+                            perdidos).</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantidade Base de Números (Domingo a Sábado)</label>
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;">
+                            <input type="number" placeholder="Dom" id="qtySun" class="form-control" min="1">
+                            <input type="number" placeholder="Seg" id="qtyMon" class="form-control" min="1">
+                            <input type="number" placeholder="Ter" id="qtyTue" class="form-control" min="1">
+                            <input type="number" placeholder="Qua" id="qtyWed" class="form-control" min="1">
+                            <input type="number" placeholder="Qui" id="qtyThu" class="form-control" min="1">
+                            <input type="number" placeholder="Sex" id="qtyFri" class="form-control" min="1">
+                            <input type="number" placeholder="Sáb" id="qtySat" class="form-control" min="1">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; border-top: 1px solid #333; padding-top: 1rem;">
+                        <h3 style="color: var(--az-text); font-size: 1.2rem;">Configurações de Compartilhamento</h3>
+                        <div class="form-group">
+                            <label>Link do Grupo VIP</label>
+                            <input type="url" id="groupLink" class="form-control"
+                                placeholder="https://chat.whatsapp.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Mídia de Compartilhamento Padrão (Imagem ou Vídeo)</label>
+                            <input type="file" id="mainShareImage" class="form-control" accept="image/*,video/*">
+                            <small style="color: var(--az-primary);" id="currentShareImageDisplay"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Texto de Compartilhamento</label>
+                            <textarea id="shareText" class="form-control" rows="4"
+                                placeholder="Participe do sorteio..."></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Salvar
+                        Configurações</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Geração de Tickets</h2>
+                <p style="color: #aaa; margin-bottom: 1rem;">Para disponibilizar os números do range definido, você
+                    precisa gerar/popular os tickets no banco.</p>
+                <button onclick="generateTickets()" class="btn btn-outline">Gerar/Atualizar Tickets</button>
+                <div id="ticketResult" style="margin-top: 1rem; color: var(--az-primary);"></div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card" style="border-color: var(--az-danger);">
+                <h2 style="color: var(--az-danger);">Zona de Perigo</h2>
+                <p style="color: #aaa;">Ações que afetam os dados da campanha. Use com cuidado.</p>
+
+                <div
+                    style="border: 1px dashed var(--az-danger); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="color: #fff; margin-top: 0;">🔄 Zerar Distribuição</h4>
+                    <p style="font-size: 0.9rem; color: #888; margin-bottom: 0.5rem;">
+                        <strong>O que faz:</strong> Remove TODOS os resgates e libera os números para "Disponível".
+                    </p>
+                    <p style="font-size: 0.9rem; color: #888; margin-bottom: 1rem;">
+                        <strong>Quando usar:</strong> Para começar uma nova rodada de distribuição mantendo a mesma
+                        campanha e promoções.
+                    </p>
+                    <button onclick="resetCampaign()" class="btn btn-danger">ZERAR DISTRIBUIÇÃO</button>
+                </div>
+
+                <div style="border: 1px dashed #FF6B35; padding: 1rem; border-radius: 8px;">
+                    <h4 style="color: #fff; margin-top: 0;">🚨 Reiniciar Campanha (Completo)</h4>
+                    <p style="font-size: 0.9rem; color: #888; margin-bottom: 0.5rem;">
+                        <strong>O que faz:</strong> Exclui TUDO - a campanha, promoções, tickets e todos os dados.
+                    </p>
+                    <p style="font-size: 0.9rem; color: #888; margin-bottom: 1rem;">
+                        <strong>Quando usar:</strong> Para começar do zero absoluto com uma campanha totalmente nova.
+                    </p>
+                    <button onclick="showRestartModal()" class="btn" style="background: #FF6B35; color: #fff;">REINICIAR
+                        CAMPANHA</button>
+                </div>
+            </div>
+
+            <!-- Restart Campaign Modal -->
+            <div id="restartModal" class="az-modal-overlay">
+                <div class="az-modal">
+                    <h3 style="color: #FF6B35;">⚠️ Confirmação de Reinício</h3>
+                    <p style="color: #ccc; text-align: left; font-size: 0.9rem;">
+                        Esta ação irá excluir permanentemente:<br>
+                        • A campanha atual<br>
+                        • Todas as promoções<br>
+                        • Todos os tickets e resgates<br>
+                        • Todos os dados de participantes
+                    </p>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="color: #aaa;">Digite sua senha para confirmar:</label>
+                        <input type="password" id="restartPassword" class="form-control"
+                            placeholder="Sua senha de admin">
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <div class="form-group" style="flex:1">
-                            <label>Início (Start Number)</label>
-                            <input type="number" id="cStart" class="form-control" required>
-                        </div>
-                        <div class="form-group" style="flex:1">
-                            <label>Fim (End Number)</label>
-                            <input type="number" id="cEnd" class="form-control" required>
-                        </div>
+                        <button onclick="confirmRestart()" class="btn"
+                            style="flex:1; background: #FF6B35; color: #fff;">CONFIRMAR</button>
+                        <button onclick="closeRestartModal()" class="btn btn-outline" style="flex:1;">CANCELAR</button>
                     </div>
-
-                    <h4>Quantidade Base por Dia</h4>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;" id="daysContainer"></div>
-
-                    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-                    <h3>Configuração de Compartilhamento (Passo 1 & 3)</h3>
-
-                    <div class="form-group">
-                        <label>URL da Imagem de Compartilhamento</label>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <button type="button" class="btn" onclick="document.getElementById('sFile').click()">📤
-                                Upload</button>
-                            <input type="file" id="sFile" style="display: none" accept="image/*"
-                                onchange="uploadShareImage(this)">
-                            <input type="text" id="sImage" class="form-control"
-                                placeholder="URL da imagem (ex: /images/logo.png)" style="flex:1">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Texto de Compartilhamento (WhatsApp)</label>
-                        <textarea id="sText" class="form-control" rows="2"
-                            placeholder="Texto que aparecerá no WhatsApp"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Link do Grupo de WhatsApp (Botão Passo 3)</label>
-                        <input type="text" id="sGroup" class="form-control" placeholder="https://chat.whatsapp.com/...">
-                    </div>
-
-                    <button type="submit" class="btn btn-green" style="margin-top: 15px;">Salvar Configuração</button>
-                </form>
-
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
-
-                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border: 1px solid #ffe0b2;">
-                    <h4>ℹ️ Inicializar Tickets</h4>
-                    <p style="font-size: 0.9rem; margin-bottom: 10px;">
-                        Esta ação gera todos os números no banco de dados (do número inicial ao final) para garantir que
-                        eles existam e possam ser sorteados.
-                        <strong>Deve ser executado sempre que você alterar o Range (Início/Fim).</strong>
-                    </p>
-                    <button class="btn" onclick="initTickets()" style="background: #f00;">Inicializar Tickets
-                        agora</button>
                 </div>
             </div>
         </div>
 
-        <!-- Promotions -->
-        <div id="tab-promotions" class="tab-content" style="display: none;">
+        <!-- TAB: PROMOS -->
+        <div id="tab-promos" class="section-content">
             <div class="card">
-                <h2 id="promoTitle">Nova Promoção</h2>
-                <form id="promoForm">
-                    <input type="hidden" id="pId">
+                <h2>Nova Promoção</h2>
+                <form id="promoForm" onsubmit="createPromo(event)">
+                    <input type="hidden" id="promoId">
                     <div class="form-group">
-                        <label>Nome</label>
-                        <input type="text" id="pName" class="form-control" required>
+                        <label>Nome da Promoção/Parceiro</label>
+                        <input type="text" id="promoName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade Extra de Números</label>
+                        <input type="number" id="promoExtra" class="form-control" value="5">
                     </div>
 
-                    <div class="form-group">
-                        <label>Banner Promocional</label>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <button type="button" class="btn" onclick="document.getElementById('pFile').click()">📤
-                                Upload Imagem</button>
-                            <input type="file" id="pFile" style="display: none" accept="image/*"
-                                onchange="uploadImage(this)">
-                            <input type="text" id="pImgUrl" class="form-control" placeholder="URL da imagem (ou upload)"
-                                readonly style="flex:1">
-                            <img id="pPreview" src="" style="height: 40px; display: none;">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Qtd Extra de Números</label>
-                        <input type="number" id="pQty" class="form-control" value="1" required min="1">
-                    </div>
-
-                    <div style="display: flex; gap: 10px;">
-                        <div class="form-group" style="flex:1">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
                             <label>Data Início</label>
-                            <input type="date" id="pStartDate" class="form-control" required>
+                            <input type="date" id="promoStartDate" class="form-control">
                         </div>
-                        <div class="form-group" style="flex:1">
+                        <div class="form-group">
                             <label>Hora Início</label>
-                            <input type="time" id="pStartTime" class="form-control" required>
+                            <input type="time" id="promoStartTime" class="form-control">
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 10px;">
-                        <div class="form-group" style="flex:1">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
                             <label>Data Fim</label>
-                            <input type="date" id="pEndDate" class="form-control" required>
+                            <input type="date" id="promoEndDate" class="form-control">
                         </div>
-                        <div class="form-group" style="flex:1">
+                        <div class="form-group">
                             <label>Hora Fim</label>
-                            <input type="time" id="pEndTime" class="form-control" required>
+                            <input type="time" id="promoEndTime" class="form-control">
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label>Upload Mídia (Imagem ou Vídeo)</label>
+                        <input type="file" id="promoImage" class="form-control" accept="image/*,video/*">
+                        <small id="currentPromoImage" style="color: var(--az-primary); display:none;"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Texto de Compartilhamento</label>
+                        <textarea id="promoShareText" class="form-control" rows="3"
+                            placeholder="Texto que será enviado ao compartilhar a promoção..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Link do Patrocinador (opcional)</label>
+                        <input type="url" id="promoSponsorLink" class="form-control"
+                            placeholder="https://exemplo.com/contato - Link que aparece no slide final">
+                    </div>
+
                     <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="btn btn-green" id="btnSavePromo">Criar Promoção</button>
-                        <button type="button" class="btn" id="btnCancelEdit" style="display:none; background: #666;"
+                        <button type="submit" class="btn" id="promoSubmitBtn">Salvar Promoção</button>
+                        <button type="button" class="btn btn-danger" id="promoCancelBtn" style="display: none;"
                             onclick="resetPromoForm()">Cancelar Edição</button>
                     </div>
                 </form>
@@ -313,364 +634,790 @@
 
             <div class="card">
                 <h2>Promoções Ativas</h2>
-                <table class="table" id="promoTable">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Extra</th>
-                            <th>Validade</th>
-                            <th>Acessos / Resgates</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table id="promoTable">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Extra</th>
+                                <th>Imagem</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Search -->
-        <div id="tab-search" class="tab-content" style="display: none;">
+        <!-- TAB: SEARCH -->
+        <div id="tab-search" class="section-content">
             <div class="card">
-                <h2>🔎 Consultar Participante</h2>
-                <div class="form-group">
-                    <label>Telefone ou Número do Ticket</label>
-                    <input type="text" id="searchTerm" class="form-control" placeholder="Ex: (11)99999-9999 ou 1234">
+                <h2>Buscar Participante</h2>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="searchTerm" class="form-control" placeholder="Telefone ou Número da Sorte">
+                    <button onclick="searchUser()" class="btn">Buscar</button>
                 </div>
-                <button class="btn" onclick="doSearch()">Buscar</button>
-                <div id="searchOutput"></div>
+            </div>
+            <div id="searchResult"></div>
+        </div>
+
+        <!-- TAB: ADMINS -->
+        <div id="tab-admins" class="section-content">
+            <div class="card">
+                <h2>Gerenciar Acessos</h2>
+                <form id="inviteForm" onsubmit="inviteAdmin(event)">
+                    <div class="form-group">
+                        <label>Nome do Novo Admin</label>
+                        <input type="text" id="newAdminName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>WhatsApp</label>
+                        <input type="tel" id="newAdminPhone" class="form-control" placeholder="(11) 99999-9999"
+                            maxlength="15" required oninput="maskPhone(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <input type="password" id="newAdminPassword" class="form-control" placeholder="Senha Inicial"
+                            required minlength="6">
+                    </div>
+                    <button type="submit" class="btn">Convidar Admin</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Administradores Ativos</h2>
+                <div class="table-wrapper">
+                    <table id="adminsTable">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>WhatsApp</th>
+                                <th>Último Acesso</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
     </div>
 
+    <!-- Custom Dialog Modal -->
+    <div class="az-modal-overlay" id="dialogModal">
+        <div class="az-modal">
+            <h3 id="dialogTitle">Atenção</h3>
+            <p id="dialogMessage">Mensagem do sistema</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" id="dialogConfirmBtn" onclick="closeDialog()">OK</button>
+                <button class="btn btn-danger" id="dialogCancelBtn" style="display: none;"
+                    onclick="closeDialog()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Promo Modal -->
+    <div class="az-modal-overlay" id="shareModal" style="display: none;">
+        <div class="az-modal" style="max-width: 400px;">
+            <h3>📤 Compartilhar Promoção</h3>
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <img id="shareModalImage" src="" alt="Imagem da Promoção"
+                    style="max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover;">
+            </div>
+            <div class="form-group">
+                <label>Texto para Compartilhar</label>
+                <textarea id="shareModalText" class="form-control" rows="4" style="resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn" onclick="copyShareText()">📋 Copiar Texto</button>
+                <button class="btn" style="background: #25D366;" onclick="sendToWhatsApp()">💬 Enviar no
+                    WhatsApp</button>
+                <button class="btn btn-danger" onclick="closeShareModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Days Configuration
-        const daysMap = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        const daysLabel = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-        const dc = document.getElementById('daysContainer');
-        daysMap.forEach((d, i) => {
-            dc.innerHTML += `
-                <div class="form-group" style="flex:1; min-width: 60px;">
-                    <label>${daysLabel[i]}</label>
-                    <input type="number" id="qty_${d}" class="form-control" value="1" min="0">
-                </div>
-            `;
-        });
-
-        // Tab Navigation
+        // --- Utils ---
         function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tab).style.display = 'block';
-            event.target.classList.add('active');
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.nav-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
 
-            if (tab === 'dashboard') loadCampaign();
-            if (tab === 'promotions') loadPromos();
+            if (tab === 'admins') loadAdmins();
         }
 
-        // === DASHBOARD ===
-        async function loadCampaign() {
+        function showDialog(msg, title = 'Aviso', isConfirm = false, onConfirm = null) {
+            document.getElementById('dialogTitle').textContent = title;
+            document.getElementById('dialogMessage').textContent = msg;
+            const modal = document.getElementById('dialogModal');
+            const confirmBtn = document.getElementById('dialogConfirmBtn');
+            const cancelBtn = document.getElementById('dialogCancelBtn');
+
+            confirmBtn.onclick = () => {
+                modal.style.display = 'none';
+                if (onConfirm) onConfirm();
+            };
+
+            cancelBtn.style.display = isConfirm ? 'block' : 'none';
+
+            modal.style.display = 'flex';
+        }
+
+        function closeDialog() {
+            document.getElementById('dialogModal').style.display = 'none';
+        }
+
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, "");
+            v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+            v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+            input.value = v;
+        }
+
+        // --- Admins Logic ---
+        async function loadAdmins() {
             try {
-                const res = await fetch('/api/admin/amigos/campaign');
+                const listRes = await fetch('/admin/list');
+                const list = await listRes.json();
+                const tbody = document.querySelector('#adminsTable tbody');
+                tbody.innerHTML = list.map(a => `
+                <tr>
+                    <td>${a.name}</td>
+                    <td>${a.phone}</td>
+                    <td>${a.last_login ? new Date(a.last_login).toLocaleString() : 'Pendente'}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteAdmin(${a.id})" style="padding: 0.5rem; font-size: 0.8rem;">Remover</button>
+                    </td>
+                </tr>
+            `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function inviteAdmin(e) {
+            e.preventDefault();
+            const name = document.getElementById('newAdminName').value;
+            const phone = document.getElementById('newAdminPhone').value;
+            const passwordInput = document.getElementById('newAdminPassword');
+            const password = passwordInput.value.trim() === '' ? null : passwordInput.value;
+
+            try {
+                const res = await fetch('/admin/invite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, password })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    showDialog('Admin convidado!', 'Sucesso');
+                    document.getElementById('inviteForm').reset();
+                    document.getElementById('newAdminName').value = '';
+                    document.getElementById('newAdminPhone').value = '';
+                    document.getElementById('newAdminPassword').value = '';
+                    loadAdmins();
+                } else {
+                    showDialog('Erro: ' + json.error, 'Erro');
+                }
+            } catch (e) { showDialog('Erro de conexão', 'Erro'); }
+        }
+
+        async function deleteAdmin(id) {
+            showDialog('Tem certeza que deseja remover este acesso?', 'Confirmação', true, async () => {
+                try {
+                    const res = await fetch(`/admin/${id}`, { method: 'DELETE' });
+                    const json = await res.json();
+                    if (json.success) loadAdmins();
+                    else showDialog(json.error || 'Erro ao remover.', 'Erro');
+                } catch (e) { showDialog('Erro de conexão', 'Erro'); }
+            });
+        }
+
+        // --- Stats & Chart ---
+        let chartInstance = null;
+
+        async function loadStats(period) {
+            document.getElementById('btn24h').classList.toggle('active', period === '24h');
+            document.getElementById('btn7d').classList.toggle('active', period === '7d');
+
+            try {
+                const res = await fetch('/api/admin/amigos/stats?period=' + period);
                 const data = await res.json();
 
-                if (!data || !data.id) {
-                    document.getElementById('campaignStats').innerHTML = '<p>Nenhuma campanha ativa.</p>';
-                    return;
-                }
+                // KPI
+                document.getElementById('kpiTotalNumbers').textContent = data.stats.total_numbers.toLocaleString();
+                document.getElementById('kpiTotalUsers').textContent = data.stats.total_users.toLocaleString();
+                document.getElementById('kpiTotalPromos').textContent = data.stats.total_promos.toLocaleString();
 
-                document.getElementById('campaignStats').innerHTML = `
-                    <p><strong>Campanha:</strong> ${data.name || 'Nenhuma'}</p>
-                    <p><strong>Range Global:</strong> ${data.start_number || 0} - ${data.end_number || 0}</p>
-                `;
+                // Chart
+                const ctx = document.getElementById('mainChart').getContext('2d');
+                if (chartInstance) chartInstance.destroy();
 
-                document.getElementById('cName').value = data.name || '';
-                document.getElementById('cStart').value = data.start_number || 0;
-                document.getElementById('cEnd').value = data.end_number || 0;
-                document.getElementById('cActive').checked = data.is_active;
-                updateActiveLabel(data.is_active);
-
-                if (data.base_qty_config) {
-                    daysMap.forEach(d => {
-                        const el = document.getElementById('qty_' + d);
-                        if (el) el.value = data.base_qty_config[d] || 1;
-                    });
-
-                    if (data.base_qty_config.share_settings) {
-                        document.getElementById('sImage').value = data.base_qty_config.share_settings.image || '';
-                        document.getElementById('sText').value = data.base_qty_config.share_settings.text || '';
-                        document.getElementById('sGroup').value = data.base_qty_config.share_settings.group_link || '';
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.chart.labels,
+                        datasets: [{
+                            label: 'Resgates',
+                            data: data.chart.data,
+                            borderColor: '#00E676',
+                            backgroundColor: 'rgba(0, 230, 118, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#000',
+                            pointBorderColor: '#00E676'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }, // Minimal look
+                        scales: {
+                            y: { grid: { color: '#333' }, ticks: { color: '#888' } },
+                            x: { grid: { display: false }, ticks: { color: '#888' } }
+                        }
                     }
+                });
+
+            } catch (e) { console.error('Stats error:', e); }
+        }
+
+        // --- Campaign Logic ---
+        async function loadCampaign() {
+            const res = await fetch('/api/admin/amigos/campaign');
+            const c = await res.json();
+            if (c.id) {
+                document.getElementById('campName').value = c.name;
+                document.getElementById('startNum').value = c.start_number;
+                document.getElementById('endNum').value = c.end_number;
+                document.getElementById('isActive').checked = c.is_active;
+
+                const config = c.base_qty_config || {};
+                document.getElementById('qtySun').value = config.sun || 1;
+                document.getElementById('qtyMon').value = config.mon || 1;
+                document.getElementById('qtyTue').value = config.tue || 1;
+                document.getElementById('qtyWed').value = config.wed || 1;
+                document.getElementById('qtyThu').value = config.thu || 1;
+                document.getElementById('qtyFri').value = config.fri || 1;
+                document.getElementById('qtySat').value = config.sat || 1;
+
+                // Share Settings
+                const share = config.share_settings || {};
+                document.getElementById('groupLink').value = share.group_link || '';
+                document.getElementById('shareText').value = share.text || '';
+                if (share.image) {
+                    document.getElementById('currentShareImageDisplay').textContent = 'Imagem atual: ' + share.image.split('/').pop();
                 }
-            } catch (e) {
-                console.error(e);
             }
         }
 
-        function updateActiveLabel(isActive) {
-            const l = document.getElementById('activeLabel');
-            l.textContent = isActive ? 'ATIVA (Vendas Liberadas)' : 'INATIVA (Vendas Pausadas)';
-            l.style.color = isActive ? '#00c853' : '#d32f2f';
-        }
-
-        document.getElementById('cActive').addEventListener('change', function () {
-            updateActiveLabel(this.checked);
-        });
-
-        document.getElementById('campaignForm').addEventListener('submit', async function (e) {
+        async function saveCampaign(e) {
             e.preventDefault();
-            const config = {};
-            daysMap.forEach(d => config[d] = parseInt(document.getElementById('qty_' + d).value));
 
-            // Add Share Settings to config
-            config.share_settings = {
-                image: document.getElementById('sImage').value,
-                text: document.getElementById('sText').value,
-                group_link: document.getElementById('sGroup').value
+            // Handle Share Image Upload First
+            const file = document.getElementById('mainShareImage').files[0];
+            let shareImageUrl = null;
+
+            if (file) {
+                const fd = new FormData();
+                fd.append('image', file);
+                try {
+                    const upRes = await fetch('/api/admin/amigos/upload', { method: 'POST', body: fd });
+                    const upJson = await upRes.json();
+                    if (upJson.url) shareImageUrl = upJson.url;
+                } catch (e) { console.error('Upload failed', e); }
+            } else {
+                const currRes = await fetch('/api/admin/amigos/campaign');
+                const curr = await currRes.json();
+                if (curr.base_qty_config && curr.base_qty_config.share_settings) {
+                    shareImageUrl = curr.base_qty_config.share_settings.image;
+                }
+            }
+
+            const data = {
+                name: document.getElementById('campName').value,
+                start_number: document.getElementById('startNum').value,
+                end_number: document.getElementById('endNum').value,
+                is_active: document.getElementById('isActive').checked,
+                config: {
+                    sun: parseInt(document.getElementById('qtySun').value),
+                    mon: parseInt(document.getElementById('qtyMon').value),
+                    tue: parseInt(document.getElementById('qtyTue').value),
+                    wed: parseInt(document.getElementById('qtyWed').value),
+                    thu: parseInt(document.getElementById('qtyThu').value),
+                    fri: parseInt(document.getElementById('qtyFri').value),
+                    sat: parseInt(document.getElementById('qtySat').value),
+                    share_settings: {
+                        group_link: document.getElementById('groupLink').value,
+                        text: document.getElementById('shareText').value,
+                        image: shareImageUrl
+                    }
+                }
             };
 
-            const payload = {
-                name: document.getElementById('cName').value,
-                start_number: parseInt(document.getElementById('cStart').value),
-                end_number: parseInt(document.getElementById('cEnd').value),
-                config: config,
-                is_active: document.getElementById('cActive').checked
-            };
-
-            await fetch('/api/admin/amigos/campaign', {
+            const res = await fetch('/api/admin/amigos/campaign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(data)
             });
-            alert('Configuração Salva!');
-            loadCampaign();
-        });
 
-        async function initTickets() {
-            if (confirm('Isso pode demorar alguns segundos para gerar todos os números. Confirmar?')) {
-                try {
-                    const btn = event.target;
-                    btn.disabled = true;
-                    btn.textContent = 'Gerando...';
+            if (res.ok) {
+                showDialog('Configurações salvas com sucesso!', 'Sucesso');
+                loadCampaign(); // Reload to show new state
+            }
+            else showDialog('Erro ao salvar.');
+        }
 
-                    const res = await fetch('/api/admin/amigos/campaign/tickets', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({}) // Backend will use active campaign
-                    });
+        async function generateTickets() {
+            showDialog('Isso pode levar alguns instantes...', 'Gerando', false);
+            const res = await fetch('/api/admin/amigos/campaign/tickets', { method: 'POST' });
+            const json = await res.json();
+            if (json.success) showDialog(json.message, 'Sucesso');
+            else showDialog('Erro: ' + json.error);
+        }
 
-                    const result = await res.json();
-
-                    if (res.ok) {
-                        alert('✅ ' + (result.message || 'Tickets inicializados com sucesso!'));
-                    } else {
-                        alert('❌ Erro: ' + (result.error || 'Erro desconhecido'));
+        async function resetCampaign() {
+            showDialog('TEM CERTEZA? Isso apagará todos os resgates e devolverá os números para o sorteio. Essa ação NÃO pode ser desfeita.', 'PERIGO', true, async () => {
+                setTimeout(async () => {
+                    const confirmation = prompt("Para confirmar, digite ZERAR (tudo maiúsculo):");
+                    if (confirmation === "ZERAR") {
+                        showDialog('Processando reset...', 'Aguarde');
+                        try {
+                            const res = await fetch('/api/admin/amigos/campaign/reset', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({})
+                            });
+                            const json = await res.json();
+                            if (json.success) {
+                                showDialog(json.message, 'Reset Concluído');
+                                loadStats('24h');
+                            } else {
+                                showDialog('Erro: ' + json.error, 'Erro');
+                            }
+                        } catch (e) {
+                            showDialog('Erro de conexão: ' + e.message, 'Erro');
+                        }
+                    } else if (confirmation !== null) {
+                        alert("Texto incorreto. Ação cancelada.");
                     }
+                }, 100);
+            });
+        }
 
-                    btn.disabled = false;
-                    btn.textContent = 'Inicializar Tickets agora';
+        // Restart Campaign Modal Functions
+        function showRestartModal() {
+            document.getElementById('restartModal').style.display = 'flex';
+            document.getElementById('restartPassword').value = '';
+        }
+
+        function closeRestartModal() {
+            document.getElementById('restartModal').style.display = 'none';
+        }
+
+        async function confirmRestart() {
+            const password = document.getElementById('restartPassword').value;
+            if (!password) {
+                showDialog('Digite sua senha para confirmar', 'Erro');
+                return;
+            }
+
+            closeRestartModal();
+            showDialog('Verificando credenciais e reiniciando...', 'Aguarde');
+
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/restart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    showDialog('Campanha reiniciada com sucesso! A página será recarregada.', 'Concluído', false, () => {
+                        window.location.reload();
+                    });
+                } else {
+                    showDialog('Erro: ' + json.error, 'Erro');
+                }
+            } catch (e) {
+                showDialog('Erro de conexão: ' + e.message, 'Erro');
+            }
+        }
+
+        // --- Promos Logic ---
+        // --- Promos Logic ---
+        let allPromos = []; // Cache for editing
+
+        async function createPromo(e) {
+            e.preventDefault();
+            const id = document.getElementById('promoId').value;
+            const isEdit = !!id;
+
+            const fd = new FormData();
+            const file = document.getElementById('promoImage').files[0];
+            let imgUrl = isEdit ? document.getElementById('currentPromoImage').getAttribute('data-url') : '';
+
+            if (file) {
+                fd.append('image', file);
+
+                // Show loading indicator
+                const submitBtn = document.getElementById('promoSubmitBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = '⏳ Enviando arquivo...';
+                submitBtn.disabled = true;
+
+                try {
+                    const upRes = await fetch('/api/admin/amigos/upload', { method: 'POST', body: fd });
+
+                    // Restore button
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+
+                    if (!upRes.ok) {
+                        const errorData = await upRes.json().catch(() => ({}));
+                        showDialog('Erro ao enviar arquivo: ' + (errorData.error || 'Servidor retornou erro ' + upRes.status), 'Erro');
+                        return;
+                    }
+                    const upJson = await upRes.json();
+                    if (upJson.url) imgUrl = upJson.url;
+                    else if (upJson.error) {
+                        showDialog('Erro no upload: ' + upJson.error, 'Erro');
+                        return;
+                    }
                 } catch (e) {
-                    alert('❌ Erro de conexão: ' + e.message);
+                    // Restore button on error
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    showDialog('Erro ao enviar imagem: ' + e.message, 'Erro');
+                    return;
                 }
             }
-        }
 
-        async function uploadShareImage(input) {
-            if (!input.files || !input.files[0]) return;
-            const fd = new FormData();
-            fd.append('image', input.files[0]);
+            // Dates
+            const sDate = document.getElementById('promoStartDate').value;
+            const sTime = document.getElementById('promoStartTime').value;
+            const eDate = document.getElementById('promoEndDate').value;
+            const eTime = document.getElementById('promoEndTime').value;
 
-            const res = await fetch('/api/admin/amigos/upload', { method: 'POST', body: fd });
-            const data = await res.json();
+            let startsAt = null;
+            if (sDate) startsAt = new Date(`${sDate}T${sTime || '00:00'}:00`).toISOString();
 
-            if (data.url) {
-                document.getElementById('sImage').value = data.url;
+            let endsAt = null;
+            if (eDate) endsAt = new Date(`${eDate}T${eTime || '23:59'}:00`).toISOString();
+
+            const data = {
+                name: document.getElementById('promoName').value,
+                extra_qty: document.getElementById('promoExtra').value,
+                image_url: imgUrl,
+                starts_at: startsAt,
+                ends_at: endsAt,
+                share_text: document.getElementById('promoShareText').value.trim() || null,
+                sponsor_link: document.getElementById('promoSponsorLink').value.trim() || null
+            };
+
+            let res;
+            if (isEdit) {
+                res = await fetch(`/api/admin/amigos/promotions/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                res = await fetch('/api/admin/amigos/promotions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
             }
-        }
 
-        // === PROMOTIONS ===
-        async function uploadImage(input) {
-            if (!input.files || !input.files[0]) return;
-            const fd = new FormData();
-            fd.append('image', input.files[0]);
-
-            const res = await fetch('/api/admin/amigos/upload', { method: 'POST', body: fd });
-            const data = await res.json();
-
-            if (data.url) {
-                document.getElementById('pImgUrl').value = data.url;
-                document.getElementById('pPreview').src = data.url;
-                document.getElementById('pPreview').style.display = 'block';
+            if (res.ok) {
+                showDialog('Promoção salva com sucesso!', 'Sucesso');
+                loadPromos();
+                resetPromoForm();
+            } else {
+                const json = await res.json();
+                showDialog('Erro ao salvar: ' + (json.error || 'Erro desconhecido'), 'Erro');
             }
         }
 
         async function loadPromos() {
             const res = await fetch('/api/admin/amigos/promotions');
-            const list = await res.json();
+            allPromos = await res.json();
             const tbody = document.querySelector('#promoTable tbody');
-            tbody.innerHTML = '';
-
-            list.forEach(p => {
-                const start = new Date(p.starts_at).toLocaleString();
-                const end = new Date(p.ends_at).toLocaleString();
-                const pJson = JSON.stringify(p).replace(/'/g, "\\'");
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <div style="display:flex; align-items:center; gap:5px;">
-                                ${p.image_url ? `<img src="${p.image_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;">` : ''}
-                                ${p.name}
-                            </div>
-                        </td>
-                        <td>+${p.extra_qty}</td>
-                        <td style="font-size:0.85rem;">${start}<br>até<br>${end}</td>
-                        <td>👁️ ${p.views_count || 0} / ✅ ${p.redemptions_count || 0}</td>
-                        <td>
-                            <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                                <button class="btn" style="padding:5px 10px; font-size:0.8rem;" onclick="copyLink(${p.id})">🔗 Copiar</button>
-                                <button class="btn" style="padding:5px 10px; font-size:0.8rem; background:#FF9800;" onclick='editPromo(${pJson})'>✏️</button>
-                                <button class="btn" style="padding:5px 10px; font-size:0.8rem; background:#f44336;" onclick="deletePromo(${p.id})">🗑️</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
+            tbody.innerHTML = allPromos.map(p => `
+            <tr>
+                <td>${p.name}
+                    ${p.starts_at && new Date(p.starts_at) > new Date() ? '<span class="badge badge-warning">Agendado</span>' : ''}
+                    ${p.ends_at && new Date(p.ends_at) < new Date() ? '<span class="badge badge-danger">Encerrado</span>' : ''}
+                </td>
+                <td>+${p.extra_qty}</td>
+                <td>${p.image_url ? `<a href="${p.image_url}" target="_blank" style="color:var(--az-primary);">Ver Imagem</a>` : '-'}</td>
+                <td>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button class="action-btn" style="background: var(--az-primary); color: #000; position:relative; z-index:1;" onclick="sharePromo(${p.id}, event)" title="Compartilhar no WhatsApp">📤</button>
+                        <button class="action-btn" style="background: #333; color: #fff; border: 1px solid var(--az-primary); position:relative; z-index:1;" onclick="generateLink(${p.id}, event)" title="Copiar Link">🔗</button>
+                        <button class="action-btn" style="background: #F0AD4E; color: #000;" onclick="editPromo(${p.id})" title="Editar">✏️</button>
+                        <button class="action-btn" style="background: var(--az-danger); color: #fff;" onclick="deletePromo(${p.id})" title="Excluir">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
         }
 
-        document.getElementById('promoForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
 
-            const sDate = document.getElementById('pStartDate').value;
-            const sTime = document.getElementById('pStartTime').value;
-            const eDate = document.getElementById('pEndDate').value;
-            const eTime = document.getElementById('pEndTime').value;
-
-            const start = new Date(sDate + 'T' + sTime);
-            const end = new Date(eDate + 'T' + eTime);
-            const now = new Date();
-            const tolerance = 5 * 60 * 1000;
-            const pId = document.getElementById('pId').value;
-
-            if (!pId && start < (now - tolerance)) {
-                if (!confirm('A data de início está no passado. Deseja continuar mesmo assim?')) return;
-            }
-            if (end <= start) {
-                alert('Data Fim deve ser maior que Data Início');
-                return;
-            }
-
-            const payload = {
-                name: document.getElementById('pName').value,
-                image_url: document.getElementById('pImgUrl').value,
-                extra_qty: parseInt(document.getElementById('pQty').value),
-                starts_at: start.toISOString(),
-                ends_at: end.toISOString()
-            };
-
-            if (pId) {
-                await fetch('/api/admin/amigos/promotions/' + pId, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } else {
-                await fetch('/api/admin/amigos/promotions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+        // Helper: Secure Copy
+        async function secureCopy(text) {
+            try {
+                if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    throw new Error('Clipboard API unavailable');
+                }
+            } catch (err) {
+                // Fallback for mobile/http
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (e) {
+                    console.error('Copy failed', e);
+                    showDialog('Não foi possível copiar automaticamente.', 'Erro');
+                }
+                document.body.removeChild(textArea);
             }
 
-            resetPromoForm();
-            loadPromos();
-        });
+            // Toast
+            const toast = document.createElement('div');
+            toast.textContent = '✓ Copiado!';
+            toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:var(--az-primary);color:#000;padding:10px 20px;border-radius:8px;font-weight:bold;z-index:9999;animation:fadeIn 0.3s ease;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
 
-        function editPromo(p) {
-            document.getElementById('promoTitle').innerText = 'Editar Promoção (Link Continua Válido)';
-            document.getElementById('pId').value = p.id;
-            document.getElementById('pName').value = p.name;
-            document.getElementById('pQty').value = p.extra_qty;
-            document.getElementById('pImgUrl').value = p.image_url || '';
+        async function generateLink(id, event) {
+            const btn = event.currentTarget || event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+
+            try {
+                const res = await fetch(`/api/admin/amigos/promotions/${id}/token`, { method: 'POST' });
+                const json = await res.json();
+                const link = `${window.location.origin}/p/${json.token}`;
+                await secureCopy(link);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btn.textContent = originalText;
+            }
+        }
+
+        async function sharePromo(id, event) {
+            const btn = event.currentTarget || event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳';
+            btn.disabled = true;
+
+            try {
+                const p = allPromos.find(x => x.id === id);
+                if (!p) return;
+
+                if (!p.share_text || !p.share_text.trim()) {
+                    showDialog('Adicione um texto de compartilhamento nesta promoção primeiro.', 'Aviso');
+                    return;
+                }
+
+                const res = await fetch(`/api/admin/amigos/promotions/${id}/token`, { method: 'POST' });
+                const json = await res.json();
+                const link = `${window.location.origin}/p/${json.token}`;
+                const shareText = `${p.share_text}\n\n👉 Acesse: ${link}`;
+
+                // Try Native Share if on Mobile/Supported
+                if (navigator.share) {
+                    try {
+                        let shareData = { text: shareText };
+
+                        // Try to attach image if available
+                        if (p.image_url) {
+                            try {
+                                // Add transformations if Cloudinary
+                                let url = p.image_url;
+                                if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+                                    url = url.replace('/upload/', '/upload/q_auto,f_auto/');
+                                }
+
+                                const mediaResp = await fetch(url);
+                                const mediaBlob = await mediaResp.blob();
+                                const isVideo = url.match(/\.(mp4|mov|webm|avi)$/i) || url.includes('/video/');
+                                const mimeType = isVideo ? 'video/mp4' : 'image/png';
+                                const fileName = isVideo ? 'promo.mp4' : 'promo.png';
+                                const mediaFile = new File([mediaBlob], fileName, { type: mimeType });
+                                shareData.files = [mediaFile];
+                            } catch (imgErr) {
+                                console.log('Image fetch failed, sharing text only', imgErr);
+                            }
+                        }
+
+                        await navigator.share(shareData);
+                        btn.textContent = '✅';
+                    } catch (shareErr) {
+                        console.log('Share API error or cancel', shareErr);
+                        // Fallback to WhatsApp link if share API fails (e.g. desktop cancel)
+                        if (!shareErr.message.includes('abort')) {
+                            const text = encodeURIComponent(shareText);
+                            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+                        }
+                    }
+                } else {
+                    // Desktop Fallback
+                    await secureCopy(shareText);
+                    const text = encodeURIComponent(shareText);
+                    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+                    showDialog('Link e texto copiados! Abrindo WhatsApp...', 'Sucesso');
+                }
+            } catch (e) {
+                console.error(e);
+                showDialog('Erro ao compartilhar', 'Erro');
+            } finally {
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        async function editPromo(id) {
+            const p = allPromos.find(x => x.id === id);
+            if (!p) return;
+
+            document.getElementById('promoId').value = p.id;
+            document.getElementById('promoName').value = p.name;
+            document.getElementById('promoExtra').value = p.extra_qty;
+
+            // Dates
+            if (p.starts_at) {
+                const d = new Date(p.starts_at);
+                document.getElementById('promoStartDate').value = d.toISOString().split('T')[0];
+                document.getElementById('promoStartTime').value = d.toTimeString().split(' ')[0].substring(0, 5);
+            }
+            if (p.ends_at) {
+                const d = new Date(p.ends_at);
+                document.getElementById('promoEndDate').value = d.toISOString().split('T')[0];
+                document.getElementById('promoEndTime').value = d.toTimeString().split(' ')[0].substring(0, 5);
+            }
+
             if (p.image_url) {
-                document.getElementById('pPreview').src = p.image_url;
-                document.getElementById('pPreview').style.display = 'block';
+                const label = document.getElementById('currentPromoImage');
+                label.style.display = 'block';
+                label.textContent = 'Imagem atual: ' + p.image_url.split('/').pop();
+                label.setAttribute('data-url', p.image_url);
             }
 
-            const s = new Date(p.starts_at);
-            const e = new Date(p.ends_at);
-            const sIso = new Date(s.getTime() - (s.getTimezoneOffset() * 60000)).toISOString();
-            const eIso = new Date(e.getTime() - (e.getTimezoneOffset() * 60000)).toISOString();
+            // Load share text
+            document.getElementById('promoShareText').value = p.share_text || '';
 
-            document.getElementById('pStartDate').value = sIso.slice(0, 10);
-            document.getElementById('pStartTime').value = sIso.slice(11, 16);
-            document.getElementById('pEndDate').value = eIso.slice(0, 10);
-            document.getElementById('pEndTime').value = eIso.slice(11, 16);
+            // Load sponsor link
+            document.getElementById('promoSponsorLink').value = p.sponsor_link || '';
 
-            document.getElementById('btnSavePromo').textContent = 'Salvar Alterações';
-            document.getElementById('btnCancelEdit').style.display = 'inline-block';
+            // UI Mode
+            document.getElementById('promoSubmitBtn').textContent = 'Salvar Alterações';
+            document.getElementById('promoCancelBtn').style.display = 'block';
+
+            // Scroll to form
+            document.getElementById('tab-promos').scrollIntoView({ behavior: 'smooth' });
         }
 
         function resetPromoForm() {
             document.getElementById('promoForm').reset();
-            document.getElementById('pId').value = '';
-            document.getElementById('promoTitle').innerText = 'Nova Promoção';
-            document.getElementById('btnSavePromo').textContent = 'Criar Promoção';
-            document.getElementById('btnCancelEdit').style.display = 'none';
-            document.getElementById('pPreview').style.display = 'none';
-            document.getElementById('pImgUrl').value = '';
+            document.getElementById('promoId').value = '';
+            document.getElementById('currentPromoImage').style.display = 'none';
+            document.getElementById('currentPromoImage').setAttribute('data-url', '');
+            document.getElementById('promoSubmitBtn').textContent = 'Criar Promoção';
+            document.getElementById('promoCancelBtn').style.display = 'none';
+
+            // Set default dates
+            const now = new Date();
+            const next = new Date();
+            next.setMonth(next.getMonth() + 1);
+
+            document.getElementById('promoStartDate').value = now.toISOString().split('T')[0];
+            document.getElementById('promoStartTime').value = now.toTimeString().split(' ')[0].substring(0, 5);
+
+            document.getElementById('promoEndDate').value = next.toISOString().split('T')[0];
+            document.getElementById('promoEndTime').value = '23:59';
         }
+
+        // Init defaults
+        resetPromoForm();
 
         async function deletePromo(id) {
-            if (!confirm('Tem certeza? O link deixará de funcionar.')) return;
-            await fetch('/api/admin/amigos/promotions/' + id, { method: 'DELETE' });
-            loadPromos();
-        }
-
-        async function copyLink(id) {
-            const res = await fetch(`/api/admin/amigos/promotions/${id}/token`, { method: 'POST' });
-            const data = await res.json();
-            navigator.clipboard.writeText(data.link).then(() => {
-                alert('Link copiado!\n\n' + data.link);
-            }).catch(() => {
-                prompt('Copie o link:', data.link);
+            showDialog('Tem certeza que deseja excluir esta promoção?', 'Confirmação', true, async () => {
+                await fetch(`/api/admin/amigos/promotions/${id}`, { method: 'DELETE' });
+                loadPromos();
             });
         }
 
-        // === SEARCH ===
-        async function doSearch() {
+        // --- Search Logic ---
+        async function searchUser() {
             const term = document.getElementById('searchTerm').value;
-            const res = await fetch(`/api/admin/amigos/search?term=${encodeURIComponent(term)}`);
-            const data = await res.json();
+            const div = document.getElementById('searchResult');
+            div.innerHTML = 'Buscando...';
 
-            const out = document.getElementById('searchOutput');
-            if (data.participant) {
-                let historyHtml = '<ul class="print-list">';
-                data.history.forEach(h => {
-                    historyHtml += `
-                        <li class="print-item">
-                            <strong>${new Date(h.claimed_at).toLocaleDateString()}</strong> - ${h.description}<br>
-                            Tickets: ${h.tickets ? h.tickets.join(', ') : 'N/A'}<br>
-                            <span style="color: red;">🛑 ${h.print_required}</span>
-                        </li>
-                    `;
-                });
-                historyHtml += '</ul>';
+            const res = await fetch(`/api/admin/amigos/search?term=${term}`);
+            const json = await res.json();
 
-                out.innerHTML = `
-                    <div class="search-result">
-                        <h3>${data.participant.name} (${data.participant.phone})</h3>
-                        <h4>Histórico e Prints Obrigatórios:</h4>
-                        ${historyHtml}
-                    </div>
-                `;
-            } else {
-                out.innerHTML = '<p>Nada encontrado.</p>';
+            if (!json.found) {
+                div.innerHTML = '<p style="color:#aaa;">Nada encontrado.</p>';
+                return;
             }
+
+            const p = json.participant;
+            const h = json.history || [];
+
+            div.innerHTML = `
+            <div class="card" style="margin-top: 1rem;">
+                <h3 style="color: var(--az-primary);">${p.name || 'Sem nome'}</h3>
+                <p>Telefone: <strong>${p.phone}</strong></p>
+                
+                <h4>Histórico (${h.length} resgates)</h4>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${h.map(i => `
+                        <div style="background: #333; padding: 10px; margin-bottom: 5px; border-radius: 4px;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span>${new Date(i.claimed_at).toLocaleString()}</span>
+                                <span style="color: var(--az-primary); font-weight:bold;">${i.total_qty} núm</span>
+                            </div>
+                            <small style="color:#aaa;">${i.description}</small>
+                            <div style="margin-top:5px; font-size:0.9rem; letter-spacing:1px; color:#fff;">
+                                [ ${JSON.parse(i.tickets || '[]').join(' - ')} ]
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
         }
 
         // Init
+        loadStats('24h');
         loadCampaign();
+        loadPromos();
+
+        async function logout() {
+            await fetch('/admin/logout', { method: 'POST' });
+            window.location.href = '/admin/login';
+        }
+
     </script>
 </body>
 

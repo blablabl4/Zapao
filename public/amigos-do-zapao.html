@@ -56,41 +56,11 @@
             overflow-y: auto;
         }
 
-        /* Carousel Slot Animation - Right to Left, accelerate then decelerate */
+        /* Carousel Slot Animation - CSS fallback */
         @keyframes carouselSpin {
             0% {
                 transform: translateX(200%);
                 opacity: 0;
-            }
-
-            10% {
-                transform: translateX(150%);
-                opacity: 0.3;
-            }
-
-            30% {
-                transform: translateX(50%);
-                opacity: 0.6;
-            }
-
-            50% {
-                transform: translateX(-50%);
-                opacity: 0.6;
-            }
-
-            70% {
-                transform: translateX(-150%);
-                opacity: 0.3;
-            }
-
-            85% {
-                transform: translateX(-30%);
-                opacity: 0.8;
-            }
-
-            95% {
-                transform: translateX(10%);
-                opacity: 0.9;
             }
 
             100% {
@@ -99,18 +69,36 @@
             }
         }
 
-        .slot-spinning {
-            animation: carouselSpin 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        /* Pop-in animation for cards */
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+
+            60% {
+                transform: scale(1.15) rotate(10deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        .az-card.pop-in {
+            animation: popIn 0.5s ease-out forwards;
         }
 
         .slot-revealed {
             border: 2px solid var(--az-primary) !important;
             box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
+            color: var(--az-primary);
+            font-weight: bold;
         }
 
         .slot-revealed .az-card-content {
             color: var(--az-primary);
-            font-weight: bold;
         }
 
         /* Logo Glow Effect */
@@ -118,11 +106,14 @@
             filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.5)) drop-shadow(0 0 40px rgba(0, 230, 118, 0.3));
         }
 
-        /* Hero Section */
-        .az-hero {
+        /* Hero / Home View */
+        .az-home-view {
             text-align: center;
             padding: 2rem 1rem;
             margin-top: 60px;
+            width: 100%;
+            display: block;
+            /* Toggled via JS */
         }
 
         .az-title {
@@ -143,8 +134,9 @@
 
         /* Cards Container - 5 columns grid */
         .az-cards-container {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 0.5rem;
             margin-bottom: 2rem;
             padding: 0 1rem;
@@ -153,11 +145,20 @@
             margin-right: auto;
         }
 
+        .az-cards-container .az-card {
+            width: calc(20% - 0.5rem);
+            min-width: 55px;
+        }
+
         @media (max-width: 450px) {
             .az-cards-container {
-                grid-template-columns: repeat(5, 1fr);
                 gap: 0.3rem;
                 max-width: 100%;
+            }
+
+            .az-cards-container .az-card {
+                width: calc(20% - 0.3rem);
+                min-width: 50px;
             }
         }
 
@@ -214,20 +215,35 @@
             }
         }
 
-        /* Action Button */
+        /* Action Button (FIXED UNIFORMITY) */
         .az-btn-main {
             background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
             color: #000;
             border: none;
-            padding: 1rem 3rem;
-            font-size: 1.2rem;
+            padding: 0 1.5rem;
+            min-height: 52px;
+            /* Fixed height for ALL buttons */
+            height: 52px;
+            /* Enforce height */
+            font-size: 1rem;
+            /* Uniform font size */
             font-weight: 700;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
             transition: transform 0.2s, box-shadow 0.2s;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            /* Flex centering for <a> and <button> */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            text-align: center;
+            white-space: nowrap;
+            /* NO TEXT WRAP */
+            width: 100%;
+            /* Default full width in stacked contexts */
         }
 
         .az-btn-main:hover {
@@ -240,9 +256,27 @@
             color: #888;
             cursor: not-allowed;
             box-shadow: none;
+            opacity: 0.7;
         }
 
-        /* Modal Overlay - Blocking */
+        /* Reveal Grid */
+        .az-reveal-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.8rem;
+            width: 100%;
+            max-width: 380px;
+            /* Wider for better spacing */
+            margin: 0 auto;
+        }
+
+        @media (max-width: 380px) {
+            .az-reveal-grid {
+                gap: 0.5rem;
+            }
+        }
+
+        /* Modal Overlay - Blocking (Only for Alerts/Lookups) */
         .az-modal-overlay {
             position: fixed;
             top: 0;
@@ -250,7 +284,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.95);
-            z-index: 9999;
+            z-index: 20000;
             display: none;
             align-items: center;
             justify-content: center;
@@ -265,8 +299,8 @@
             border-radius: 20px;
             width: 90%;
             max-width: 380px;
-            height: 550px;
-            max-height: 85vh;
+            height: auto;
+            min-height: 200px;
             overflow: visible !important;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
             border: 1px solid #333;
@@ -280,61 +314,10 @@
         .az-modal-content {
             padding: 2.5rem 2rem;
             width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             border-radius: 20px;
             text-align: center;
-        }
-
-        .az-modal::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .az-modal::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .az-modal::-webkit-scrollbar-thumb {
-            background: #444;
-            border-radius: 3px;
-        }
-
-        .az-modal-overlay {
-            overflow: hidden;
-        }
-
-        .step-badge {
-            position: absolute;
-            top: -15px;
-            left: -15px;
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
-            color: #000;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 1.5rem;
-            box-shadow: 4px 6px 20px rgba(0, 0, 0, 0.6);
-            border: 4px solid #121212;
-            transform: rotate(-10deg);
-            z-index: 20;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .az-btn-secondary {
-            background: linear-gradient(135deg, #333 0%, #222 100%);
-            color: var(--az-primary) !important;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-
-        .az-btn-secondary:hover {
-            box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
         }
 
         @keyframes slideUp {
@@ -396,26 +379,6 @@
             margin-top: 3px;
         }
 
-        .alert-box {
-            background: rgba(255, 193, 7, 0.1);
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            color: #FFC107;
-            padding: 0.8rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-        }
-
-        .az-countdown {
-            font-family: monospace;
-            font-size: 1.2rem;
-            color: #FF5252;
-            margin-top: 1rem;
-        }
-
         .az-success-msg {
             display: none;
             text-align: center;
@@ -434,16 +397,19 @@
             display: inline-block;
         }
 
-        /* Stories Carousel Layout */
-        .stories-overlay {
+        /* --- Full Screen Stories View (No Modal) --- */
+        .stories-view {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
+            background: var(--az-dark);
+            /* Opaque background */
             z-index: 10000;
             display: none;
+            /* Hidden by default */
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
@@ -451,6 +417,7 @@
         .stories-wrapper {
             width: 100%;
             max-width: 480px;
+            /* Limit max width for desktop feel */
             height: 100%;
             position: relative;
             overflow: hidden;
@@ -458,6 +425,7 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            /* Shadow on sides for desktop */
         }
 
         .stories-track {
@@ -470,74 +438,106 @@
 
         .story-slide {
             width: 25%;
-            /* 100% / 4 */
             height: 100%;
             flex-shrink: 0;
-            padding: 2rem 1.5rem;
+            /* BETTER SPACING / DISTRIBUTION */
+            padding: 1rem 1.5rem 6rem 1.5rem;
+            /* Huge bottom padding for arrow space */
             box-sizing: border-box;
             background: #1a1a1a;
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            /* Centraliza vert */
-            overflow-y: auto;
+            justify-content: space-between;
+            /* Header Top, Content Middle, Footer Bottom */
+        }
+
+        .story-header {
+            margin-top: 4.5rem;
+            margin-bottom: 1rem;
+            width: 100%;
             text-align: center;
+            flex-shrink: 0;
+        }
+
+        .story-content-area {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            position: relative;
+            /* Content is free to scroll if needed, but flex centered by default */
         }
 
         /* Nav Buttons */
         .story-nav-btn {
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 44px;
-            height: 44px;
+            bottom: 30px;
+            /* Fixed at bottom right */
+            right: 20px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 20;
+            z-index: 50;
             border: none;
-            font-size: 1.5rem;
-            backdrop-filter: blur(5px);
-            transition: background 0.2s;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            display: none;
+            /* Hidden by default */
         }
 
-        .story-nav-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .story-nav-btn.visible {
+            display: flex;
+            background: var(--az-primary);
+            color: #000;
+            box-shadow: 0 0 25px rgba(0, 230, 118, 0.8);
+            animation: pulseBtn 1.5s infinite;
         }
 
-        .story-nav-next {
-            right: 10px;
-        }
+        @keyframes pulseBtn {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+            }
 
-        .story-nav-prev {
-            left: 10px;
+            70% {
+                box-shadow: 0 0 0 15px rgba(0, 230, 118, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+            }
         }
 
         .story-close {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 20px;
+            right: 20px;
             background: none;
             border: none;
             color: white;
-            font-size: 2rem;
-            z-index: 30;
+            font-size: 2.5rem;
+            line-height: 1;
+            z-index: 60;
             cursor: pointer;
             opacity: 0.7;
         }
 
         .story-badge {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 40px;
-            height: 40px;
+            top: 25px;
+            left: 25px;
+            width: 45px;
+            height: 45px;
             background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
             color: #000;
             border-radius: 50%;
@@ -553,7 +553,8 @@
 </head>
 
 <body>
-    <div class="az-hero" style="padding-top: 1.5rem;">
+    <!-- Home View (Initial) -->
+    <div id="home-view" class="az-home-view">
         <!-- Logo with Glow Effect -->
         <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
             <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão" class="logo-glow"
@@ -561,9 +562,8 @@
         </div>
         <div id="promoBadgeContainer"></div>
         <p class="az-subtitle" style="margin-bottom: 1.5rem;">Resgate seu número da sorte diário gratuitamente !</p>
-        <!-- Cards Area - 5x1 with slot animation -->
+        <!-- Cards Area -->
         <div class="az-cards-container" id="cardsContainer">
-            <!-- Placeholders - no blur, animated numbers -->
             <div class="az-card">
                 <div class="az-card-content">??</div>
             </div>
@@ -580,29 +580,22 @@
                 <div class="az-card-content">??</div>
             </div>
         </div>
-        <!-- Action Buttons - Same Size, No Line Break -->
+        <!-- Initial Buttons -->
         <div
             style="display: flex; flex-direction: column; gap: 0.8rem; align-items: center; width: 100%; max-width: 280px; margin: 0.5rem auto 0;">
-            <button class="az-btn-main" id="generateBtn" onclick="startFlow()"
-                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">Resgatar Número
+            <button class="az-btn-main" id="generateBtn" onclick="startFlow()" style="width: 100%;">Resgatar Número
             </button>
             <button class="az-btn-main az-btn-secondary" id="lookupBtn" onclick="openLookupModal()"
-                style="width: 100%; padding: 0.9rem 1rem; font-size: 1rem; white-space: nowrap;">Consultar Números
+                style="width: 100%;">Consultar Números
             </button>
-        </div>
-        <div class="az-success-msg" id="successMsg">
-            <h3 style="color: var(--az-primary); margin-bottom: 0.5rem;">🎉 Sucesso !</h3>
-            <p>Seus números foram registrados !</p>
-            <button class="az-btn-main" onclick="window.location.reload()"
-                style="margin-top: 1rem; font-size: 1rem; padding: 0.8rem 2rem;">Voltar ao Início </button>
         </div>
     </div>
 
-    <!-- Custom Alert Modal (replaces browser alert) -->
+    <!-- Custom Alert Modal -->
     <div class="az-modal-overlay" id="alertModal">
         <div class="az-modal" style="text-align: center; max-width: 350px;">
             <div class="az-modal-content">
-                <h2 id="alertTitle" style="color: var(--az-primary);">⚠️ Atenção</h2>
+                <h2 id="alertTitle" style="color: var(--az-primary);">Atenção</h2>
                 <p id="alertMessage" style="color: #ccc; margin: 1rem 0;"></p>
                 <button class="az-btn-main" onclick="closeAlertModal()" style="width: 100%;">OK </button>
             </div>
@@ -613,7 +606,7 @@
     <div class="az-modal-overlay" id="lookupModal">
         <div class="az-modal">
             <div class="az-modal-content">
-                <h2>📋 Consultar Números</h2>
+                <h2>Consultar Números</h2>
                 <div class="form-group"><label>Seu WhatsApp (com DDD)</label><input type="tel" id="lookupPhoneModal"
                         class="form-control" placeholder="(11) 99999-9999" oninput="maskPhone(this)"></div>
                 <button class="az-btn-main" onclick="doLookup()" style="width: 100%; margin-top: 1rem;">Buscar </button>
@@ -624,38 +617,50 @@
         </div>
     </div>
 
-    <!-- Unified Stories Overlay -->
-    <div class="stories-overlay" id="storiesModal">
+    <!-- STORIES VIEW (Replcae Modal, Full Screen) -->
+    <div class="stories-view" id="storiesView">
         <div class="stories-wrapper">
-            <!-- Close (X) -->
+            <!-- Close -->
             <button class="story-close" onclick="closeStories()">×</button>
-            <!-- Navigation Arrows -->
-            <button class="story-nav-btn story-nav-prev" onclick="prevStory()">❮</button>
-            <button class="story-nav-btn story-nav-next" onclick="nextStory()">❯</button>
+            <!-- NEXT ARROW (Fixed Bottom Right) -->
+            <button class="story-nav-btn" id="storyNextBtn" onclick="nextStory()">❯</button>
+
             <div class="stories-track" id="storiesTrack">
                 <!-- SLIDE 1: Share -->
                 <div class="story-slide" id="slide1">
                     <div class="story-badge">1</div>
-                    <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 1rem;">📤 Compartilhe</h2>
-                    <p style="color: #aaa; margin-bottom: 1.5rem;">Compartilhe no status para continuar !</p>
-                    <div
-                        style="margin-bottom: auto; width: 100%; display: flex; justify-content: center; align-items: center; flex: 1;">
-                        <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
-                            style="max-width: 200px; max-height: 200px; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 15px rgba(0,230,118,0.3);">
+                    <div class="story-header">
+                        <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Compartilhamento
+                            Obrigatório</h2>
+                        <p style="color: #aaa; margin: 0; font-size: 0.9rem;">Compartilhe a publicação abaixo no status
+                            do WhatsApp para resgatar seus números da sorte.</p>
+                        <p style="color: #FFD700; font-weight: bold; font-size: 0.85rem; margin-top: 0.5rem;">⚠️ Faça
+                            print do seu status. Sem o print do seu status o prêmio não será validado. Sem exceções.</p>
                     </div>
-                    <div style="margin-top: auto; width: 100%; padding-top: 1rem;">
-                        <button class="az-btn-main" onclick="shareToWhatsApp()" style="width: 100%;">Compartilhar
-                            WhatsApp</button>
-                        <p style="color: #666; font-size: 0.8rem; margin-top: 0.5rem;">Após compartilhar, clique na seta
-                            ❯ para prosseguir.</p>
+                    <!-- Portrait Image Container -->
+                    <div class="story-content-area">
+                        <div
+                            style="width: 85%; height: 100%; max-height: 55vh; aspect-ratio: 9/16; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 20px rgba(0,230,118,0.2); overflow: hidden;">
+                            <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
+                                style="width: 100%; height: 100%; object-fit: cover;">
+                            <video id="sharePreviewVideo"
+                                style="width: 100%; height: 100%; object-fit: cover; display: none;" autoplay loop muted
+                                playsinline></video>
+                        </div>
+                        <div style="width: 100%; padding-top: 1.5rem;">
+                            <button class="az-btn-main" onclick="shareToWhatsApp()"
+                                style="width: 100%;">Compartilhar</button>
+                        </div>
                     </div>
                 </div>
                 <!-- SLIDE 2: Form -->
                 <div class="story-slide" id="slide2">
                     <div class="story-badge">2</div>
-                    <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 1rem;">🎰 Seus Dados</h2>
-                    <p style="color: #aaa; margin-bottom: 1rem;">Preencha para gerar números</p>
-                    <div style="width: 100%; text-align: left; overflow-y: auto; padding-bottom: 1rem;">
+                    <div class="story-header">
+                        <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 0.5rem;">Seus Dados</h2>
+                        <p style="color: #aaa; margin: 0;">Preencha para gerar números</p>
+                    </div>
+                    <div class="story-content-area" style="display: block; width: 100%;">
                         <form id="claimFormStories" onsubmit="submitClaimStep2(event)">
                             <div class="form-group"><label>WhatsApp (com DDD)</label><input type="tel" id="phone"
                                     class="form-control" required placeholder="(11) 99999-9999"
@@ -663,48 +668,58 @@
                             <div class="form-group"><label>Nome Completo</label><input type="text" id="name"
                                     class="form-control" required minlength="3"
                                     onblur="this.value = capitalizeName(this.value)"></div>
-                            <div class="form-group"><label>Você já compartilhou?</label><select id="sharedStatus"
-                                    class="form-control" required>
+                            <div class="form-group"><label>Você já compartilhou no status?</label><select
+                                    id="sharedStatus" class="form-control" required>
                                     <option value="">Selecione...</option>
                                     <option value="yes">Sim, já compartilhei</option>
                                     <option value="no">Vou compartilhar agora</option>
                                 </select></div>
                             <div class="checkbox-group"><input type="checkbox" id="lgpdConsent" required><label
                                     for="lgpdConsent">Aceito os Termos e Política de Privacidade.</label></div>
-                            <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 2rem;"
-                                id="submitBtnStories">Gerar Números ➜ </button>
+                            <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1.5rem;"
+                                id="submitBtnStories">Gerar Números</button>
                         </form>
                     </div>
                 </div>
                 <!-- SLIDE 3: Reveal -->
                 <div class="story-slide" id="slideReveal">
-                    <div class="story-badge">2</div>
-                    <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 0.5rem;">🎰 Sorteio</h2>
-                    <p id="revealStatus" style="color: #aaa;">Revelando...</p>
-                    <div
-                        style="flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; overflow-y: auto;">
-                        <div id="revealGrid"
-                            style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 320px;">
+                    <div class="story-badge">3</div>
+                    <div class="story-header">
+                        <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Esse são seus números da
+                            sorte 🍀</h2>
+                        <p id="revealStatus" style="color: #aaa; margin: 0;">Boa sorte!</p>
+                    </div>
+                    <div class="story-content-area">
+                        <div id="revealGrid" class="az-reveal-grid">
                             <!-- Grid populated by JS -->
                         </div>
+                        <p style="color: #666; font-size: 0.8rem; margin-top: 2rem;" id="revealHint"></p>
                     </div>
-                    <button class="az-btn-main az-btn-secondary" id="goToStep3Btn" onclick="nextStory()"
-                        style="width: 100%; margin-top: 1rem; display: none;">Continuar ➜ </button>
                 </div>
                 <!-- SLIDE 4: Success -->
                 <div class="story-slide" id="slideSuccess">
-                    <div class="story-badge">3</div>
-                    <h2 class="az-title" style="font-size: 1.8rem;">🎉 Sucesso !</h2>
-                    <p>Números registrados com sucesso</p>
-                    <div
-                        style="background: rgba(0,230,118,0.1); padding: 1.5rem; border-radius: 12px; margin: 2rem 0; width: 100%;">
-                        <p style="margin: 0; color: #fff;">📢 <strong>Entre no Grupo VIP !</strong><br><span
-                                style="font-size: 0.9rem; color: #ccc;">Para concorrer a prêmios extras !</span></p>
+                    <div class="story-badge">4</div>
+                    <div class="story-header">
+                        <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 0.5rem;">Último Passo</h2>
+                        <p style="color: #aaa; margin: 0;">Números registrados</p>
                     </div>
-                    <a href="#" id="groupLinkBtn" target="_blank" class="az-btn-main" onclick="finishFlow()"
-                        style="text-decoration: none; display: block; width: 100%;">Entrar no Grupo </a>
-                    <button class="az-btn-main az-btn-secondary" onclick="finishFlow()"
-                        style="width: 100%; margin-top: 1rem;">Finalizar </button>
+                    <div class="story-content-area">
+                        <div
+                            style="background: rgba(0,230,118,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; width: 100%;">
+                            <p style="margin: 0; color: #FFD700; font-size: 1rem; font-weight: bold;">⚠️ ENTRADA
+                                OBRIGATÓRIA NO GRUPO OFICIAL DO SORTEIO PARA:</p>
+                            <ul
+                                style="margin: 1rem 0 0 0; padding-left: 1.2rem; color: #fff; font-size: 0.9rem; line-height: 1.6;">
+                                <li>Ver resultado do Sorteio</li>
+                                <li>Conquistar + números da sorte</li>
+                                <li>Receber avisos e atualizações importantes</li>
+                            </ul>
+                        </div>
+                        <a href="#" id="groupLinkBtn" target="_blank" class="az-btn-main" onclick="finishFlow()"
+                            style="width: 100%; margin-bottom: 1rem;">ENTRAR NO GRUPO</a>
+                        <button class="az-btn-main az-btn-secondary" onclick="finishFlow()" style="width: 100%;">JÁ
+                            ESTOU NO GRUPO</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -713,7 +728,25 @@
     <script>
         // State
         let claimSessionId = null;
+        // Support both /p/TOKEN path and ?p=TOKEN query parameter
         let promoToken = new URLSearchParams(window.location.search).get('p');
+        if (!promoToken && window.location.pathname.startsWith('/p/')) {
+            promoToken = window.location.pathname.split('/p/')[1];
+        }
+
+        // Cloudinary URL optimization helper
+        function optimizeCloudinaryUrl(url, options = {}) {
+            if (!url || !url.includes('cloudinary.com')) return url;
+
+            // Default optimizations: auto format and quality
+            const transformations = options.transformations || 'q_auto,f_auto';
+
+            // Insert transformations after /upload/
+            if (url.includes('/upload/')) {
+                return url.replace('/upload/', `/upload/${transformations}/`);
+            }
+            return url;
+        }
         let deviceId = localStorage.getItem('az_device_id') || generateDeviceId();
         let shareSettings = {
             share_image: '/images/amigos-logo-new.png',
@@ -721,24 +754,95 @@
             group_link: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
         };
 
+        // Promo-specific settings (overrides campaign settings when available)
+        let promoSettings = null;
+
         // Stories State
         let currentStoryIndex = 0;
         const totalStories = 4;
+        let step1Done = false;
+        let step3Done = false;
 
-        // Load share settings
         async function loadSettings() {
             try {
                 const res = await fetch('/api/amigos/settings');
-                const data = await res.json();
+                if (!res.ok) throw new Error('Settings fetch failed');
+                const text = await res.text();
+                if (!text) throw new Error('Empty settings response');
+                const data = JSON.parse(text);
                 shareSettings = data;
                 if (data.share_image) document.getElementById('sharePreviewImg').src = data.share_image;
                 if (data.group_link) document.getElementById('groupLinkBtn').href = data.group_link;
-            } catch (e) { console.log('Using default settings'); }
+            } catch (e) { console.log('Using default settings:', e.message); }
+
+            // If accessing via promo link, override share image with promo image/video
+            if (promoToken) {
+                try {
+                    const promoRes = await fetch(`/api/amigos/promo/${promoToken}`);
+                    if (promoRes.ok) {
+                        const text = await promoRes.text();
+                        if (text) {
+                            const promoData = JSON.parse(text);
+
+                            // Store promo settings for sharing
+                            promoSettings = {
+                                image_url: promoData.image_url,
+                                share_text: promoData.share_text,
+                                name: promoData.name,
+                                sponsor_link: promoData.sponsor_link
+                            };
+
+                            if (promoData.image_url) {
+                                const url = optimizeCloudinaryUrl(promoData.image_url);
+                                const isVideo = url.match(/\.(mp4|mov|webm|avi)$/i) || url.includes('/video/');
+
+                                if (isVideo) {
+                                    document.getElementById('sharePreviewImg').style.display = 'none';
+                                    const video = document.getElementById('sharePreviewVideo');
+                                    video.src = url;
+                                    video.style.display = 'block';
+                                } else {
+                                    document.getElementById('sharePreviewImg').src = url;
+                                }
+                            }
+
+                            // Update slide 4 if promo has sponsor link
+                            if (promoData.sponsor_link) {
+                                updateSlide4ForSponsor(promoData.sponsor_link, promoData.name);
+                            }
+                        }
+                    }
+                } catch (e) { console.log('Could not load promo media:', e.message); }
+            }
         }
         loadSettings();
 
-        // Custom Alert Modal
-        function showAlert(message, title = '⚠️ Atenção', callback = null) {
+        // Update slide 4 to show sponsor link instead of group link
+        function updateSlide4ForSponsor(sponsorLink, promoName) {
+            const slide4 = document.getElementById('slideSuccess');
+            if (!slide4) return;
+
+            slide4.innerHTML = `
+                <div class="story-badge">4</div>
+                <div class="story-header">
+                    <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 0.5rem;">Último Passo</h2>
+                    <p style="color: #aaa; margin: 0;">Números registrados</p>
+                </div>
+                <div class="story-content-area">
+                    <div style="background: rgba(0,230,118,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; width: 100%;">
+                        <p style="margin: 0; color: #FFD700; font-size: 1rem; font-weight: bold;">🎁 PROMOÇÃO: ${promoName || 'Especial'}</p>
+                        <p style="margin: 1rem 0 0 0; color: #fff; font-size: 0.9rem;">
+                            Clique no botão abaixo para entrar em contato com o patrocinador desta promoção
+                        </p>
+                    </div>
+                    <a href="${sponsorLink}" target="_blank" class="az-btn-main" onclick="finishFlow()"
+                        style="width: 100%; margin-bottom: 1rem;">FALAR COM PATROCINADOR</a>
+                    <button class="az-btn-main az-btn-secondary" onclick="finishFlow()" style="width: 100%;">CONTINUAR</button>
+                </div>
+            `;
+        }
+
+        function showAlert(message, title = 'Atenção', callback = null) {
             document.getElementById('alertTitle').textContent = title;
             document.getElementById('alertMessage').textContent = message;
             document.getElementById('alertModal').style.display = 'flex';
@@ -753,7 +857,6 @@
             }
         }
 
-        // Helpers
         function generateDeviceId() {
             const id = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
             localStorage.setItem('az_device_id', id);
@@ -779,14 +882,17 @@
             if (phone.length < 14) return;
             try {
                 const res = await fetch(`/api/amigos/lookup?phone=${encodeURIComponent(phone)}`);
-                const data = await res.json();
+                if (!res.ok) return;
+                const text = await res.text();
+                if (!text) return;
+                const data = JSON.parse(text);
                 if (data.found && data.name) {
                     const nameInput = document.getElementById('name');
                     if (nameInput && !nameInput.value) {
                         nameInput.value = capitalizeName(data.name);
                     }
                 }
-            } catch (e) { }
+            } catch (e) { console.log('Lookup error:', e); }
         }
 
         // ---- Stories Nav Logic ----
@@ -794,19 +900,22 @@
             const track = document.getElementById('storiesTrack');
             track.style.transform = `translateX(-${currentStoryIndex * 25}%)`;
 
-            // Manage prev/next buttons
-            const prevBtn = document.querySelector('.story-nav-prev');
-            const nextBtn = document.querySelector('.story-nav-next');
+            // Only Manage Next button
+            const nextBtn = document.getElementById('storyNextBtn');
+            nextBtn.classList.remove('visible'); // default hide
 
-            prevBtn.style.display = currentStoryIndex === 0 ? 'none' : 'flex';
-            nextBtn.style.display = currentStoryIndex === totalStories - 1 ? 'none' : 'flex';
+            // Logic for when to show Next arrow
+            if (currentStoryIndex === 0 && step1Done) {
+                nextBtn.classList.add('visible');
+            } else if (currentStoryIndex === 2 && step3Done) {
+                nextBtn.classList.add('visible');
+            }
+            // Form step (1) relies on form button, Success step (3) has no next
         }
 
         function nextStory() {
             if (currentStoryIndex < totalStories - 1) {
-                // Validation before moving
                 if (currentStoryIndex === 1) { // Form Step
-                    // Try to submit form. If success, it will advance automatically.
                     const form = document.getElementById('claimFormStories');
                     if (form.checkValidity()) {
                         document.getElementById('submitBtnStories').click();
@@ -815,21 +924,14 @@
                     }
                     return;
                 }
-
                 currentStoryIndex++;
                 updateStories();
             }
         }
 
-        function prevStory() {
-            if (currentStoryIndex > 0) {
-                currentStoryIndex--;
-                updateStories();
-            }
-        }
-
         function closeStories() {
-            document.getElementById('storiesModal').style.display = 'none';
+            document.getElementById('storiesView').style.display = 'none';
+            document.getElementById('home-view').style.display = 'block'; // Show home
             if (currentStoryIndex === 3) window.location.reload();
         }
 
@@ -846,17 +948,29 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ promo_token: promoToken, device_id: deviceId })
                 });
+
+                // Check response before parsing
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    let errorMsg = 'Erro ao iniciar';
+                    try {
+                        const errJson = JSON.parse(errorText);
+                        errorMsg = errJson.error || errorMsg;
+                    } catch { errorMsg = errorText || errorMsg; }
+                    throw new Error(errorMsg);
+                }
+
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Erro ao iniciar');
 
                 claimSessionId = data.claim_session_id;
 
-                // Show Stories Modal
-                document.getElementById('storiesModal').style.display = 'flex';
+                // SWITCH VIEW (No Modal)
+                document.getElementById('home-view').style.display = 'none';
+                document.getElementById('storiesView').style.display = 'flex';
+
                 currentStoryIndex = 0;
                 updateStories();
 
-                // Pre-fill phone if saved
                 const savedPhone = localStorage.getItem('az_phone');
                 if (savedPhone) {
                     document.getElementById('phone').value = savedPhone;
@@ -866,7 +980,7 @@
                 btn.disabled = false;
                 btn.textContent = 'Resgatar Número';
             } catch (e) {
-                showAlert(e.message, '❌ Erro');
+                showAlert(e.message, 'Erro');
                 btn.disabled = false;
                 btn.textContent = 'Resgatar Número';
             }
@@ -879,29 +993,43 @@
             shareBtn.disabled = true;
 
             try {
+                // Determine which media and text to share
+                // Promo settings override campaign settings when available
+                let mediaUrl = shareSettings.share_image;
+                let shareText = shareSettings.share_text;
+
+                if (promoSettings) {
+                    if (promoSettings.image_url) mediaUrl = promoSettings.image_url;
+                    if (promoSettings.share_text) shareText = promoSettings.share_text;
+                }
+
+                const isVideo = mediaUrl && (mediaUrl.match(/\.(mp4|mov|webm|avi)$/i) || mediaUrl.includes('/video/'));
+
+                // Apply Cloudinary optimization
+                const optimizedUrl = optimizeCloudinaryUrl(mediaUrl);
+
                 if (navigator.share) {
                     try {
-                        const imgResp = await fetch(shareSettings.share_image);
-                        const imgBlob = await imgResp.blob();
-                        const imgFile = new File([imgBlob], 'amigos-zapao.png', { type: 'image/png' });
-                        await navigator.share({ files: [imgFile], text: shareSettings.share_text });
+                        const mediaResp = await fetch(optimizedUrl);
+                        const mediaBlob = await mediaResp.blob();
+                        const mimeType = isVideo ? 'video/mp4' : 'image/png';
+                        const fileName = isVideo ? 'promo-video.mp4' : 'promo-image.png';
+                        const mediaFile = new File([mediaBlob], fileName, { type: mimeType });
+                        await navigator.share({ files: [mediaFile], text: shareText });
                     } catch (shareErr) {
-                        await navigator.share({ text: shareSettings.share_text });
+                        // Fallback: share without file
+                        await navigator.share({ text: shareText });
                     }
                 } else {
-                    const text = encodeURIComponent(shareSettings.share_text);
+                    const text = encodeURIComponent(shareText);
                     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
                 }
-            } catch (e) { console.log(e); }
+            } catch (e) { console.log('Share error:', e); }
             finally {
-                shareBtn.textContent = '✅ Compartilhado!';
+                shareBtn.textContent = 'Compartilhado!';
                 shareBtn.classList.add('az-btn-secondary');
-                setTimeout(() => {
-                    if (currentStoryIndex === 0) {
-                        currentStoryIndex++;
-                        updateStories();
-                    }
-                }, 1000); // Auto advance after share
+                step1Done = true;
+                updateStories();
             }
         }
 
@@ -930,15 +1058,24 @@
                         device_id: deviceId
                     })
                 });
-                const result = await res.json();
 
+                // Check response status first
                 if (!res.ok) {
-                    if (result.error.includes('bloqueado')) {
-                        handleBlocked(result.error);
+                    const errorText = await res.text();
+                    let errorMsg = 'Erro desconhecido';
+                    try {
+                        const errJson = JSON.parse(errorText);
+                        errorMsg = errJson.error || errorMsg;
+                    } catch { errorMsg = errorText || errorMsg; }
+
+                    if (errorMsg.includes('bloqueado')) {
+                        handleBlocked(errorMsg);
                         return;
                     }
-                    throw new Error(result.error);
+                    throw new Error(errorMsg);
                 }
+
+                const result = await res.json();
 
                 localStorage.setItem('az_phone', phone);
 
@@ -950,7 +1087,7 @@
                 btn.disabled = false;
                 btn.textContent = originalText;
             } catch (err) {
-                showAlert(err.message, '❌ Erro');
+                showAlert(err.message, 'Erro');
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
@@ -961,49 +1098,77 @@
             const grid = document.getElementById('revealGrid');
             grid.innerHTML = '';
 
-            // Populate grid
+            // Random String Gen
+            function randomStr() { return Math.floor(Math.random() * 10000).toString().padStart(4, '0'); }
+
+            // Populate initially with random (hidden for pop-in)
             sorted.forEach((num, i) => {
                 const card = document.createElement('div');
                 card.className = 'az-card blur';
                 card.id = `reveal-card-${i}`;
-                card.style.opacity = '0.3';
-                card.innerHTML = `<div class="az-card-content">${num.toString().padStart(4, '0')}</div>`;
+                card.style.opacity = '0'; // Start hidden for pop-in
+                card.innerHTML = `<div class="az-card-content">${randomStr()}</div>`;
                 grid.appendChild(card);
+
+                // Pop-in animation with stagger
+                setTimeout(() => {
+                    card.classList.add('pop-in');
+                    card.style.opacity = '1';
+                }, i * 100);
             });
 
-            // Animate
+            // Iterate Lines
             const linesCount = Math.ceil(sorted.length / 5);
             let currentLine = 0;
 
             function revealLine() {
                 if (currentLine >= linesCount) {
-                    document.getElementById('revealStatus').textContent = 'Boa sorte! 🍀';
-                    // Show next button
-                    const btn = document.getElementById('goToStep3Btn');
-                    if (btn) btn.style.display = 'block';
+                    document.getElementById('revealStatus').textContent = 'Boa sorte!';
+                    step3Done = true;
+                    updateStories();
+                    document.getElementById('revealHint').textContent = 'Toque na seta para continuar >';
                     return;
                 }
                 const startIdx = currentLine * 5;
                 const endIdx = Math.min(startIdx + 5, sorted.length);
+
+                // Animate each card in line
                 for (let i = startIdx; i < endIdx; i++) {
-                    const delay = (i - startIdx) * 80;
+                    // Stagger start
                     setTimeout(() => {
                         const card = document.getElementById(`reveal-card-${i}`);
-                        if (card) {
-                            card.style.opacity = '1';
-                            card.classList.remove('blur');
-                            card.classList.add('slot-spinning');
-                            setTimeout(() => {
-                                card.classList.remove('slot-spinning');
+                        const targetNum = sorted[i].toString().padStart(4, '0');
+                        const content = card.querySelector('.az-card-content');
+
+                        card.classList.remove('blur');
+                        card.style.border = '2px solid var(--az-primary)';
+
+                        let cycles = 0;
+                        let speed = 50;
+                        const maxCycles = 15 + Math.floor(Math.random() * 10);
+
+                        function spin() {
+                            content.textContent = randomStr();
+                            cycles++;
+
+                            if (cycles < maxCycles) {
+                                if (cycles > maxCycles - 5) speed += 30; // Slow down
+                                setTimeout(spin, speed);
+                            } else {
+                                // Stop
+                                content.textContent = targetNum;
                                 card.classList.add('slot-revealed');
-                            }, 600);
+                            }
                         }
-                    }, delay);
+                        spin();
+                    }, (i - startIdx) * 100);
                 }
+
                 currentLine++;
+                // Next line delay
                 setTimeout(revealLine, 1200);
             }
-            setTimeout(revealLine, 400);
+            setTimeout(revealLine, 300);
         }
 
         function finishFlow() {
@@ -1011,11 +1176,10 @@
         }
 
         function handleBlocked(msg) {
-            showAlert(msg, '⛔ Bloqueado', () => window.location.reload());
+            showAlert(msg, 'Bloqueado', () => window.location.reload());
             closeStories();
         }
 
-        // --- Lookup Modal ---
         function openLookupModal() { document.getElementById('lookupModal').style.display = 'flex'; }
         function closeLookupModal() { document.getElementById('lookupModal').style.display = 'none'; }
 
@@ -1036,20 +1200,46 @@
                         return;
                     }
                     const sorted = data.numbers.sort((a, b) => a - b);
-                    const nums = sorted.map(n => `<span style="background:#1e1e1e;padding:6px;border-radius:4px;color:#00E676;">${String(n).padStart(4, '0')}</span>`).join(' ');
+
+                    // Generate HTML with pop-in animation (starts hidden)
+                    const numsHtml = sorted.map((n, i) =>
+                        `<div class="az-card slot-revealed" style="opacity:0; border: 2px solid var(--az-primary); aspect-ratio:1; font-size: 0.7rem; animation-delay: ${i * 100}ms;" data-pop-delay="${i * 100}">
+                            <div class="az-card-content">${String(n).padStart(4, '0')}</div>
+                         </div>`
+                    ).join('');
+
                     resultEl.innerHTML = `<div style="background: rgba(0,230,118,0.1); padding: 15px; border-radius: 8px;">
-                        <p style="color:white;">Olá <strong>${data.name}</strong>, você tem ${data.total_numbers} números:</p>
-                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${nums}</div>
+                        <p style="color:white; margin-bottom: 1rem;">Olá <strong>${data.name}</strong>, você tem ${data.total_numbers} números:</p>
+                        <div class="az-reveal-grid" style="max-width: 100%;">
+                            ${numsHtml}
+                        </div>
                     </div>`;
+
+                    // Trigger pop-in animation with stagger
+                    const cards = resultEl.querySelectorAll('.az-card');
+                    cards.forEach((card, i) => {
+                        setTimeout(() => {
+                            card.classList.add('pop-in');
+                            card.style.opacity = '1';
+                        }, i * 100);
+                    });
                 })
                 .catch(() => { resultEl.innerHTML = '<p style="color: #f44336;">Erro ao buscar.</p>'; });
         }
 
-        // Placeholder Animation
         function animatePlaceholders() {
             const container = document.getElementById('cardsContainer');
             const cards = Array.from(container.querySelectorAll('.az-card'));
             function randomNumber() { return Math.floor(Math.random() * 10000).toString().padStart(4, '0'); }
+
+            // First: Pop-in animation (cards appear one by one)
+            cards.forEach((card, i) => {
+                card.style.opacity = '0';
+                setTimeout(() => {
+                    card.classList.add('pop-in');
+                    card.style.opacity = '1';
+                }, i * 150); // 150ms stagger
+            });
 
             function animateCard(card, delay) {
                 const content = card.querySelector('.az-card-content');
@@ -1073,7 +1263,10 @@
                 }
                 setTimeout(spin, delay);
             }
-            cards.forEach((card, i) => animateCard(card, i * 200));
+            // Start slot animation after pop-in completes
+            setTimeout(() => {
+                cards.forEach((card, i) => animateCard(card, i * 200));
+            }, cards.length * 150 + 300);
         }
         animatePlaceholders();
 

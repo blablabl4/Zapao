@@ -4,9 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin - TVZapão</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Login Admin - Amigos do Zapão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --az-primary: #00E676;
+            --az-dark: #121212;
+            --az-card-bg: #1E1E1E;
+            --az-text: #FFFFFF;
+            --az-text-muted: #AAAAAA;
+            --az-danger: #ff4444;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,8 +23,9 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            font-family: 'Inter', sans-serif;
+            background-color: var(--az-dark);
+            color: var(--az-text);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -23,319 +33,306 @@
             padding: 20px;
         }
 
-        .login-container {
-            background: rgba(26, 26, 46, 0.95);
-            border-radius: 20px;
-            padding: 40px;
+        .login-card {
+            background: var(--az-card-bg);
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 2.5rem;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-        }
-
-        .logo {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             text-align: center;
-            margin-bottom: 30px;
         }
 
-        .logo h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .logo-glow {
+            filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.4));
+            margin-bottom: 1.5rem;
+            max-width: 150px;
         }
 
-        .logo p {
-            color: #888;
+        h2 {
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        p.subtitle {
+            color: var(--az-text-muted);
+            margin-bottom: 2rem;
             font-size: 0.9rem;
-            margin-top: 5px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            text-align: left;
         }
 
-        label {
+        .form-group label {
             display: block;
-            color: #aaa;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
+            color: #ccc;
             font-size: 0.9rem;
         }
 
         input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid rgba(102, 126, 234, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            background: #121212;
+            border: 1px solid #444;
+            border-radius: 8px;
             color: #fff;
             font-size: 1rem;
-            transition: all 0.3s ease;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
         input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
-        }
-
-        input::placeholder {
-            color: #666;
+            border-color: var(--az-primary);
         }
 
         .btn {
             width: 100%;
-            padding: 15px;
+            background: var(--az-primary);
+            color: #000;
             border: none;
-            border-radius: 10px;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 800;
             font-size: 1rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: opacity 0.2s;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
+        .btn:hover {
+            opacity: 0.9;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
+        .btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
+        }
+
+        .input-code {
+            text-align: center;
+            letter-spacing: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
         }
 
         .message {
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
             display: none;
-        }
-
-        .message.success {
-            background: rgba(0, 200, 83, 0.2);
-            color: #00c853;
-            border: 1px solid rgba(0, 200, 83, 0.3);
         }
 
         .message.error {
-            background: rgba(255, 82, 82, 0.2);
-            color: #ff5252;
-            border: 1px solid rgba(255, 82, 82, 0.3);
+            background: rgba(255, 68, 68, 0.1);
+            color: var(--az-danger);
+            border: 1px solid var(--az-danger);
         }
 
-        #step-email,
-        #step-code {
-            transition: opacity 0.3s ease;
-        }
-
-        #step-code {
-            display: none;
-        }
-
-        .code-input {
-            text-align: center;
-            font-size: 1.5rem;
-            letter-spacing: 10px;
-            font-weight: 700;
+        .message.success {
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--az-primary);
+            border: 1px solid var(--az-primary);
         }
 
         .back-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .back-link a {
-            color: #667eea;
+            display: block;
+            margin-top: 1.5rem;
+            color: var(--az-text-muted);
             text-decoration: none;
             font-size: 0.9rem;
         }
 
-        .back-link a:hover {
-            text-decoration: underline;
-        }
-
-        .timer {
-            text-align: center;
-            color: #888;
-            font-size: 0.85rem;
-            margin-top: 15px;
+        .back-link:hover {
+            color: #fff;
         }
     </style>
 </head>
 
 <body>
-    <div class="login-container">
-        <div class="logo">
-            <h1>🎰 TVZapão</h1>
-            <p>Painel Administrativo</p>
-        </div>
+
+    <div class="login-card">
+        <img src="/images/amigos-logo-new.png" alt="Logo" class="logo-glow">
+        <h2>Acesso Restrito</h2>
+        <p class="subtitle">Painel Administrativo</p>
 
         <div id="message" class="message"></div>
 
-        <!-- Step 1: Email -->
-        <div id="step-email">
-            <form id="email-form">
-                <div class="form-group">
-                    <label for="email">Email cadastrado</label>
-                    <input type="email" id="email" placeholder="seu@email.com" required>
-                </div>
-                <button type="submit" class="btn btn-primary" id="btn-send-code">
-                    Enviar código
-                </button>
-            </form>
-        </div>
-
-        <!-- Step 2: Code -->
-        <div id="step-code">
-            <form id="code-form">
-                <div class="form-group">
-                    <label for="code">Digite o código recebido</label>
-                    <input type="text" id="code" class="code-input" placeholder="000000" maxlength="6"
-                        pattern="[0-9]{6}" required>
-                </div>
-                <button type="submit" class="btn btn-primary" id="btn-verify">
-                    Verificar
-                </button>
-            </form>
-            <div class="timer" id="timer">Código expira em: <span id="countdown">5:00</span></div>
-            <div class="back-link">
-                <a href="#" id="back-to-email">← Voltar</a>
+        <!-- STEP 1: Phone -->
+        <form id="stepPhone">
+            <div class="form-group">
+                <label>WhatsApp</label>
+                <input type="tel" id="phone" placeholder="(11) 99999-9999" maxlength="15" required
+                    oninput="maskPhone(this)">
             </div>
-        </div>
+            <button type="submit" class="btn" id="btnCheck">Continuar</button>
+        </form>
+
+        <!-- STEP 2: Password (Dynamic) -->
+        <form id="stepPassword" style="display: none;">
+            <p id="welcomeMsg" style="color: var(--az-primary); margin-bottom: 1rem; font-weight: bold;"></p>
+
+            <div class="form-group">
+                <label id="lblPassword">Senha</label>
+                <input type="password" id="password" placeholder="********" required>
+            </div>
+
+            <!-- New Password Confirm (only for first access) -->
+            <div class="form-group" id="groupConfirm" style="display: none;">
+                <label>Confirmar Senha</label>
+                <input type="password" id="confirmPassword" placeholder="Repita a senha">
+            </div>
+
+            <button type="submit" class="btn" id="btnLogin">Entrar</button>
+            <a href="#" onclick="resetFlow(event)" class="back-link">← Voltar / Alterar Número</a>
+        </form>
     </div>
 
     <script>
-        const emailForm = document.getElementById('email-form');
-        const codeForm = document.getElementById('code-form');
-        const stepEmail = document.getElementById('step-email');
-        const stepCode = document.getElementById('step-code');
-        const message = document.getElementById('message');
-        const btnSendCode = document.getElementById('btn-send-code');
-        const btnVerify = document.getElementById('btn-verify');
-        const backToEmail = document.getElementById('back-to-email');
-        const countdown = document.getElementById('countdown');
+        const stepPhone = document.getElementById('stepPhone');
+        const stepPassword = document.getElementById('stepPassword');
+        const msgDiv = document.getElementById('message');
+        const btnCheck = document.getElementById('btnCheck');
+        const btnLogin = document.getElementById('btnLogin');
 
-        let userEmail = '';
-        let countdownInterval = null;
+        let currentPhone = '';
+        let isFirstAccess = false;
 
-        function showMessage(text, type) {
-            message.textContent = text;
-            message.className = `message ${type}`;
-            message.style.display = 'block';
+        function showMsg(txt, type) {
+            msgDiv.textContent = txt;
+            msgDiv.className = 'message ' + type;
+            msgDiv.style.display = 'block';
         }
 
-        function hideMessage() {
-            message.style.display = 'none';
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, "");
+            v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+            v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+            input.value = v;
         }
 
-        function startCountdown(seconds) {
-            clearInterval(countdownInterval);
-            let remaining = seconds;
-
-            countdownInterval = setInterval(() => {
-                const mins = Math.floor(remaining / 60);
-                const secs = remaining % 60;
-                countdown.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-
-                if (remaining <= 0) {
-                    clearInterval(countdownInterval);
-                    showMessage('Código expirado. Solicite um novo.', 'error');
-                    stepCode.style.display = 'none';
-                    stepEmail.style.display = 'block';
-                }
-                remaining--;
-            }, 1000);
+        function resetFlow(e) {
+            if (e) e.preventDefault();
+            stepPassword.style.display = 'none';
+            stepPhone.style.display = 'block';
+            msgDiv.style.display = 'none';
+            document.getElementById('password').value = '';
+            document.getElementById('confirmPassword').value = '';
         }
 
-        emailForm.addEventListener('submit', async (e) => {
+        // 1. Check User
+        stepPhone.onsubmit = async (e) => {
             e.preventDefault();
-
-            const email = document.getElementById('email').value;
-            btnSendCode.disabled = true;
-            btnSendCode.textContent = 'Enviando...';
-            hideMessage();
+            const phone = document.getElementById('phone').value;
+            btnCheck.disabled = true;
+            btnCheck.textContent = 'Verificando...';
+            msgDiv.style.display = 'none';
 
             try {
-                const response = await fetch('/admin/request-code', {
+                const res = await fetch('/admin/check-user', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ phone })
                 });
+                const data = await res.json();
 
-                const data = await response.json();
+                if (data.exists) {
+                    if (!data.active) {
+                        showMsg('Usuário inativo. Contate o suporte.', 'error');
+                        btnCheck.disabled = false;
+                        btnCheck.textContent = 'Continuar';
+                        return;
+                    }
 
-                if (response.ok) {
-                    userEmail = email;
-                    stepEmail.style.display = 'none';
-                    stepCode.style.display = 'block';
-                    document.getElementById('code').focus();
-                    startCountdown(300); // 5 minutes
-                    showMessage('Código enviado para seu email!', 'success');
+                    currentPhone = phone;
+                    isFirstAccess = data.needsPassword;
+
+                    // Setup Step 2 UI
+                    stepPhone.style.display = 'none';
+                    stepPassword.style.display = 'block';
+
+                    if (isFirstAccess) {
+                        document.getElementById('welcomeMsg').textContent = `Olá ${data.name}! Crie sua senha de acesso.`;
+                        document.getElementById('lblPassword').textContent = 'Nova Senha (mín 6 dig)';
+                        document.getElementById('groupConfirm').style.display = 'block';
+                        document.getElementById('confirmPassword').required = true;
+                        btnLogin.textContent = 'Criar Senha e Entrar';
+                    } else {
+                        document.getElementById('welcomeMsg').textContent = `Olá, ${data.name}`;
+                        document.getElementById('lblPassword').textContent = 'Sua Senha';
+                        document.getElementById('groupConfirm').style.display = 'none';
+                        document.getElementById('confirmPassword').required = false;
+                        btnLogin.textContent = 'Entrar';
+                    }
+
+                    document.getElementById('password').focus();
+
                 } else {
-                    showMessage(data.error || 'Erro ao enviar código', 'error');
+                    showMsg('Número não encontrado.', 'error');
                 }
-            } catch (error) {
-                showMessage('Erro de conexão', 'error');
+            } catch (e) {
+                showMsg('Erro de conexão.', 'error');
             } finally {
-                btnSendCode.disabled = false;
-                btnSendCode.textContent = 'Enviar código';
+                btnCheck.disabled = false;
+                btnCheck.textContent = 'Continuar';
             }
-        });
+        };
 
-        codeForm.addEventListener('submit', async (e) => {
+        // 2. Login or Register Password
+        stepPassword.onsubmit = async (e) => {
             e.preventDefault();
+            const password = document.getElementById('password').value;
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Processando...';
+            msgDiv.style.display = 'none';
 
-            const code = document.getElementById('code').value;
-            btnVerify.disabled = true;
-            btnVerify.textContent = 'Verificando...';
-            hideMessage();
+            let endpoint = '/admin/login';
+            let body = { phone: currentPhone, password };
+
+            if (isFirstAccess) {
+                const confirm = document.getElementById('confirmPassword').value;
+                if (password !== confirm) {
+                    showMsg('As senhas não conferem.', 'error');
+                    btnLogin.disabled = false;
+                    btnLogin.textContent = 'Criar Senha e Entrar';
+                    return;
+                }
+                if (password.length < 6) {
+                    showMsg('A senha deve ter no mínimo 6 caracteres.', 'error');
+                    btnLogin.disabled = false;
+                    btnLogin.textContent = 'Criar Senha e Entrar';
+                    return;
+                }
+                endpoint = '/admin/first-access';
+            }
 
             try {
-                const response = await fetch('/admin/verify-code', {
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: userEmail, code })
+                    body: JSON.stringify(body)
                 });
+                const data = await res.json();
 
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    showMessage('Login realizado!', 'success');
-                    clearInterval(countdownInterval);
-                    setTimeout(() => {
-                        window.location.href = data.redirect || '/admin';
-                    }, 500);
+                if (res.ok && data.success) {
+                    showMsg(data.message || 'Sucesso! Redirecionando...', 'success');
+                    setTimeout(() => window.location.href = data.redirect, 1000);
                 } else {
-                    showMessage(data.error || 'Código inválido', 'error');
+                    showMsg(data.error || 'Erro ao processar.', 'error');
+                    btnLogin.disabled = false;
+                    btnLogin.textContent = isFirstAccess ? 'Criar Senha e Entrar' : 'Entrar';
                 }
-            } catch (error) {
-                showMessage('Erro de conexão', 'error');
-            } finally {
-                btnVerify.disabled = false;
-                btnVerify.textContent = 'Verificar';
+            } catch (e) {
+                showMsg('Erro de conexão.', 'error');
+                btnLogin.disabled = false;
+                btnLogin.textContent = isFirstAccess ? 'Criar Senha e Entrar' : 'Entrar';
             }
-        });
-
-        backToEmail.addEventListener('click', (e) => {
-            e.preventDefault();
-            clearInterval(countdownInterval);
-            hideMessage();
-            stepCode.style.display = 'none';
-            stepEmail.style.display = 'block';
-        });
-
-        // Auto-format code input
-        document.getElementById('code').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
-        });
+        };
     </script>
 </body>
 

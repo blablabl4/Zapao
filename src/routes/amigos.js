@@ -8,11 +8,9 @@ const { validate } = require('../validators');
 /**
  * Extract request info for logging
  */
-const getRequestInfo = (req) => ({
-    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-    ua: req.headers['user-agent'],
-    deviceId: req.headers['x-device-id'] || req.body.device_id
-});
+const { asyncHandler, ApiResponse, ErrorTypes } = require('../middleware/errorHandler');
+const { validate } = require('../validators');
+const { getRequestInfo } = require('../utils/http');
 
 /**
  * GET /api/amigos/settings
@@ -103,11 +101,13 @@ router.get('/lookup', validate('phoneQuery', 'query'), async (req, res) => {
         // Get claims for this phone IN THE ACTIVE CAMPAIGN ONLY
         const claimsRes = await query(`
             SELECT c.id, c.name, c.claimed_at, c.total_qty, c.next_unlock_at,
-                   array_agg(t.number ORDER BY t.number) as numbers
+                   array_agg(t.number ORDER BY t.number) as numbers,
+                   cam.name as campaign_name
             FROM az_claims c
             LEFT JOIN az_tickets t ON t.assigned_claim_id = c.id
+            JOIN az_campaigns cam ON c.campaign_id = cam.id
             WHERE c.phone = $1 AND c.campaign_id = $2
-            GROUP BY c.id
+            GROUP BY c.id, cam.name
             ORDER BY c.claimed_at DESC
         `, [phone, campaign.id]);
 
@@ -137,7 +137,8 @@ router.get('/lookup', validate('phoneQuery', 'query'), async (req, res) => {
     }
 });
 
-router.post('/start', async (req, res) => {
+// Validate startClaim schema
+router.post('/start', validate('startClaim'), async (req, res) => {
     try {
         const { phone, promo_token, device_id } = req.body;
 
@@ -175,7 +176,8 @@ router.post('/start', async (req, res) => {
     }
 });
 
-router.post('/finish', async (req, res) => {
+// Validate finishClaim schema
+router.post('/finish', validate('finishClaim'), async (req, res) => {
     try {
         const { claim_session_id, phone, name, shared_status, promo_token, lgpd_consent, device_id } = req.body;
 

@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
+const { query } = require('../database/db');
 const AmigosAdminService = require('../services/AmigosAdminService');
 const AmigosService = require('../services/AmigosService');
 
@@ -91,11 +93,74 @@ router.post('/campaign/tickets', async (req, res) => {
         console.log('[AdminAmigos] populateTickets result:', result);
         res.json({
             success: true,
-            message: `✅ ${result.inserted} tickets criados! Total: ${result.total}`,
+            message: `✅ Sincronização Concluída!\nCriados: ${result.inserted}\nRemovidos (Fora do range): ${result.deleted}\nTotal Atual: ${result.total}`,
             details: result
         });
     } catch (e) {
         console.error('[AdminAmigos] Error initializing tickets:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/campaign/reset', async (req, res) => {
+    try {
+        const { campaignId } = req.body;
+        console.log('[AdminAmigos] Resetting tickets for campaign:', campaignId);
+
+        let targetId = campaignId;
+        if (!targetId) {
+            const campaign = await AmigosService.getActiveCampaign();
+            if (!campaign) return res.status(400).json({ error: 'Nenhuma campanha ativa' });
+            targetId = campaign.id;
+        }
+
+        const result = await AmigosAdminService.resetTickets(targetId);
+        res.json({
+            success: true,
+            message: `♻️ Distribuição zerada! ${result.claims_deleted} resgates removidos, ${result.tickets_reset} números liberados.`
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Restart Campaign (Complete Delete + Recreate)
+router.post('/campaign/restart', async (req, res) => {
+    try {
+        const { password } = req.body;
+
+        // Validate password using the existing admin session
+        if (!req.session || !req.session.adminId) {
+            return res.status(401).json({ error: 'Sessão inválida' });
+        }
+
+        // Verify the password matches
+
+        const adminRes = await query('SELECT password_hash FROM admin_users WHERE id = $1', [req.session.adminId]);
+        if (!adminRes.rows[0]) {
+            return res.status(401).json({ error: 'Admin não encontrado' });
+        }
+
+        const isValid = await bcrypt.compare(password, adminRes.rows[0].password_hash);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Senha incorreta' });
+        }
+
+        // Get active campaign
+        const campaign = await AmigosService.getActiveCampaign();
+        if (!campaign) {
+            return res.status(400).json({ error: 'Nenhuma campanha ativa para reiniciar' });
+        }
+
+        // Delete everything related to the campaign
+        await AmigosAdminService.deleteCampaign(campaign.id);
+
+        res.json({
+            success: true,
+            message: 'Campanha reiniciada com sucesso!'
+        });
+    } catch (e) {
+        console.error('[AdminAmigos] Restart error:', e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -113,12 +178,12 @@ router.get('/promotions', async (req, res) => {
 
 router.post('/promotions', async (req, res) => {
     try {
-        const { name, extra_qty, starts_at, ends_at, image_url } = req.body;
+        const { name, extra_qty, starts_at, ends_at, image_url, share_text, sponsor_link } = req.body;
         const campaign = await AmigosService.getActiveCampaign();
         if (!campaign) throw new Error('No active campaign');
 
         const promo = await AmigosAdminService.createPromotion(campaign.id, {
-            name, extra_qty, starts_at, ends_at, image_url
+            name, extra_qty, starts_at, ends_at, image_url, share_text, sponsor_link
         });
         res.json(promo);
     } catch (e) {
@@ -145,38 +210,59 @@ router.delete('/promotions/:id', async (req, res) => {
 });
 
 // Image Upload Configuration
+// Cloudinary configuration
+const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const fs = require('fs');
-        const path = require('path');
-        const dir = path.join(__dirname, '../../public/uploads');
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir)
-    },
-    filename: function (req, file, cb) {
-        const ext = file.originalname.split('.').pop();
-        cb(null, 'promo-' + Date.now() + '.' + ext)
-    }
-});
-const upload = multer({ storage: storage });
+const upload = multer({ storage: multer.memoryStorage() }); // Store in memory for Cloudinary upload
 
-router.post('/upload', upload.single('image'), (req, res) => {
+// Configure Cloudinary from environment variables
+const CLOUDINARY_CONFIGURED = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+
+if (CLOUDINARY_CONFIGURED) {
+    cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+    console.log('[Cloudinary] Configured successfully');
+} else {
+    console.warn('[Cloudinary] NOT configured - missing environment variables!');
+    console.warn('  CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'MISSING');
+    console.warn('  CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING');
+    console.warn('  CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING');
+}
+
+router.post('/upload', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file' });
-    // Return relative URL
-    res.json({ url: '/uploads/' + req.file.filename });
+
+    // Check if Cloudinary is configured
+    if (!CLOUDINARY_CONFIGURED) {
+        return res.status(500).json({ error: 'Cloudinary não está configurado. Verifique as variáveis CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET no Railway.' });
+    }
+
+    try {
+        // Convert buffer to base64 data URI
+        const b64 = Buffer.from(req.file.buffer).toString('base64');
+        const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: 'tvzapao-promos',
+            resource_type: 'auto' // Supports images and videos
+        });
+
+        res.json({ url: result.secure_url });
+    } catch (e) {
+        console.error('Cloudinary upload error:', e);
+        res.status(500).json({ error: 'Failed to upload: ' + e.message });
+    }
 });
 
 router.post('/promotions/:id/token', async (req, res) => {
     try {
         const token = await AmigosAdminService.generatePromoToken(req.params.id);
-        // Return full link
-        // Assuming host from req or config
         const host = req.headers.host;
-        const link = `${req.protocol}://${host}/amigos-do-zapao?p=${token}`;
-
+        const link = `${req.protocol}://${host}/p/${token}`;
         res.json({ token, link });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -190,6 +276,16 @@ router.get('/search', async (req, res) => {
 
         const result = await AmigosAdminService.searchParticipant(term);
         res.json(result || { found: false });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/stats', async (req, res) => {
+    try {
+        const { period } = req.query; // '24h' or '7d'
+        const stats = await AmigosAdminService.getStats(period || '24h');
+        res.json(stats);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sorteio MVP</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/form-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚙️ Painel Administrativo</h1>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">
+                Gerencie as rodadas e visualize estatísticas
+            </p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Prêmio da Rodada</h3>
+                <div class="value" id="statCurrentPrize">R$ 0,00</div>
+            </div>
+            <div class="stat-card">
+                <h3>Prêmio Base</h3>
+                <div class="value" id="statPrizeBase">R$ 500,00</div>
+            </div>
+            <div class="stat-card">
+                <h3>Reserva</h3>
+                <div class="value" id="statReserve">R$ 0,00</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pedidos Pagos</h3>
+                <div class="value" id="statPaidTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Receita Total</h3>
+                <div class="value" id="statRevenue">R$ 0,00</div>
+            </div>
+        </div>
+
+        <!--Sales Lock Control -->
+        <div class="draw-controls">
+            <h2 style="margin-bottom: 1.5rem;">Controle de Vendas</h2>
+            <div id="salesLockStatus" style="margin-bottom: 1rem;">
+                <!-- Status will be inserted here -->
+            </div>
+            <button class="btn btn-primary" id="toggleSalesBtn" onclick="toggleSales()">
+                🔒 Travar Vendas
+            </button>
+        </div>
+
+        <!-- Draw Controls -->
+        <div class="draw-controls">
+            <h2 style="margin-bottom: 1.5rem;">Encerrar Rodada</h2>
+            <label for="drawnNumber" style="color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">
+                Número sorteado (00-99):
+            </label>
+            <input type="number" id="drawnNumber" min="0" max="99" placeholder="Digite o número sorteado">
+            <button class="btn btn-primary" onclick="closeDraw()">🎲 Encerrar e Sortear</button>
+        </div>
+
+        <!-- Search Winners -->
+        <div class="draw-controls">
+            <h2 style="margin-bottom: 1.5rem;">Buscar Compradores por Número</h2>
+            <div class="search-box">
+                <label for="searchNumber" style="color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">
+                    Digite o número (00-99):
+                </label>
+                <input type="number" id="searchNumber" min="0" max="99" placeholder="Digite o número para buscar">
+            </div>
+            <button class="btn btn-primary" onclick="searchByNumber()">🔍 Buscar</button>
+
+            <div id="searchResults" style="margin-top: 1.5rem; display: none;">
+                <div id="searchSummary"></div>
+                <div id="searchBuyersTable" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="winners-list" id="resultsSection" style="display: none;">
+            <h2 style="margin-bottom: 1.5rem;">Resultado do Sorteio</h2>
+
+            <div id="resultSummary" style="margin-bottom: 2rem;">
+                <!-- Summary will be inserted here -->
+            </div>
+
+            <div id="winnersTable" style="display: none;">
+                <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">Ganhadores:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Pagamento</th>
+                            <th>Valor Pago</th>
+                            <th>Prêmio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="winnersTableBody">
+                        <!-- Winners will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noWinnersMessage" style="display: none;">
+                <div class="info-section">
+                    <h3>⚠️ Nenhum ganhador nesta rodada</h3>
+                    <ul>
+                        <li>O prêmio foi adicionado à reserva</li>
+                        <li>A próxima rodada terá prêmio reforçado</li>
+                        <li id="newReserveInfo"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><a href="/admin">← Voltar ao Painel Principal</a> | <a href="/">Ver Sorteio</a></p>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+
+</html>

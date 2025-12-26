@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste UX - Fase 4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #00E676;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #FFD700;
+            margin: 30px 0 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* === FEATURE 1: Botão Consultar Números === */
+        .btn-consultar {
+            background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-consultar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 230, 118, 0.4);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #252525;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal h3 {
+            color: #00E676;
+            margin-bottom: 20px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #333;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .modal input:focus {
+            border-color: #00E676;
+            outline: none;
+        }
+
+        .modal button {
+            width: 100%;
+            padding: 15px;
+            background: #00E676;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal .close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .result-card {
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid #00E676;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .result-card .name {
+            font-size: 1.2rem;
+            color: #00E676;
+        }
+
+        .result-card .numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* === FEATURE 2: Timer === */
+        .timer-box {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .timer-box .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .timer-box .time {
+            font-size: 2.5rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+        }
+
+        /* === FEATURE 3: Números Animados === */
+        .number-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA000 100%);
+            color: #000;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 50%;
+            animation: popIn 0.5s ease-out forwards;
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+
+            50% {
+                transform: scale(1.2) rotate(10deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        .demo-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-demo {
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .btn-demo:hover {
+            background: #555;
+        }
+
+        .description {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎨 Teste de UX - Fase 4</h1>
+    <p style="text-align: center; color: #888; margin-bottom: 30px;">
+        Preview das melhorias antes de implementar na página real
+    </p>
+
+    <!-- FEATURE 1: Consultar Números -->
+    <div class="section">
+        <h2>1️⃣ Botão "Consultar Meus Números"</h2>
+        <p class="description">
+            Permite ao usuário ver seus números sem passar pelo fluxo de compartilhamento.
+            Apareceria na página inicial, logo abaixo do botão principal.
+        </p>
+
+        <button class="btn-consultar" onclick="openModal()">
+            🔍 Consultar Meus Números
+        </button>
+    </div>
+
+    <!-- FEATURE 2: Timer -->
+    <div class="section">
+        <h2>2️⃣ Timer de Desbloqueio</h2>
+        <p class="description">
+            Mostra quanto tempo falta para poder resgatar novamente.
+            Apareceria quando o usuário já resgatou no dia.
+        </p>
+
+        <div class="timer-box">
+            <div class="label">Você pode resgatar novamente em:</div>
+            <div class="time" id="timer">--:--:--</div>
+        </div>
+    </div>
+
+    <!-- FEATURE 3: Animação -->
+    <div class="section">
+        <h2>3️⃣ Animação dos Números</h2>
+        <p class="description">
+            Números aparecem um por um com efeito de "pop".
+            Mais emocionante do que mostrar tudo de uma vez.
+        </p>
+
+        <button class="btn-demo" onclick="animateNumbers()">▶️ Ver Animação</button>
+        <div class="demo-numbers" id="numbersContainer"></div>
+    </div>
+
+    <!-- Modal Consultar -->
+    <div class="modal-overlay" id="consultModal">
+        <div class="modal" style="position: relative;">
+            <button class="close" onclick="closeModal()">×</button>
+            <h3>🔍 Consultar Meus Números</h3>
+            <input type="tel" id="phoneInput" placeholder="Digite seu telefone (ex: 11999999999)">
+            <button onclick="searchNumbers()">Buscar</button>
+
+            <div id="searchResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // Timer
+        function updateTimer() {
+            const now = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(11, 0, 0, 0);
+
+            const diff = tomorrow - now;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('timer').textContent =
+                `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // Modal
+        function openModal() {
+            document.getElementById('consultModal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('consultModal').classList.remove('active');
+        }
+
+        // Simulated search
+        function searchNumbers() {
+            const phone = document.getElementById('phoneInput').value;
+            if (!phone) return alert('Digite o telefone!');
+
+            // Simulated result
+            document.getElementById('searchResult').innerHTML = `
+                <div class="result-card">
+                    <div class="name">👋 Olá, João!</div>
+                    <p style="color: #aaa; margin-top: 10px;">Seus números da sorte:</p>
+                    <div class="numbers" id="modalNumbers"></div>
+                    <p style="color: #888; font-size: 0.85rem; margin-top: 15px;">
+                        📅 Próximo resgate disponível: amanhã às 11h
+                    </p>
+                </div>
+            `;
+
+            // Animate numbers in modal
+            const container = document.getElementById('modalNumbers');
+            const numbers = [127, 345, 512, 789, 901];
+            numbers.forEach((num, i) => {
+                setTimeout(() => {
+                    const badge = document.createElement('span');
+                    badge.className = 'number-badge';
+                    badge.textContent = num;
+                    container.appendChild(badge);
+                }, i * 300);
+            });
+        }
+
+        // Demo animation
+        function animateNumbers() {
+            const container = document.getElementById('numbersContainer');
+            container.innerHTML = '';
+
+            const numbers = [42, 137, 256, 389, 501];
+            numbers.forEach((num, i) => {
+                setTimeout(() => {
+                    const badge = document.createElement('span');
+                    badge.className = 'number-badge';
+                    badge.textContent = num;
+                    container.appendChild(badge);
+                }, i * 400);
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-const { query } = require('../database/db');
+const { query, getClient } = require('../database/db');
 const AmigosService = require('./AmigosService');
 
 class AmigosAdminService {
@@ -34,11 +34,15 @@ class AmigosAdminService {
     }
 
     async createPromotion(campaignId, data) {
+        const startsAt = data.starts_at || new Date();
+        const endsAt = data.ends_at || new Date('2099-12-31');
+        const extraQty = parseInt(data.extra_qty) || 0;
+
         const res = await query(`
-            INSERT INTO az_promotions (campaign_id, name, extra_qty, starts_at, ends_at, image_url)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO az_promotions (campaign_id, name, extra_qty, starts_at, ends_at, image_url, share_text, sponsor_link)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
-        `, [campaignId, data.name, data.extra_qty, data.starts_at, data.ends_at, data.image_url]);
+        `, [campaignId, data.name, extraQty, startsAt, endsAt, data.image_url, data.share_text || null, data.sponsor_link || null]);
         return res.rows[0];
     }
 
@@ -74,11 +78,14 @@ class AmigosAdminService {
         const values = [];
         let idx = 1;
 
-        // Allow updating ends_at and image
+        // Allow updating all promo fields
+        if (data.starts_at) { fields.push(`starts_at = $${idx++}`); values.push(data.starts_at); }
         if (data.ends_at) { fields.push(`ends_at = $${idx++}`); values.push(data.ends_at); }
         if (data.image_url) { fields.push(`image_url = $${idx++}`); values.push(data.image_url); }
         if (data.extra_qty !== undefined) { fields.push(`extra_qty = $${idx++}`); values.push(data.extra_qty); }
         if (data.name) { fields.push(`name = $${idx++}`); values.push(data.name); }
+        if (data.share_text !== undefined) { fields.push(`share_text = $${idx++}`); values.push(data.share_text || null); }
+        if (data.sponsor_link !== undefined) { fields.push(`sponsor_link = $${idx++}`); values.push(data.sponsor_link || null); }
 
         if (fields.length === 0) return null;
 
@@ -168,6 +175,169 @@ class AmigosAdminService {
             description: c.type === 'PROMO' ? `Promoção: ${c.promo_name}` : 'Resgate Diário',
             print_required: `Print do status do dia ${new Date(c.claimed_at).toLocaleDateString('pt-BR')}`
         }));
+    }
+
+    async resetTickets(campaignId) {
+        // Danger zone - Reset EVERYTHING for the campaign
+        const client = await require('../database/db').getClient();
+        try {
+            await client.query('BEGIN');
+
+            console.log('[Reset] Starting reset for campaign:', campaignId);
+
+            // 1. Reset ALL Tickets for this campaign - force to AVAILABLE
+            const ticketsRes = await client.query(`
+                UPDATE az_tickets 
+                SET status = 'AVAILABLE', assigned_claim_id = NULL, updated_at = NOW() 
+                WHERE campaign_id = $1
+            `, [campaignId]);
+            console.log('[Reset] Tickets reset:', ticketsRes.rowCount);
+
+            // 2. Delete ALL Claims for this campaign
+            const claimsRes = await client.query('DELETE FROM az_claims WHERE campaign_id = $1', [campaignId]);
+            console.log('[Reset] Claims deleted:', claimsRes.rowCount);
+
+            // 3. Delete promo redemptions for promos in this campaign
+            const promoRedRes = await client.query(`
+                DELETE FROM az_promo_redemptions 
+                WHERE promotion_id IN (SELECT id FROM az_promotions WHERE campaign_id = $1)
+            `, [campaignId]);
+            console.log('[Reset] Promo redemptions deleted:', promoRedRes.rowCount);
+
+            // 4. Delete events related to this campaign
+            const eventsRes = await client.query('DELETE FROM az_events WHERE campaign_id = $1', [campaignId]);
+            console.log('[Reset] Events deleted:', eventsRes.rowCount);
+
+            await client.query('COMMIT');
+            console.log('[Reset] Completed successfully');
+            return { claims_deleted: claimsRes.rowCount, tickets_reset: ticketsRes.rowCount };
+        } catch (e) {
+            await client.query('ROLLBACK');
+            console.error('[Reset] Error:', e);
+            throw e;
+        } finally {
+            client.release();
+        }
+    }
+
+    async deleteCampaign(campaignId) {
+        const client = await getClient();
+        try {
+            await client.query('BEGIN');
+            console.log('[DeleteCampaign] Starting complete deletion for campaign:', campaignId);
+
+            // 1. Delete events
+            await client.query('DELETE FROM az_events WHERE campaign_id = $1', [campaignId]);
+
+            // 2. Delete promo redemptions
+            await client.query(`
+                DELETE FROM az_promo_redemptions 
+                WHERE promotion_id IN (SELECT id FROM az_promotions WHERE campaign_id = $1)
+            `, [campaignId]);
+
+            // 3. Delete promo tokens
+            await client.query(`
+                DELETE FROM az_promo_tokens 
+                WHERE promotion_id IN (SELECT id FROM az_promotions WHERE campaign_id = $1)
+            `, [campaignId]);
+
+            // 4. Delete claims
+            await client.query('DELETE FROM az_claims WHERE campaign_id = $1', [campaignId]);
+
+            // 5. Delete tickets
+            await client.query('DELETE FROM az_tickets WHERE campaign_id = $1', [campaignId]);
+
+            // 6. Delete promotions
+            await client.query('DELETE FROM az_promotions WHERE campaign_id = $1', [campaignId]);
+
+            // 7. Finally delete the campaign
+            await client.query('DELETE FROM az_campaigns WHERE id = $1', [campaignId]);
+
+            await client.query('COMMIT');
+            console.log('[DeleteCampaign] Complete deletion finished');
+            return { success: true };
+        } catch (e) {
+            await client.query('ROLLBACK');
+            console.error('[DeleteCampaign] Error:', e);
+            throw e;
+        } finally {
+            client.release();
+        }
+    }
+
+    async getStats(period, campaignId = null) {
+        // period: '24h' or '7d'
+        let timeFilter, interval;
+        if (period === '24h') {
+            timeFilter = "NOW() - INTERVAL '24 hours'";
+            interval = 'hour'; // PostgreSQL trunk
+        } else {
+            timeFilter = "NOW() - INTERVAL '7 days'";
+            interval = 'day';
+        }
+
+        // Get active campaign if not provided
+        if (!campaignId) {
+            const AmigosService = require('./AmigosService');
+            const campaign = await AmigosService.getActiveCampaign();
+            campaignId = campaign?.id;
+        }
+
+        if (!campaignId) {
+            return {
+                chart: { labels: [], data: [] },
+                stats: { total_numbers: 0, total_users: 0, total_promos: 0 }
+            };
+        }
+
+        // 1. Chart Data
+        // Group claims by interval
+        const chartRes = await query(`
+            SELECT 
+                DATE_TRUNC($1, claimed_at) as time_bucket,
+                COUNT(*) as count
+            FROM az_claims
+            WHERE claimed_at >= ${timeFilter} AND campaign_id = $2
+            GROUP BY time_bucket
+            ORDER BY time_bucket ASC
+        `, [interval, campaignId]);
+
+        // Fill gaps if needed, but for MVP simple query is fine
+        // Format labels and data
+        const labels = [];
+        const data = [];
+
+        chartRes.rows.forEach(r => {
+            const d = new Date(r.time_bucket);
+            // Format label based on interval - convert to local visual
+            if (interval === 'hour') {
+                labels.push(d.getHours() + 'h');
+            } else {
+                // Day: Show "DD/MM (Dia)"
+                const dayStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                const weekDay = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+                labels.push(`${dayStr} (${weekDay})`);
+            }
+            data.push(parseInt(r.count));
+        });
+
+        // 2. Total Distributed Numbers (for this campaign)
+        const totalRes = await query('SELECT COUNT(*) as c FROM az_tickets WHERE status = \'ASSIGNED\' AND campaign_id = $1', [campaignId]);
+
+        // 3. Total Participants (Unique Phones in this campaign)
+        const usersRes = await query('SELECT COUNT(DISTINCT phone) as c FROM az_claims WHERE campaign_id = $1', [campaignId]);
+
+        // 4. Redeemed Promo Codes (Stats in this campaign)
+        const promoRes = await query('SELECT COUNT(*) as c FROM az_claims WHERE type = \'PROMO\' AND campaign_id = $1', [campaignId]);
+
+        return {
+            chart: { labels, data },
+            stats: {
+                total_numbers: parseInt(totalRes.rows[0].c),
+                total_users: parseInt(usersRes.rows[0].c),
+                total_promos: parseInt(promoRes.rows[0].c)
+            }
+        };
     }
 
     async logEvent(type, data) {
