@@ -2,14 +2,22 @@ const express = require('express');
 const router = express.Router();
 const AmigosService = require('../services/AmigosService');
 const AmigosAdminService = require('../services/AmigosAdminService');
+const { asyncHandler, ApiResponse, ErrorTypes } = require('../middleware/errorHandler');
+const { validate } = require('../validators');
 
+/**
+ * Extract request info for logging
+ */
 const getRequestInfo = (req) => ({
     ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
     ua: req.headers['user-agent'],
     deviceId: req.headers['x-device-id'] || req.body.device_id
 });
 
-// Public settings for frontend (share content, group link, etc.)
+/**
+ * GET /api/amigos/settings
+ * Public settings for frontend (share content, group link, etc.)
+ */
 router.get('/settings', async (req, res) => {
     try {
         const campaign = await AmigosService.getActiveCampaign();
@@ -42,11 +50,34 @@ router.get('/settings', async (req, res) => {
     }
 });
 
-router.get('/status', async (req, res) => {
+// Get promotion info by token (for promo image display)
+router.get('/promo/:token', async (req, res) => {
+    try {
+        const promo = await AmigosService.getPromoByToken(req.params.token);
+        if (!promo) {
+            return res.status(404).json({ error: 'Promoção não encontrada' });
+        }
+        res.json({
+            id: promo.id,
+            name: promo.name,
+            image_url: promo.image_url,
+            extra_qty: promo.extra_qty,
+            share_text: promo.share_text,
+            sponsor_link: promo.sponsor_link
+        });
+    } catch (e) {
+        console.error('[Amigos] Get promo error:', e);
+        res.status(500).json({ error: 'Erro ao buscar promoção' });
+    }
+});
+
+/**
+ * GET /api/amigos/status
+ * Check lock status for a phone number
+ */
+router.get('/status', validate('phoneQuery', 'query'), async (req, res) => {
     try {
         const { phone } = req.query;
-        if (!phone) return res.status(400).json({ error: 'Telefone obrigatório' });
-
         const status = await AmigosService.checkLockStatus(phone);
         res.json(status);
     } catch (e) {
@@ -54,31 +85,38 @@ router.get('/status', async (req, res) => {
     }
 });
 
-// Lookup user's numbers by phone
-router.get('/lookup', async (req, res) => {
+/**
+ * GET /api/amigos/lookup
+ * Lookup user's numbers by phone - ONLY for active campaign
+ */
+router.get('/lookup', validate('phoneQuery', 'query'), async (req, res) => {
     try {
         const { phone } = req.query;
-        if (!phone) return res.status(400).json({ error: 'Telefone obrigatório' });
-
         const { query } = require('../database/db');
 
-        // Get all claims for this phone
+        // Get active campaign first
+        const campaign = await AmigosService.getActiveCampaign();
+        if (!campaign) {
+            return res.json({ found: false, message: 'Nenhuma campanha ativa no momento.' });
+        }
+
+        // Get claims for this phone IN THE ACTIVE CAMPAIGN ONLY
         const claimsRes = await query(`
             SELECT c.id, c.name, c.claimed_at, c.total_qty, c.next_unlock_at,
                    array_agg(t.number ORDER BY t.number) as numbers
             FROM az_claims c
             LEFT JOIN az_tickets t ON t.assigned_claim_id = c.id
-            WHERE c.phone = $1
+            WHERE c.phone = $1 AND c.campaign_id = $2
             GROUP BY c.id
             ORDER BY c.claimed_at DESC
-        `, [phone]);
+        `, [phone, campaign.id]);
 
         if (claimsRes.rows.length === 0) {
             return res.json({ found: false, message: 'Nenhum número encontrado para este telefone.' });
         }
 
-        // Flatten all numbers
-        const allNumbers = claimsRes.rows.flatMap(c => c.numbers || []);
+        // Flatten all numbers (filter out nulls)
+        const allNumbers = claimsRes.rows.flatMap(c => c.numbers || []).filter(n => n !== null);
         const lastName = claimsRes.rows[0].name;
         const lastClaim = claimsRes.rows[0].claimed_at;
         const nextUnlock = claimsRes.rows[0].next_unlock_at;
@@ -116,15 +154,19 @@ router.post('/start', async (req, res) => {
 
         req.session.save(); // Ensure save
 
-        // Log
-        const info = getRequestInfo(req);
-        AmigosAdminService.logEvent('CLAIM_START', {
-            ...info,
-            promo_id: result.promo?.id,
-            token: promo_token,
-            phone: phone,
-            metadata: { session_id: result.claim_session_id }
-        });
+        // Log (Fire and forget, prevent crash)
+        try {
+            const info = getRequestInfo(req);
+            AmigosAdminService.logEvent('CLAIM_START', {
+                ...info,
+                promo_id: result.promo?.id,
+                token: promo_token,
+                phone: phone,
+                metadata: { session_id: result.claim_session_id }
+            }).catch(err => console.error('[Amigos] Log Start Error:', err.message));
+        } catch (logErr) {
+            console.error('[Amigos] Log Start Sync Error:', logErr.message);
+        }
 
         res.json(result);
     } catch (e) {
@@ -165,16 +207,19 @@ router.post('/finish', async (req, res) => {
         delete req.session.amigos_claim;
 
         // Log
-        AmigosAdminService.logEvent('CLAIM_FINISH', {
-            ...info,
-            // promo_id? retrieved inside finishClaim, not returned explicitly maybe?
-            // logging metadata
-            phone: phone,
-            metadata: {
-                numbers: result.numbers,
-                total_qty: result.total_qty
-            }
-        });
+        // Log (Fire and forget, prevent crash)
+        try {
+            AmigosAdminService.logEvent('CLAIM_FINISH', {
+                ...info,
+                phone: phone,
+                metadata: {
+                    numbers: result.numbers,
+                    total_qty: result.total_qty
+                }
+            }).catch(err => console.error('[Amigos] Log Finish Error:', err.message));
+        } catch (logErr) {
+            console.error('[Amigos] Log Finish Sync Error:', logErr.message);
+        }
 
         res.json(result);
 

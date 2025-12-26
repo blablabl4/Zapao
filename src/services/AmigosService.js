@@ -1,18 +1,55 @@
 const { query, getClient } = require('../database/db');
 
 class AmigosService {
+    constructor() {
+        // Simple in-memory cache for active campaign
+        this._campaignCache = {
+            data: null,
+            expiresAt: 0
+        };
+    }
+
     /**
-     * Get active campaign
+     * Get active campaign (Cached 60s)
      */
     async getActiveCampaign() {
-        // Cache this ideally
+        const now = Date.now();
+        if (this._campaignCache.data && now < this._campaignCache.expiresAt) {
+            return this._campaignCache.data;
+        }
+
         const res = await query(`
             SELECT * FROM az_campaigns 
             WHERE is_active = true 
             ORDER BY created_at DESC 
             LIMIT 1
         `);
-        return res.rows[0];
+
+        const campaign = res.rows[0];
+
+        // Update cache
+        if (campaign) {
+            this._campaignCache.data = campaign;
+            this._campaignCache.expiresAt = now + 60 * 1000; // 60s TTL
+        } else {
+            // Negative cache (shorter TTL)
+            this._campaignCache.data = null;
+            this._campaignCache.expiresAt = now + 5 * 1000;
+        }
+
+        return campaign;
+    }
+
+    /**
+     * Get promotion by token
+     */
+    async getPromoByToken(token) {
+        const res = await query(`
+            SELECT p.* FROM az_promo_tokens t
+            JOIN az_promotions p ON t.promotion_id = p.id
+            WHERE t.token = $1 AND t.expires_at > NOW()
+        `, [token]);
+        return res.rows[0] || null;
     }
 
     /**
@@ -77,6 +114,7 @@ class AmigosService {
     /**
      * Initialize tickets for a campaign (Admin only or auto)
      * POPULATES az_tickets based on range. Be careful with large ranges.
+     * UPDATED: Now inserts SHUFFLED tickets to allow faster retrieval (LIMIT 1)
      */
     async populateTickets(campaignId) {
         console.log('[AmigosService] populateTickets called with campaignId:', campaignId);
@@ -90,19 +128,53 @@ class AmigosService {
 
             if (!camp) throw new Error('Campaign not found');
 
-            // Generate sequence - using direct values to debug
             const startNum = parseInt(camp.start_number);
             const endNum = parseInt(camp.end_number);
+            const total = endNum - startNum + 1;
+
             console.log('[AmigosService] Generating tickets from', startNum, 'to', endNum);
 
-            const insertResult = await client.query(`
-                INSERT INTO az_tickets (campaign_id, number, status)
-                SELECT $1, s.a, 'AVAILABLE'
-                FROM generate_series($2::int, $3::int) AS s(a)
-                ON CONFLICT (campaign_id, number) DO NOTHING
+            // Create array of numbers
+            const numbers = Array.from({ length: total }, (_, i) => startNum + i);
+
+            // Fisher-Yates Shuffle (O(N)) - In-place
+            for (let i = numbers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+            }
+
+            console.log('[AmigosService] Tickets shuffled. Starting bulk insert...');
+
+            // Bulk Insert (chunks of 5000 to be safe with query size limit)
+            const chunkSize = 5000;
+            let insertedCount = 0;
+
+            for (let i = 0; i < numbers.length; i += chunkSize) {
+                const chunk = numbers.slice(i, i + chunkSize);
+
+                // Construct values string: ($1, num1, 'AVAILABLE'), ($1, num2, 'AVAILABLE')...
+                // Since pg parameters can be slow for huge lists, we assume numbers are safe integers here.
+                const values = chunk.map(n => `(${campaignId}, ${n}, 'AVAILABLE')`).join(',');
+
+                const res = await client.query(`
+                    INSERT INTO az_tickets (campaign_id, number, status)
+                    VALUES ${values}
+                    ON CONFLICT (campaign_id, number) DO NOTHING
+                `);
+                insertedCount += res.rowCount;
+            }
+
+            console.log('[AmigosService] Total INSERT result rowCount:', insertedCount);
+
+            // Remove tickets outside range (only if available) to ensure sync
+            const deleteRes = await client.query(`
+                DELETE FROM az_tickets 
+                WHERE campaign_id = $1 
+                  AND status = 'AVAILABLE'
+                  AND (number < $2 OR number > $3)
             `, [campaignId, startNum, endNum]);
 
-            console.log('[AmigosService] INSERT result rowCount:', insertResult.rowCount);
+            console.log('[AmigosService] DELETE result rowCount:', deleteRes.rowCount);
 
             await client.query('COMMIT');
 
@@ -110,7 +182,7 @@ class AmigosService {
             const countRes = await client.query('SELECT COUNT(*) as c FROM az_tickets WHERE campaign_id = $1', [campaignId]);
             console.log('[AmigosService] Final ticket count for campaign:', countRes.rows[0].c);
 
-            return { inserted: insertResult.rowCount, total: countRes.rows[0].c };
+            return { inserted: insertedCount, deleted: deleteRes.rowCount, total: countRes.rows[0].c };
         } catch (e) {
             console.error('[AmigosService] populateTickets ERROR:', e);
             await client.query('ROLLBACK');
@@ -183,7 +255,24 @@ class AmigosService {
         // Or actually, user asked for "claim_session_id" and "expires_at = now + 3min".
         // Let's generate a UUID.
 
-        const sessionId = require('crypto').randomUUID();
+        // Generate Session ID (Robust UUID v4)
+        const generateUUID = () => {
+            try {
+                const crypto = require('crypto');
+                if (crypto.randomUUID) return crypto.randomUUID();
+                return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+                    (c ^ crypto.randomBytes(1)[0] & 15 >> c / 4).toString(16)
+                );
+            } catch (e) {
+                // Fallback for very old environments
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+        };
+
+        const sessionId = generateUUID();
         const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
 
         return {
@@ -274,16 +363,20 @@ class AmigosService {
             ]);
             const claimId = claimRes.rows[0].id;
 
-            // 4. Allocate Tickets - RANDOM selection
+            // 4. Allocate Tickets
+            // OPTIMIZATION: Removed ORDER BY RANDOM(). We rely on shuffled insertion.
+            // Just picking the next available ones is random enough IF populated randomly.
+            // With SKIP LOCKED, this is super fast.
             const ticketsRes = await client.query(`
                 SELECT id, number FROM az_tickets 
                 WHERE campaign_id = $1 AND status = 'AVAILABLE'
-                ORDER BY RANDOM()
                 LIMIT $2
                 FOR UPDATE SKIP LOCKED
             `, [campaign.id, totalQty]);
 
             if (ticketsRes.rows.length < totalQty) {
+                // Fallback for edge case: if we are out of tickets or fragmentation is high?
+                // Actually if less than needed, we are out.
                 throw new Error('Tickets esgotados para esta campanha!');
             }
 
@@ -312,5 +405,4 @@ class AmigosService {
         }
     }
 }
-
 module.exports = new AmigosService();
