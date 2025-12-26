@@ -8,8 +8,7 @@ const { validate } = require('../validators');
 /**
  * Extract request info for logging
  */
-const { asyncHandler, ApiResponse, ErrorTypes } = require('../middleware/errorHandler');
-const { validate } = require('../validators');
+// Imports removed (duplicates)
 const { getRequestInfo } = require('../utils/http');
 
 /**
