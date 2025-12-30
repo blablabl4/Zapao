@@ -12,6 +12,18 @@ class AmigosService {
     /**
      * Get active campaign (Cached 60s)
      */
+    /**
+     * Invalidate campaign cache
+     * Called when Admin updates/creates a campaign
+     */
+    invalidateCache() {
+        console.log('[AmigosService] Cache invalidated');
+        this._campaignCache = { data: null, expiresAt: 0 };
+    }
+
+    /**
+     * Get active campaign (Cached 60s)
+     */
     async getActiveCampaign() {
         const now = Date.now();
         if (this._campaignCache.data && now < this._campaignCache.expiresAt) {
@@ -53,15 +65,16 @@ class AmigosService {
     }
 
     /**
-     * Check if phone is blocked and get stats
+     * Check if phone is blocked (Daily Limit)
+     * Only checks 'NORMAL' claims
      * @param {string} phone 
      * @returns {object} { blocked: boolean, next_unlock_at: Date|null }
      */
     async checkLockStatus(phone) {
-        // Find last claim
+        // Find last DAILY claim
         const res = await query(`
             SELECT * FROM az_claims 
-            WHERE phone = $1 
+            WHERE phone = $1 AND type = 'NORMAL'
             ORDER BY claimed_at DESC 
             LIMIT 1
         `, [phone]);
@@ -85,29 +98,13 @@ class AmigosService {
      * Calculate unlock time: Tomorrow 11:00 AM (Brasília - UTC-3)
      */
     calculateNextUnlock() {
-        // Current time in UTC
         const now = new Date();
-
-        // Calculate current time in São Paulo (UTC-3)
-        // São Paulo offset is -3 hours from UTC
         const spOffset = -3;
         const spNow = new Date(now.getTime() + (spOffset * 60 * 60 * 1000));
-
-        // Set to tomorrow 11:00 AM in SP time
         const nextUnlockSP = new Date(spNow);
         nextUnlockSP.setDate(nextUnlockSP.getDate() + 1);
-        nextUnlockSP.setUTCHours(11, 0, 0, 0); // 11:00 in SP
-
-        // Convert back to UTC by subtracting the offset (since we set it as SP time)
-        // 11:00 SP = 14:00 UTC
+        nextUnlockSP.setUTCHours(11, 0, 0, 0);
         const nextUnlockUTC = new Date(nextUnlockSP.getTime() - (spOffset * 60 * 60 * 1000));
-
-        console.log('[AmigosService] Next unlock calculated:', {
-            now: now.toISOString(),
-            spNow: spNow.toISOString(),
-            nextUnlockUTC: nextUnlockUTC.toISOString()
-        });
-
         return nextUnlockUTC;
     }
 
@@ -170,8 +167,8 @@ class AmigosService {
             const deleteRes = await client.query(`
                 DELETE FROM az_tickets 
                 WHERE campaign_id = $1 
-                  AND status = 'AVAILABLE'
-                  AND (number < $2 OR number > $3)
+                AND status = 'AVAILABLE'
+                AND (number < $2 OR number > $3)
             `, [campaignId, startNum, endNum]);
 
             console.log('[AmigosService] DELETE result rowCount:', deleteRes.rowCount);
@@ -203,8 +200,8 @@ class AmigosService {
         // Config days
         const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         const today = daysMap[new Date().getDay()];
-        const baseQty = campaign.base_qty_config[today] || 1;
 
+        let baseQty = campaign.base_qty_config[today] || 1;
         let extraQty = 0;
         let promo = null;
 
@@ -240,20 +237,13 @@ class AmigosService {
                 }
             }
 
+            // Fix: Promo claims ONLY give the specific promo extra quantity. Base daily quantity is 0.
+            baseQty = 0;
             extraQty = p.extra_qty;
             promo = p;
         }
 
         const totalQty = baseQty + extraQty;
-
-        // Create Session (JWT or DB? Prompt says "claim_session with 3min TTL")
-        // Storing in DB is safer for "No reuse".
-        // But for MVP, a signed JSON object or simple ID in memory/DB.
-        // Let's use DB to enforce TTL strictly.
-        // We don't have a sessions table for this specifically, but I can use `az_claims` partially or a redis?
-        // Let's return a signed payload (JWT) to avoid DB writes for just "start".
-        // Or actually, user asked for "claim_session_id" and "expires_at = now + 3min".
-        // Let's generate a UUID.
 
         // Generate Session ID (Robust UUID v4)
         const generateUUID = () => {
@@ -299,53 +289,71 @@ class AmigosService {
         try {
             await client.query('BEGIN');
 
-            // 1. Lock/Check Phone Block
-            const lastClaimRes = await client.query(`
-                SELECT * FROM az_claims WHERE phone = $1 ORDER BY claimed_at DESC LIMIT 1 FOR UPDATE
-            `, [phone]);
-            // (Note: locking based on phone might require an insert attempt or existing row lock. 
-            // Better: use advisory lock or just rely on constraints if parallel?)
-            // We need to check DATE.
-
-            if (lastClaimRes.rows.length > 0) {
-                const prev = lastClaimRes.rows[0];
-                if (new Date() < new Date(prev.next_unlock_at)) {
-                    throw new Error('Você já resgatou hoje. Volte amanhã!');
-                    // Should verify if this error is friendly
-                }
-            }
-
-            // 2. Re-verify Promo Logic (security)
             let extraQty = 0;
             let promoId = null;
+            let isPromo = false;
+
+            // 1. Validate Promo (If exists)
             if (promoToken) {
                 const pRes = await client.query(`
                    SELECT p.* FROM az_promo_tokens t
                    JOIN az_promotions p ON t.promotion_id = p.id
                    WHERE t.token = $1 AND t.expires_at > NOW()
-                `, [promoToken]); // Token logic
+                `, [promoToken]);
 
                 if (pRes.rows.length > 0) {
                     const p = pRes.rows[0];
-                    // Check redemption
+                    // Check redemption UNIQUE for this promo
                     const redCheck = await client.query('SELECT * FROM az_promo_redemptions WHERE promotion_id = $1 AND phone = $2', [p.id, phone]);
-                    if (redCheck.rows.length === 0) {
-                        extraQty = p.extra_qty;
-                        promoId = p.id;
+                    if (redCheck.rows.length > 0) {
+                        throw new Error('Você já resgatou esta promoção!');
+                    }
 
-                        // Record redemption
-                        await client.query('INSERT INTO az_promo_redemptions (promotion_id, phone) VALUES ($1, $2)', [p.id, phone]);
+                    extraQty = p.extra_qty;
+                    promoId = p.id;
+                    isPromo = true;
+
+                    // Record redemption
+                    await client.query('INSERT INTO az_promo_redemptions (promotion_id, phone) VALUES ($1, $2)', [p.id, phone]);
+                }
+            }
+
+            // 2. Check Daily Limit (ONLY IF NOT PROMO)
+            // If it's a PROMO claim, we bypass the daily limit check (independent cycle)
+            // If it's a NORMAL claim, we check the daily limit
+            let nextUnlock = null;
+
+            if (!isPromo) {
+                const lastClaimRes = await client.query(`
+                    SELECT * FROM az_claims WHERE phone = $1 AND type = 'NORMAL' ORDER BY claimed_at DESC LIMIT 1 FOR UPDATE
+                `, [phone]);
+
+                if (lastClaimRes.rows.length > 0) {
+                    const prev = lastClaimRes.rows[0];
+                    if (new Date() < new Date(prev.next_unlock_at)) {
+                        throw new Error('Você já resgatou hoje. Volte amanhã!');
                     }
                 }
+                // Set unlock for tomorrow only for NORMAL claims
+                nextUnlock = this.calculateNextUnlock();
+            } else {
+                // For promo claims, set to NOW() since they don't have a daily unlock cycle
+                // Database requires NOT NULL, so we use NOW() to indicate already unlocked
+                nextUnlock = new Date();
             }
 
             // Recalculate totals
             const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
             const today = daysMap[new Date().getDay()];
             const campaign = await this.getActiveCampaign();
-            const baseQty = campaign.base_qty_config[today] || 1;
+
+            // Fix: Promo claims ONLY give the specific promo extra quantity. Base daily quantity is 0.
+            let baseQty = campaign.base_qty_config[today] || 1;
+            if (isPromo) {
+                baseQty = 0;
+            }
+
             const totalQty = baseQty + extraQty;
-            const nextUnlock = this.calculateNextUnlock();
 
             // 3. Insert Claim
             const claimRes = await client.query(`
@@ -355,18 +363,15 @@ class AmigosService {
                 RETURNING id
             `, [
                 campaign.id, phone, name,
-                promoId ? 'PROMO' : 'NORMAL',
+                isPromo ? 'PROMO' : 'NORMAL',
                 promoId, promoToken,
                 baseQty, extraQty, totalQty,
-                nextUnlock,
+                nextUnlock, // Null for promos
                 ip, ua, deviceId, sessionData.claim_session_id, consent
             ]);
             const claimId = claimRes.rows[0].id;
 
             // 4. Allocate Tickets
-            // OPTIMIZATION: Removed ORDER BY RANDOM(). We rely on shuffled insertion.
-            // Just picking the next available ones is random enough IF populated randomly.
-            // With SKIP LOCKED, this is super fast.
             const ticketsRes = await client.query(`
                 SELECT id, number FROM az_tickets 
                 WHERE campaign_id = $1 AND status = 'AVAILABLE'
@@ -375,8 +380,6 @@ class AmigosService {
             `, [campaign.id, totalQty]);
 
             if (ticketsRes.rows.length < totalQty) {
-                // Fallback for edge case: if we are out of tickets or fragmentation is high?
-                // Actually if less than needed, we are out.
                 throw new Error('Tickets esgotados para esta campanha!');
             }
 
@@ -393,7 +396,7 @@ class AmigosService {
 
             return {
                 numbers: ticketsRes.rows.map(r => r.number),
-                next_unlock_at: nextUnlock,
+                next_unlock_at: nextUnlock || null, // Return null if promo
                 total_qty: totalQty
             };
 

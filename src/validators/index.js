@@ -39,6 +39,7 @@ const nameSchema = Joi.string()
 // Token validation (hexadecimal, 8-64 chars)
 const tokenSchema = Joi.string()
     .pattern(/^[a-f0-9]{8,64}$/i)
+    .allow(null, '')
     .messages({
         'string.pattern.base': 'Token inválido'
     });
@@ -71,7 +72,7 @@ const schemas = {
         claim_session_id: Joi.string().required(),
         phone: phoneSchema,
         name: nameSchema,
-        shared_status: Joi.boolean().optional(),
+        shared_status: Joi.string().optional(),
         promo_token: tokenSchema.optional(),
         lgpd_consent: consentSchema,
         device_id: deviceIdSchema
@@ -103,9 +104,10 @@ function validate(schemaName, source = 'body') {
 
         if (error) {
             const messages = error.details.map(d => d.message);
+            console.warn('[Validation Error]', messages);
             return res.status(400).json({
                 success: false,
-                error: 'Dados inválidos',
+                error: messages.join(', '), // Show actual error to client for debugging
                 details: messages
             });
         }

@@ -11,6 +11,7 @@ const config = require('./config');
 const { initializeDatabase, closeDatabase, getPool } = require('./database/db');
 const expirationJob = require('./jobs/expirationJob');
 const drawExpirationJob = require('./jobs/drawExpirationJob');
+const paymentPollingJob = require('./jobs/paymentPollingJob');
 const { requireAdmin } = require('./middleware/adminAuth');
 
 const app = express();
@@ -104,30 +105,37 @@ app.get('/p/:token', async (req, res) => {
             WHERE t.token = $1
         `, [token]);
 
-        let ogImage = 'https://www.tvzapao.com.br/images/amigos-logo-new.png';
+        let ogImage = null;
         let ogTitle = 'Amigos do Zapão';
         let ogDesc = 'Resgate seu número da sorte diário gratuitamente!';
 
         if (pRes.rows.length > 0) {
             const p = pRes.rows[0];
             if (p.image_url) ogImage = p.image_url.startsWith('http') ? p.image_url : `https://www.tvzapao.com.br${p.image_url}`;
-            ogTitle = p.name;
-            ogDesc = 'Participe desta promoção especial e ganhe números extras!';
+            ogTitle = p.name || ogTitle;
+            if (p.share_text) ogDesc = p.share_text;
         }
 
         const fs = require('fs');
         const filePath = path.join(__dirname, '../public/amigos-do-zapao.html');
         let html = fs.readFileSync(filePath, 'utf8');
 
-        // Simple injection - assumes these tags exist or head exists
-        const metaTags = `
-            <meta property="og:title" content="${ogTitle}" />
-            <meta property="og:description" content="${ogDesc}" />
+        // Construct Meta Tags conditionally
+        let metaTags = `
+            <meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
+            <meta property="og:description" content="${ogDesc.replace(/"/g, '&quot;')}" />
+        `;
+
+        if (ogImage) {
+            metaTags += `
             <meta property="og:image" content="${ogImage}" />
             <meta property="og:image:width" content="1200" />
             <meta property="og:image:height" content="630" />
             <meta name="twitter:card" content="summary_large_image" />
-        `;
+            `;
+        } else {
+            metaTags += `<meta name="twitter:card" content="summary" />`;
+        }
 
         // Replace head or append
         html = html.replace('</head>', `${metaTags}\n</head>`);
@@ -156,7 +164,13 @@ app.get('/admin/amigos', requireAdmin, (req, res) => {
 
 // === ACTIVE API ROUTES ===
 app.use('/api/amigos', require('./routes/amigos'));
+app.use('/api/bolao', require('./routes/bolao'));
 app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
+
+// Bolão Frontend
+app.get('/bolao', (req, res) => {
+    res.sendFile('bolao.html', { root: path.join(__dirname, '../public') });
+});
 
 
 // ARCHIVED: orders, webhooks, history routes removed (not in use)
@@ -178,6 +192,7 @@ async function startServer() {
         // Start background jobs
         expirationJob.start();
         drawExpirationJob.start();
+        paymentPollingJob.start();
 
         // Start WhatsApp Bot (Bot Phase 9) - PAUSED
         // const { startBot } = require('./bot');
@@ -196,6 +211,7 @@ async function startServer() {
 
             expirationJob.stop();
             drawExpirationJob.stop();
+            paymentPollingJob.stop();
 
             server.close(async () => {
                 await closeDatabase();
@@ -209,6 +225,7 @@ async function startServer() {
 
             expirationJob.stop();
             drawExpirationJob.stop();
+            paymentPollingJob.stop();
 
             server.close(async () => {
                 await closeDatabase();

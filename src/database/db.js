@@ -10,9 +10,9 @@ function getPool() {
         pool = new Pool({
             connectionString: process.env.DATABASE_URL,
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-            max: 20, // Maximum pool size (optimized for Railway starter/pro)
-            idleTimeoutMillis: 30000, // Close idle clients after 30s
-            connectionTimeoutMillis: 5000, // Fail fast if DB is down
+            max: 50, // INCREASED POOL SIZE FOR HIGH TRAFFIC
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000, // Increased timeout
         });
 
         pool.on('error', (err) => {

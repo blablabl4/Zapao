@@ -13,6 +13,7 @@ class AmigosAdminService {
         if (data.end_number !== undefined) { fields.push(`end_number = $${idx++}`); values.push(data.end_number); }
         if (data.base_qty_config) { fields.push(`base_qty_config = $${idx++}`); values.push(data.base_qty_config); }
         if (data.is_active !== undefined) { fields.push(`is_active = $${idx++}`); values.push(data.is_active); }
+        if (data.group_link !== undefined) { fields.push(`group_link = $${idx++}`); values.push(data.group_link); }
 
         values.push(id);
         const res = await query(`
@@ -21,16 +22,39 @@ class AmigosAdminService {
             WHERE id = $${idx}
             RETURNING *
         `, values);
+
+        // If activating this campaign, deactivate all others
+        if (data.is_active === true) {
+            await query('UPDATE az_campaigns SET is_active = false WHERE id != $1', [id]);
+        }
+
+        // Invalidate cache
+        AmigosService.invalidateCache();
+
         return res.rows[0];
     }
 
     async createCampaign(data) {
+        // Enforce is_active default true if not provided
+        const isActive = data.is_active !== undefined ? data.is_active : true;
+
         const res = await query(`
-            INSERT INTO az_campaigns (name, start_number, end_number, base_qty_config, is_active)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO az_campaigns (name, start_number, end_number, base_qty_config, is_active, group_link)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
-        `, [data.name, data.start_number, data.end_number, data.base_qty_config, data.is_active !== undefined ? data.is_active : true]);
-        return res.rows[0];
+        `, [data.name, data.start_number, data.end_number, data.base_qty_config, isActive, data.group_link || null]);
+
+        const newCampaign = res.rows[0];
+
+        // If activating, deactivate all others
+        if (isActive) {
+            await query('UPDATE az_campaigns SET is_active = false WHERE id != $1', [newCampaign.id]);
+        }
+
+        // Invalidate cache
+        AmigosService.invalidateCache();
+
+        return newCampaign;
     }
 
     async createPromotion(campaignId, data) {
@@ -185,13 +209,31 @@ class AmigosAdminService {
 
             console.log('[Reset] Starting reset for campaign:', campaignId);
 
-            // 1. Reset ALL Tickets for this campaign - force to AVAILABLE
-            const ticketsRes = await client.query(`
+            // 1. Reset ALL Tickets related to this campaign's claims or campaign_id
+
+            // A. Reset tickets belonging to this campaign
+            await client.query(`
                 UPDATE az_tickets 
                 SET status = 'AVAILABLE', assigned_claim_id = NULL, updated_at = NOW() 
                 WHERE campaign_id = $1
             `, [campaignId]);
-            console.log('[Reset] Tickets reset:', ticketsRes.rowCount);
+
+            // B. Reset tickets linked to claims of this campaign (Foolproof Method)
+            // fetch all claim IDs first to ensure we target exactly what we are about to delete
+            const claimIdsRes = await client.query('SELECT id FROM az_claims WHERE campaign_id = $1', [campaignId]);
+            const claimIds = claimIdsRes.rows.map(r => r.id);
+
+            if (claimIds.length > 0) {
+                console.log(`[Reset] Found ${claimIds.length} claims. Detaching from tickets...`);
+                // Update any ticket (even from other campaigns if corrupted) that points to these claims
+                await client.query(`
+                    UPDATE az_tickets 
+                    SET status = 'AVAILABLE', assigned_claim_id = NULL, updated_at = NOW()
+                    WHERE assigned_claim_id = ANY($1::int[])
+                `, [claimIds]);
+            }
+
+            console.log('[Reset] Tickets reset finished');
 
             // 2. Delete ALL Claims for this campaign
             const claimsRes = await client.query('DELETE FROM az_claims WHERE campaign_id = $1', [campaignId]);
@@ -210,6 +252,10 @@ class AmigosAdminService {
 
             await client.query('COMMIT');
             console.log('[Reset] Completed successfully');
+
+            // Invalidate cache because distribution state changed (though active campaign config didn't, it's safer)
+            require('./AmigosService').invalidateCache();
+
             return { claims_deleted: claimsRes.rowCount, tickets_reset: ticketsRes.rowCount };
         } catch (e) {
             await client.query('ROLLBACK');
@@ -241,11 +287,11 @@ class AmigosAdminService {
                 WHERE promotion_id IN (SELECT id FROM az_promotions WHERE campaign_id = $1)
             `, [campaignId]);
 
-            // 4. Delete claims
-            await client.query('DELETE FROM az_claims WHERE campaign_id = $1', [campaignId]);
-
-            // 5. Delete tickets
+            // 4. Delete tickets (BEFORE Claims to avoid FK violation)
             await client.query('DELETE FROM az_tickets WHERE campaign_id = $1', [campaignId]);
+
+            // 5. Delete claims
+            await client.query('DELETE FROM az_claims WHERE campaign_id = $1', [campaignId]);
 
             // 6. Delete promotions
             await client.query('DELETE FROM az_promotions WHERE campaign_id = $1', [campaignId]);
@@ -255,6 +301,10 @@ class AmigosAdminService {
 
             await client.query('COMMIT');
             console.log('[DeleteCampaign] Complete deletion finished');
+
+            // Invalidate cache
+            require('./AmigosService').invalidateCache();
+
             return { success: true };
         } catch (e) {
             await client.query('ROLLBACK');
@@ -263,6 +313,90 @@ class AmigosAdminService {
         } finally {
             client.release();
         }
+    }
+
+    async getMonitorStats(campaignId) {
+        // 1. Traffic (Claims per hour)
+        const trafficRes = await query(`
+            SELECT to_char(claimed_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'HH24:00') as hour, COUNT(*) as volume
+            FROM az_claims
+            WHERE campaign_id = $1
+            GROUP BY 1
+            ORDER BY 1
+        `, [campaignId]);
+
+        // 2. Failures (Orphan Claims)
+        const failuresRes = await query(`
+            SELECT c.id, c.phone, c.name, c.claimed_at 
+            FROM az_claims c
+            LEFT JOIN az_tickets t ON t.assigned_claim_id = c.id
+            WHERE c.campaign_id = $1 AND t.id IS NULL
+        `, [campaignId]);
+
+        // 3. Totals (Fix: Count TICKETS, not just Claims)
+        const totalRes = await query(`
+            SELECT COUNT(*) as total_tickets 
+            FROM az_tickets 
+            WHERE campaign_id = $1 AND status = 'ASSIGNED'
+        `, [campaignId]);
+
+        return {
+            traffic: trafficRes.rows,
+            failures: failuresRes.rows,
+            total_claims: parseInt(totalRes.rows[0].total_tickets), // Label on UI says "Total Resgates" but often implies volumes
+            last_updated: new Date()
+        };
+    }
+
+    async getPromoStats(campaignId) {
+        const res = await query(`
+            SELECT p.name, COUNT(c.id) as count
+            FROM az_promotions p
+            LEFT JOIN az_claims c ON c.promotion_id = p.id
+            WHERE p.campaign_id = $1
+            GROUP BY p.name
+            ORDER BY count DESC
+        `, [campaignId]);
+
+        return {
+            labels: res.rows.map(r => r.name),
+            data: res.rows.map(r => parseInt(r.count))
+        };
+    }
+
+    // === DRAW SYSTEM (Sorteio) ===
+
+    async drawWinner(campaignId) {
+        // Draw from ALL tickets (Global Pool)
+        // If status='ASSIGNED', we have a winner.
+        // If status='AVAILABLE'/'RESERVED', the House Wins.
+        const res = await query(`
+            SELECT t.number as ticket_number, t.status, c.name, c.phone
+            FROM az_tickets t
+            LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
+            WHERE t.campaign_id = $1
+            ORDER BY RANDOM()
+            LIMIT 1
+        `, [campaignId]);
+
+        return res.rows[0];
+    }
+
+    async getDrawCandidates(campaignId) {
+        // Get 50 random tickets for the visual "Spin" effect
+        const res = await query(`
+            SELECT t.number as ticket_number, t.status, c.name
+            FROM az_tickets t
+            LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
+            WHERE t.campaign_id = $1
+            ORDER BY RANDOM()
+            LIMIT 50
+        `, [campaignId]);
+
+        return res.rows.map(r => ({
+            number: r.ticket_number,
+            label: r.status === 'ASSIGNED' ? (r.name || 'Participante') : 'Livre 🏠'
+        }));
     }
 
     async getStats(period, campaignId = null) {
@@ -294,13 +428,13 @@ class AmigosAdminService {
         // Group claims by interval
         const chartRes = await query(`
             SELECT 
-                DATE_TRUNC($1, claimed_at) as time_bucket,
-                COUNT(*) as count
+                DATE_TRUNC($1, claimed_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as time_bucket,
+            COUNT(*) as count
             FROM az_claims
             WHERE claimed_at >= ${timeFilter} AND campaign_id = $2
             GROUP BY time_bucket
             ORDER BY time_bucket ASC
-        `, [interval, campaignId]);
+            `, [interval, campaignId]);
 
         // Fill gaps if needed, but for MVP simple query is fine
         // Format labels and data
@@ -316,7 +450,7 @@ class AmigosAdminService {
                 // Day: Show "DD/MM (Dia)"
                 const dayStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
                 const weekDay = d.toLocaleDateString('pt-BR', { weekday: 'short' });
-                labels.push(`${dayStr} (${weekDay})`);
+                labels.push(`${dayStr}(${weekDay})`);
             }
             data.push(parseInt(r.count));
         });
@@ -342,9 +476,9 @@ class AmigosAdminService {
 
     async logEvent(type, data) {
         await query(`
-            INSERT INTO az_events (type, promotion_id, promo_token, phone, metadata, ip, user_agent, device_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [type, data.promo_id, data.token, data.phone, data.metadata, data.ip, data.ua, data.deviceId]);
+            INSERT INTO az_events(type, promotion_id, promo_token, phone, metadata, ip, user_agent, device_id)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+                `, [type, data.promo_id, data.token, data.phone, data.metadata, data.ip, data.ua, data.deviceId]);
     }
 }
 

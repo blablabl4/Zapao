@@ -22,7 +22,7 @@ router.get('/settings', async (req, res) => {
         // Default settings
         const defaults = {
             share_image: '/images/amigos-logo-new.png',
-            share_text: 'Participe do sorteio diário GRÁTIS! https://www.tvzapao.com.br/amigos-do-zapao',
+            share_text: '', // User requested no default text, only link if empty
             group_link: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn'
         };
 
@@ -30,11 +30,15 @@ router.get('/settings', async (req, res) => {
         if (campaign && campaign.base_qty_config && campaign.base_qty_config.share_settings) {
             const settings = campaign.base_qty_config.share_settings;
             res.json({
-                share_image: settings.image || defaults.share_image,
+                share_image: settings.image || null, // Allow no image if not set
                 share_text: settings.text || defaults.share_text,
-                group_link: settings.group_link || defaults.group_link
+                group_link: campaign.group_link || settings.group_link || defaults.group_link
             });
         } else {
+            // New logic: Use campaign group link if available
+            if (campaign && campaign.group_link) {
+                defaults.group_link = campaign.group_link;
+            }
             res.json(defaults);
         }
     } catch (e) {

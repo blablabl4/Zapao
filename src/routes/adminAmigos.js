@@ -258,6 +258,59 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     }
 });
 
+router.get('/search', async (req, res) => {
+    try {
+        const { term } = req.query;
+        if (!term) return res.status(400).json({ error: 'Termo de busca obrigatório' });
+
+        const result = await AmigosAdminService.searchParticipant(term);
+        if (result) {
+            res.json({ found: true, ...result });
+        } else {
+            res.json({ found: false });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/stats/promos/:id', async (req, res) => {
+    try {
+        const stats = await AmigosAdminService.getPromoStats(req.params.id);
+        res.json(stats);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// === DRAW ROUTES ===
+router.get('/draw/winner/:id', async (req, res) => {
+    try {
+        const winner = await AmigosAdminService.drawWinner(req.params.id);
+        res.json(winner);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/draw/candidates/:id', async (req, res) => {
+    try {
+        const candidates = await AmigosAdminService.getDrawCandidates(req.params.id);
+        res.json(candidates);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/stats/monitor/:id', async (req, res) => {
+    try {
+        const stats = await AmigosAdminService.getMonitorStats(req.params.id);
+        res.json(stats);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.post('/promotions/:id/token', async (req, res) => {
     try {
         const token = await AmigosAdminService.generatePromoToken(req.params.id);

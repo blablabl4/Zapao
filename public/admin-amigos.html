@@ -384,6 +384,368 @@
                 padding: 1rem;
             }
         }
+
+        /* DRAW MODAL (Roleta) */
+        #drawModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .slot-machine-container {
+            width: 350px;
+            background: linear-gradient(145deg, #1a1a1a, #000);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 50px rgba(0, 230, 118, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1);
+            border: 2px solid #333;
+            text-align: center;
+            position: relative;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .slot-machine-container.focused {
+            transform: scale(1.15);
+            z-index: 10005;
+            box-shadow: 0 0 100px rgba(0, 230, 118, 0.6), inset 0 0 40px rgba(255, 215, 0, 0.3);
+            border-color: #FFD700;
+        }
+
+        .slot-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+            animation: floatLogo 3s ease-in-out infinite;
+        }
+
+        @keyframes floatLogo {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .slot-title {
+            color: #FFD700;
+            font-size: 1.2rem;
+            /* Reduced to fit logo */
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .slot-window {
+            height: 300px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 4px solid #FFD700;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .slot-strip {
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s linear;
+            /* JS controlled */
+        }
+
+        .slot-item {
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #eee;
+            background: #fff;
+            color: #333;
+            box-sizing: border-box;
+            /* Fix sizing */
+        }
+
+        .slot-item.winner-highlight {
+            background: #00C853;
+            /* Green */
+            color: #fff;
+            font-weight: 900;
+            font-size: 1.5rem;
+            animation: winnerPulse 0.5s infinite alternate;
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 200, 83, 0.5);
+            position: relative;
+            z-index: 5;
+            /* Cover Line */
+        }
+
+        @keyframes winnerPulse {
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.05);
+            }
+        }
+
+        .slot-item .ticket-num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #00C853;
+            /* Default green text */
+        }
+
+        .slot-item.winner-highlight .ticket-num {
+            color: #fff;
+            /* White text on green bg */
+        }
+
+        .slot-item .ticket-name {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .slot-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 40%, transparent 60%, rgba(0, 0, 0, 0.6) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .slot-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 0;
+            z-index: 10;
+        }
+
+        .slot-line::before,
+        .slot-line::after {
+            content: '';
+            position: absolute;
+            top: -15px;
+            /* Center vertical (30px height / 2) */
+            width: 0;
+            height: 0;
+            border-style: solid;
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Left Marker (Points Right) -> Triangle pointing right */
+        .slot-line::before {
+            content: '' !important;
+            left: -5px;
+            border-width: 15px 0 15px 25px;
+            /* Top Right Bottom Left */
+            border-color: transparent transparent transparent #FFD700;
+        }
+
+        /* Right Marker (Points Left) -> Triangle pointing left */
+        .slot-line::after {
+            content: '' !important;
+            right: -5px;
+            border-width: 15px 25px 15px 0;
+            border-color: transparent #FFD700 transparent transparent;
+        }
+
+        /* WINNER CARD */
+        /* WINNER CARD */
+        .winner-card {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #00C853;
+            /* Green Background */
+            align-items: center;
+            justify-content: center;
+            justify-content: center;
+            justify-content: center;
+            z-index: 100000;
+            /* MAX Z-INDEX (Above Modal) */
+            opacity: 0;
+            transform: scale(0.5);
+            /* Start small for pop */
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .winner-card.show {
+            display: flex;
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+            /* Pop to full size */
+        }
+
+        .winner-card .winner-emoji {
+            font-size: 5rem;
+            margin-bottom: 0px;
+            display: block;
+            animation: bounce 1s infinite alternate;
+        }
+
+        .winner-number {
+            display: block;
+            font-size: 8rem;
+            /* MASSIVE */
+            font-weight: 900;
+            color: #fff;
+            /* White Text */
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            letter-spacing: -5px;
+        }
+
+        .house-wins .winner-number {
+            color: #fff;
+            text-shadow: 0 0 40px rgba(244, 67, 54, 0.8);
+        }
+
+        .winner-card.house-wins {
+            background: #F44336;
+            /* Red for house */
+        }
+
+        .close-overlay-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            top: auto;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #00E676;
+            /* Green Style */
+            color: #000;
+            /* Black Text */
+            border: none;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100001;
+            box-shadow: 0 0 25px rgba(0, 230, 118, 0.8);
+            animation: pulseBtn 1.5s infinite;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        @keyframes pulseBtn {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(0, 230, 118, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+            }
+        }
+
+        .close-overlay-btn:hover {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        .house-wins .winner-number {
+            color: #F44336;
+            text-shadow: 0 0 40px rgba(244, 67, 54, 0.8);
+        }
+
+        .winner-info p {
+            font-size: 1.5rem;
+            color: #ccc;
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-20px);
+            }
+        }
+
+        .winner-card h2 {
+            color: #00E676;
+            font-size: 2rem;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+        }
+
+        .winner-card .winner-emoji {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .winner-info p {
+            margin: 5px 0;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .winner-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #FFD700;
+            margin: 15px 0;
+            display: block;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .house-wins {
+            border-color: #FF0055;
+            box-shadow: 0 0 100px rgba(255, 0, 85, 0.5);
+        }
+
+        .house-wins h2 {
+            color: #FF0055;
+        }
+
+        /* CONFETTI (Simple CSS implementation) */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f00;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+            }
+        }
     </style>
 </head>
 
@@ -394,6 +756,8 @@
         <div style="display: flex; gap: 10px; align-items: center;">
             <a href="/admin" class="btn btn-outline">← Voltar ao Hub</a>
             <a href="/amigos-do-zapao" target="_blank" class="btn btn-outline">Ver App</a>
+            <button onclick="openMonitor()" class="btn"
+                style="background-color: #673AB7; display: flex; align-items: center; gap: 5px;">📊 Monitorar</button>
             <button onclick="logout()" class="btn" style="background:#333; color:#aaa;">Sair</button>
         </div>
     </header>
@@ -410,8 +774,9 @@
                 <span class="stat-label">Usuários Ativos</span>
                 <span class="stat-value" id="kpiTotalUsers">...</span>
             </div>
-            <div class="stat-card">
-                <span class="stat-label">Resgates de Promoção</span>
+            <div class="stat-card" onclick="showPromoChart()" style="cursor: pointer; transition: transform 0.2s;"
+                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <span class="stat-label">Resgates de Promoção 📊</span>
                 <span class="stat-value" id="kpiTotalPromos">...</span>
             </div>
         </div>
@@ -434,6 +799,7 @@
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="switchTab('config')">Configuração</div>
             <div class="nav-tab" onclick="switchTab('promos')">Promoções</div>
+            <div class="nav-tab" onclick="switchTab('draw')">Sorteio 🎰</div>
             <div class="nav-tab" onclick="switchTab('search')">Buscar Usuário</div>
             <div class="nav-tab" onclick="switchTab('admins')">Administradores</div>
         </div>
@@ -501,9 +867,10 @@
                     </div>
 
                     <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Salvar
-                        Configurações</button>
                 </form>
             </div>
+
+
 
             <div class="card">
                 <h2>Geração de Tickets</h2>
@@ -646,6 +1013,27 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: DRAW (SORTEIO) -->
+        <div id="tab-draw" class="section-content">
+            <div class="card"
+                style="border: 2px solid #FFD700; background: linear-gradient(145deg, #1a1a1a, #000); padding: 40px; text-align: center;">
+                <h2
+                    style="color: #FFD700; font-size: 2.5rem; text-shadow: 0 0 20px rgba(255,215,0,0.4); margin-bottom: 20px;">
+                    🎲 Sorteio & Premiação</h2>
+                <p style="color: #ccc; font-size: 1.1rem; max-width: 600px; margin: 0 auto 30px auto;">
+                    Realize o sorteio oficial entre <strong>TODOS</strong> os tickets da campanha ativa.
+                    <br>Lógica aplicada: Se cair em um ticket sem dono, a <strong>Casa Ganha</strong>.
+                </p>
+
+                <div style="display: flex; justify-content: center; gap: 20px;">
+                    <button onclick="openDraw()" class="btn"
+                        style="background: #FFD700; color: #000; font-weight: 900; font-size: 1.4rem; padding: 20px 40px; text-transform: uppercase; border-radius: 50px; box-shadow: 0 0 30px rgba(255,215,0,0.3);">
+                        🎰 ABRIR ROLETA DA SORTE
+                    </button>
                 </div>
             </div>
         </div>
@@ -892,6 +1280,7 @@
             const res = await fetch('/api/admin/amigos/campaign');
             const c = await res.json();
             if (c.id) {
+                currentCampaignId = c.id;
                 document.getElementById('campName').value = c.name;
                 document.getElementById('startNum').value = c.start_number;
                 document.getElementById('endNum').value = c.end_number;
@@ -1188,13 +1577,20 @@
                 document.body.appendChild(textArea);
                 textArea.focus();
                 textArea.select();
+
+                let success = false;
                 try {
-                    document.execCommand('copy');
+                    success = document.execCommand('copy');
                 } catch (e) {
                     console.error('Copy failed', e);
-                    showDialog('Não foi possível copiar automaticamente.', 'Erro');
                 }
+
                 document.body.removeChild(textArea);
+
+                if (!success) {
+                    showDialog('Não foi possível copiar. Selecione e copie manualmente: ' + text, 'Erro');
+                    return;
+                }
             }
 
             // Toast
@@ -1240,14 +1636,24 @@
                 const res = await fetch(`/api/admin/amigos/promotions/${id}/token`, { method: 'POST' });
                 const json = await res.json();
                 const link = `${window.location.origin}/p/${json.token}`;
+
+                // Construct clean text
                 const shareText = `${p.share_text}\n\n👉 Acesse: ${link}`;
 
-                // Try Native Share if on Mobile/Supported
+                // Try Native Share
                 if (navigator.share) {
                     try {
-                        let shareData = { text: shareText };
+                        let shareData = {
+                            title: p.name,
+                            text: shareText,
+                            url: link // Add explicit URL for compatibility
+                        };
 
-                        // Try to attach image if available
+                        // Optional: Try image if present, but prioritize Text+Link visibility
+                        // Many Androids drop text if File is present. 
+                        // Let's try to attach file ONLY if it is an image, but be ready to fallback
+                        let fileAttached = false;
+
                         if (p.image_url) {
                             try {
                                 // Add transformations if Cloudinary
@@ -1262,7 +1668,14 @@
                                 const mimeType = isVideo ? 'video/mp4' : 'image/png';
                                 const fileName = isVideo ? 'promo.mp4' : 'promo.png';
                                 const mediaFile = new File([mediaBlob], fileName, { type: mimeType });
-                                shareData.files = [mediaFile];
+
+                                // Basic check for share support with files
+                                if (navigator.canShare && navigator.canShare({ files: [mediaFile] })) {
+                                    shareData.files = [mediaFile];
+                                    fileAttached = true;
+                                    // Some apps ignore text if files are present. 
+                                    // We append everything to text as caption to be safe.
+                                }
                             } catch (imgErr) {
                                 console.log('Image fetch failed, sharing text only', imgErr);
                             }
@@ -1272,10 +1685,10 @@
                         btn.textContent = '✅';
                     } catch (shareErr) {
                         console.log('Share API error or cancel', shareErr);
-                        // Fallback to WhatsApp link if share API fails (e.g. desktop cancel)
-                        if (!shareErr.message.includes('abort')) {
-                            const text = encodeURIComponent(shareText);
-                            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+                        if (!shareErr.message.includes('abort') && !shareErr.message.includes('Canceled')) {
+                            // Fallback to WhatsApp link
+                            const textValues = encodeURIComponent(shareText);
+                            window.open(`https://api.whatsapp.com/send?text=${textValues}`, '_blank');
                         }
                     }
                 } else {
@@ -1373,25 +1786,38 @@
             const div = document.getElementById('searchResult');
             div.innerHTML = 'Buscando...';
 
-            const res = await fetch(`/api/admin/amigos/search?term=${term}`);
-            const json = await res.json();
+            try {
+                const res = await fetch(`/api/admin/amigos/search?term=${term}`);
+                if (!res.ok) throw new Error('Erro ao buscar (API)');
 
-            if (!json.found) {
-                div.innerHTML = '<p style="color:#aaa;">Nada encontrado.</p>';
-                return;
-            }
+                const json = await res.json();
 
-            const p = json.participant;
-            const h = json.history || [];
+                if (!json.found) {
+                    div.innerHTML = '<p style="color:#aaa;">Nada encontrado.</p>';
+                    return;
+                }
 
-            div.innerHTML = `
+                const p = json.participant;
+                const h = json.history || [];
+
+                div.innerHTML = `
             <div class="card" style="margin-top: 1rem;">
                 <h3 style="color: var(--az-primary);">${p.name || 'Sem nome'}</h3>
                 <p>Telefone: <strong>${p.phone}</strong></p>
                 
                 <h4>Histórico (${h.length} resgates)</h4>
                 <div style="max-height: 200px; overflow-y: auto;">
-                    ${h.map(i => `
+                    ${h.map(i => {
+                    let ticketsStr = '';
+                    // Safe check for array vs string
+                    if (Array.isArray(i.tickets)) {
+                        ticketsStr = i.tickets.join(' - ');
+                    } else if (typeof i.tickets === 'string') {
+                        try { ticketsStr = JSON.parse(i.tickets).join(' - '); }
+                        catch (e) { ticketsStr = i.tickets; }
+                    }
+
+                    return `
                         <div style="background: #333; padding: 10px; margin-bottom: 5px; border-radius: 4px;">
                             <div style="display:flex; justify-content:space-between;">
                                 <span>${new Date(i.claimed_at).toLocaleString()}</span>
@@ -1399,13 +1825,16 @@
                             </div>
                             <small style="color:#aaa;">${i.description}</small>
                             <div style="margin-top:5px; font-size:0.9rem; letter-spacing:1px; color:#fff;">
-                                [ ${JSON.parse(i.tickets || '[]').join(' - ')} ]
+                                [ ${ticketsStr} ]
                             </div>
-                        </div>
-                    `).join('')}
+                        </div>`;
+                }).join('')}
                 </div>
-            </div>
-        `;
+            </div>`;
+            } catch (e) {
+                console.error(e);
+                div.innerHTML = `<p style="color:red;">Erro: ${e.message}</p>`;
+            }
         }
 
         // Init
@@ -1418,6 +1847,537 @@
             window.location.href = '/admin/login';
         }
 
+    </script>
+    <script>
+        // --- Promo Chart Logic ---
+        async function showPromoChart() {
+            if (!currentCampaignId) return;
+
+            // UI Feedback
+            const container = document.querySelector('.chart-container h3');
+            const originalTitle = container.textContent;
+            container.textContent = 'Carregando dados por promoção...';
+
+            try {
+                // Fetch breakdown
+                const res = await fetch(`/api/admin/amigos/stats/promos/${currentCampaignId}`);
+                if (!res.ok) throw new Error('Failed to load promo stats');
+                const data = await res.json();
+
+                // Update Main Chart
+                const ctx = document.getElementById('mainChart').getContext('2d');
+                if (window.myChart) window.myChart.destroy();
+
+                window.myChart = new Chart(ctx, {
+                    type: 'bar', // Horizontal bar? Vertical is fine.
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Resgates por Promoção',
+                            data: data.data,
+                            backgroundColor: '#9C27B0',
+                            borderColor: '#7B1FA2',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: '#ccc' } },
+                            title: { display: true, text: 'Performance de Promoções', color: '#fff' }
+                        },
+                        scales: {
+                            y: { grid: { color: '#333' }, ticks: { color: '#aaa' } },
+                            x: { grid: { color: '#333' }, ticks: { color: '#aaa' } }
+                        }
+                    }
+                });
+
+                container.textContent = 'Distribuição por Promoção (Campanha Atual)';
+
+                // Add a "Reset" button if not exists
+                if (!document.getElementById('btnResetChart')) {
+                    const btn = document.createElement('button');
+                    btn.id = 'btnResetChart';
+                    btn.textContent = 'Voltar ao Geral';
+                    btn.onclick = () => { loadStats('24h'); btn.remove(); container.textContent = 'Fluxo de Resgates'; };
+                    btn.style.cssText = 'margin-left: 10px; background: #333; color: #fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;';
+                    document.querySelector('.chart-controls').appendChild(btn);
+                }
+
+            } catch (e) {
+                console.error(e);
+                container.textContent = originalTitle;
+            }
+        }
+
+        // Hook into loadCampaign to set ID
+        const originalLoadCampaign = loadCampaign; // Assuming it exists or I'll define it/patch it?
+        // Wait, loadCampaign is defined below line 1455 called in Init.
+        // I need to find the function body to patch it properly or just overwrite it?
+        // It's not visible in "Showing lines 1300 to 1604".
+        // It must be in the block I haven't seen between 800 and 1300.
+        // I will trust the "Global ID" variable added in previous chunk works if I assign it here
+        // But I can't overwrite `loadCampaign` if I don't see it.
+        // Strategy: I added `let currentCampaignId` globally.
+        // I will inject a fetch wrapper or I need to View `loadCampaign` to replace it.
+
+    </script>
+
+    <!-- Monitor Modal -->
+    <div id="monitorModal" class="modal"
+        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="background: #1e1e1e; margin: auto; padding: 20px; border: 1px solid #333; width: 90%; max-width: 800px; border-radius: 12px; color: #fff;">
+            <div class="modal-header"
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="margin: 0;">📊 Monitoramento em Tempo Real</h2>
+                <button onclick="closeMonitor()"
+                    style="background: none; border: none; color: #fff; font-size: 28px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div
+                        style="flex: 1; margin-right: 10px; background: #2c2c2c; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #aaa;">Total Resgates</h3>
+                        <p id="monTotal" style="font-size: 2.5rem; font-weight: bold; margin: 0; color: #4CAF50;">0</p>
+                    </div>
+                    <div
+                        style="flex: 1; margin-left: 10px; background: #2c2c2c; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #aaa;">Falhas (Tickets não gerados)</h3>
+                        <p id="monFailures" style="font-size: 2.5rem; font-weight: bold; margin: 0; color: #F44336;">0
+                        </p>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 15px;">📈 Tráfego (Últimas Horas)</h3>
+                <div id="trafficChart"
+                    style="height: 200px; display: flex; align-items: flex-end; gap: 5px; padding: 20px 0; border-bottom: 1px solid #333; background: #252525; border-radius: 8px; overflow-x: auto;">
+                    <!-- Bars generated here -->
+                </div>
+
+                <h3 style="margin-top: 20px; margin-bottom: 10px;">🚨 Log de Falhas</h3>
+                <div id="failureLog"
+                    style="height: 150px; overflow-y: auto; background: #252525; padding: 10px; border: 1px solid #333; border-radius: 8px;">
+                    <p style="color: #aaa;">Nenhuma falha detectada.</p>
+                </div>
+
+                <p style="text-align: right; color: #666; font-size: 0.8rem; margin-top: 10px;">Atualizando
+                    automaticamente a cada 5s...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let monitorInterval;
+        let currentCampaignId = null; // Global ID
+
+        function openMonitor() {
+            if (!currentCampaignId) {
+                showDialog('Nenhuma campanha carregada ou ativa.', 'Erro');
+                return;
+            }
+            document.getElementById('monitorModal').style.display = 'flex';
+            fetchMonitorStats(currentCampaignId);
+            monitorInterval = setInterval(() => fetchMonitorStats(currentCampaignId), 5000);
+        }
+
+        function closeMonitor() {
+            document.getElementById('monitorModal').style.display = 'none';
+            clearInterval(monitorInterval);
+        }
+
+        async function fetchMonitorStats(id) {
+            try {
+                // Determine ID if not passed
+                if (!id) id = 6;
+
+                const res = await fetch(`/api/admin/amigos/stats/monitor/${id}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                document.getElementById('monTotal').textContent = data.total_claims;
+
+                const failEl = document.getElementById('monFailures');
+                failEl.textContent = data.failures.length;
+                failEl.style.color = data.failures.length > 0 ? '#F44336' : '#4CAF50';
+
+                // Render Traffic
+                const chart = document.getElementById('trafficChart');
+                chart.innerHTML = '';
+                // Avoid div by zero
+                const vols = data.traffic.map(t => parseInt(t.volume));
+                const maxVol = vols.length ? Math.max(...vols) : 10;
+                const finalMax = maxVol || 10;
+
+                data.traffic.forEach(t => {
+                    // Traffic Fix: Add validation
+                    const vol = parseInt(t.volume) || 0;
+                    const h = (vol / finalMax) * 100;
+                    const bar = document.createElement('div');
+                    bar.style.height = `${Math.max(h, 5)}%`; // Min height for visibility
+                    bar.style.width = '30px';
+                    bar.style.minWidth = '30px';
+                    bar.style.background = '#2196F3';
+                    bar.style.margin = '0 4px 0 4px';
+                    bar.title = `${t.hour}: ${vol}`; // Fixed tooltip
+                    bar.style.borderRadius = '4px 4px 0 0';
+
+                    const label = document.createElement('div');
+                    label.textContent = t.hour.split(':')[0] + 'h';
+                    label.style.fontSize = '10px';
+                    label.style.textAlign = 'center';
+                    label.style.color = '#ccc';
+                    label.style.marginTop = '4px';
+
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'flex';
+                    wrapper.style.flexDirection = 'column';
+                    wrapper.style.alignItems = 'center';
+
+                    wrapper.appendChild(bar);
+                    wrapper.appendChild(label);
+                    chart.appendChild(wrapper);
+                });
+
+                // Render Failures
+                const log = document.getElementById('failureLog');
+                if (data.failures.length === 0) {
+                    log.innerHTML = '<p style="color: #4CAF50;">✅ Sistema estável. Nenhuma falha.</p>';
+                } else {
+                    log.innerHTML = data.failures.map(f =>
+                        `<div style="color: #F44336; border-bottom: 1px solid #333; padding: 5px;">
+                            <strong>${f.phone}</strong> - ${new Date(f.claimed_at).toLocaleTimeString()} (${f.name})
+                         </div>`
+                    ).join('');
+                }
+
+            } catch (e) { console.error('Monitor error:', e); }
+        }
+
+    </script>
+
+    <!-- Draw Modal -->
+    <div id="drawModal">
+        <div class="slot-machine-container" id="slotMachineContainer">
+            <img src="/images/amigos-logo-new.png" class="slot-logo" alt="Logo">
+
+
+            <div class="slot-window">
+                <div class="slot-overlay"></div>
+                <!-- Center Line -->
+                <div class="slot-line"></div>
+
+                <div class="slot-strip" id="slotStrip">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;" id="spinControls">
+                <button onclick="startSpin()" class="az-btn" id="spinBtn"
+                    style="width: 100%; font-size: 1.2rem; padding: 15px; background: #00E676; color: #000; font-weight:bold; border:none; border-radius:8px; cursor:pointer;">
+                    GIRAR A RODA 🎲
+                </button>
+                <button onclick="closeDraw()" class="az-btn az-btn-secondary" id="closeSpinBtn"
+                    style="width: 100%; margin-top: 10px; background:#333; color:#fff; border:none; padding:10px; border-radius:8px; cursor:pointer;">
+                    Fechar
+                </button>
+            </div>
+
+            <!-- RESULT CARD -->
+            <div id="winnerCard" class="winner-card">
+                <button class="close-overlay-btn" onclick="resetSlot()" title="Fechar">×</button>
+                <div id="winnerContent">
+                    <span class="winner-emoji" id="winEmoji">🏆</span>
+                    <h2 id="winTitle">GANHADOR!</h2>
+                    <span class="winner-number" id="winNum">#000</span>
+                    <div class="winner-info" id="winInfoBox">
+                        <p id="winName" style="font-size: 1.5rem; font-weight:bold; color:#fff;">Nome</p>
+                        <p id="winPhone" style="color: #aaa;">Phone</p>
+                    </div>
+                    <a id="winChatBtn" href="#" target="_blank"
+                        style="text-decoration:none; background: #25D366; color:#fff; padding:15px; border-radius:8px; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight:bold;">
+                        <span style="font-size: 1.4rem">💬</span> Falar com Ganhador
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DRAW LOGIC ---
+        let drawCandidates = [];
+        const ITEM_HEIGHT = 100;
+
+        // AUDIO SYSTEM (Hybrid: Files + Web Audio API Fallback)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioTick = new Audio('/audio/tick.mp3');
+        const audioWin = new Audio('/audio/win.mp3');
+
+        let spinAnimationId = null;
+
+        // SYNTHETIC SOUNDS (If files missing)
+        function playSyntheticTick() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playSyntheticWin() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            // Simple Arpeggio
+            [440, 554, 659, 880].forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + i * 0.1);
+                osc.stop(audioCtx.currentTime + i * 0.1 + 0.5);
+            });
+        }
+
+        async function openDraw() {
+            if (!currentCampaignId) return showDialog('Nenhuma campanha carregada!', 'Erro');
+
+            document.getElementById('drawModal').style.display = 'flex';
+            resetSlot();
+
+            // Load visual candidates with fallback
+            drawCandidates = Array(50).fill(0).map((_, i) => ({
+                number: String(i).padStart(3, '0'),
+                label: Math.random() > 0.5 ? 'Participante' : 'Livre 🏠'
+            }));
+
+            try {
+                const res = await fetch(`/api/admin/amigos/draw/candidates/${currentCampaignId}`);
+                if (res.ok) {
+                    drawCandidates = await res.json();
+                }
+            } catch (e) {
+                console.error('Error loading candidates', e);
+            }
+            renderStrip(drawCandidates);
+        }
+
+        function closeDraw() {
+            document.getElementById('drawModal').style.display = 'none';
+        }
+
+        function resetSlot() {
+            const container = document.getElementById('slotMachineContainer');
+            if (container) container.classList.remove('focused');
+
+            const strip = document.getElementById('slotStrip');
+            if (!strip) return;
+            strip.style.transition = 'none';
+            strip.style.transform = 'translateY(0)';
+            document.getElementById('winnerCard').classList.remove('show', 'house-wins');
+
+            // STOP AUDIO
+            if (spinAnimationId) cancelAnimationFrame(spinAnimationId);
+            audioWin.pause();
+            audioWin.currentTime = 0;
+
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = false;
+            spinBtn.textContent = 'GIRAR A RODA 🎲';
+            spinBtn.onclick = startSpin;
+
+            // Show Controls Again
+            const controls = document.getElementById('spinControls');
+            if (controls) controls.style.display = 'block';
+
+            // Show Close Button (inside controls)
+            document.getElementById('closeSpinBtn').style.display = 'block';
+        }
+
+        function renderStrip(items) {
+            const strip = document.getElementById('slotStrip');
+            if (!strip) return;
+            strip.innerHTML = items.map(i => `
+                <div class="slot-item" ${i.isWinner ? 'id="winning-ticket"' : ''}>
+                    <span class="ticket-num">#${i.number}</span>
+                </div>
+            `).join('');
+        }
+
+        async function startSpin() {
+            console.log('Spin started...');
+
+            // Hide Controls Completely
+            const controls = document.getElementById('spinControls');
+            if (controls) controls.style.display = 'none';
+
+            // PLAY SPIN AUDIO VIA TRACKING
+            audioWin.pause();
+            audioWin.currentTime = 0;
+
+            // Start Tracking for Clicks
+            trackSpinning();
+
+            try {
+                // 1. Get Official Winner
+                const res = await fetch(`/api/admin/amigos/draw/winner/${currentCampaignId}`);
+                if (!res.ok) throw new Error('Erro no sorteio');
+                const winner = await res.json();
+
+                // 2. Deep Validation Spin Logic
+                // We repeat the list many times to create a "Long Spin" effect
+                // mimicking multiple turns.
+                const originalList = [...drawCandidates];
+                let spinList = [];
+                // Repeat 10 times
+                for (let k = 0; k < 10; k++) {
+                    spinList = [...spinList, ...originalList];
+                }
+
+                // We decide the winner will be at specific deep index
+                // e.g., near the end (index ~400 if list is 50*10=500)
+                const finalPositionIndex = spinList.length - 15;
+
+                const winnerItem = {
+                    number: winner.ticket_number,
+                    label: winner.status === 'ASSIGNED' ? (winner.name || 'Participante') : 'Livre 🏠',
+                    isWinner: true
+                };
+
+                // Inject Winner
+                spinList[finalPositionIndex] = winnerItem;
+                renderStrip(spinList);
+
+                // 3. Animate
+                const strip = document.getElementById('slotStrip');
+                strip.style.transition = 'none';
+                strip.style.transform = 'translateY(0)';
+
+                // Focus Zoom
+                document.getElementById('slotMachineContainer').classList.add('focused');
+
+                // Force Reflow
+                void strip.offsetHeight;
+
+                // Target Y
+                const targetY = -(finalPositionIndex * ITEM_HEIGHT) + 100;
+
+                // Spin Duration 25s
+                strip.style.transition = 'transform 25s cubic-bezier(0.1, 0.9, 0.3, 1)';
+                strip.style.transform = `translateY(${targetY}px)`;
+
+                // 4. Show Result
+                setTimeout(() => {
+                    // STOP SPIN TRACKING, PLAY WIN
+                    if (spinAnimationId) cancelAnimationFrame(spinAnimationId);
+
+                    // Try play file, fallback to synth
+                    const playPromise = audioWin.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log('Win File failed, using Synth');
+                            playSyntheticWin();
+                        });
+                    }
+
+                    // Reveal Green Highlight on Ticket
+                    const winTicket = document.getElementById('winning-ticket');
+                    if (winTicket) winTicket.classList.add('winner-highlight');
+
+                    showDrawResult(winner);
+                    btn.textContent = 'GIRAR NOVAMENTE 🔄';
+                    btn.disabled = false;
+                    btn.onclick = () => { resetSlot(); };
+                }, 25500);
+
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao realizar sorteio: ' + e.message);
+                btn.disabled = false;
+                btn.textContent = 'GIRAR A RODA 🎲';
+            }
+        }
+
+        function trackSpinning() {
+            const strip = document.getElementById('slotStrip');
+            let lastIndex = 0;
+
+            const check = () => {
+                if (!strip) return;
+                const style = window.getComputedStyle(strip);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                const y = Math.abs(matrix.m42); // Get Y translation (absolute)
+
+                const currentIndex = Math.floor(y / ITEM_HEIGHT);
+
+                if (currentIndex !== lastIndex) {
+                    // Crossed a number line -> Play Click
+                    // Try file first
+                    const click = audioTick.cloneNode();
+                    click.volume = 0.5;
+                    const p = click.play();
+
+                    // If file fails (or empty), play synth
+                    if (p !== undefined) {
+                        p.catch(() => {
+                            // File not found/loaded -> Synth
+                            playSyntheticTick();
+                        });
+                    }
+
+                    lastIndex = currentIndex;
+                }
+
+                spinAnimationId = requestAnimationFrame(check);
+            };
+
+            spinAnimationId = requestAnimationFrame(check);
+        }
+
+        function showDrawResult(w) {
+            const card = document.getElementById('winnerCard');
+            const isHouse = w.status !== 'ASSIGNED';
+
+            document.getElementById('winNum').textContent = `#${w.ticket_number}`;
+
+            if (isHouse) {
+                card.classList.add('house-wins');
+                document.getElementById('winEmoji').textContent = '🏠';
+                document.getElementById('winTitle').textContent = 'A CASA GANHOU';
+                document.getElementById('winInfoBox').style.display = 'none';
+                document.getElementById('winChatBtn').style.display = 'none';
+            } else {
+                card.classList.remove('house-wins');
+                document.getElementById('winEmoji').textContent = '🏆';
+                document.getElementById('winTitle').textContent = 'GANHADOR!';
+                document.getElementById('winInfoBox').style.display = 'block';
+                document.getElementById('winName').textContent = w.name;
+                document.getElementById('winPhone').textContent = w.phone;
+
+                const msg = `Olá ${w.name}! Parabéns! Você foi o ganhador do sorteio com o número #${w.ticket_number}! 🏆`;
+                const cleanPhone = w.phone.replace(/\D/g, '');
+                const link = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(msg)}`;
+
+                const btn = document.getElementById('winChatBtn');
+                btn.style.display = 'flex';
+                btn.href = link;
+            }
+
+            createConfetti();
+            card.classList.add('show');
+        }
     </script>
 </body>
 

@@ -30,9 +30,10 @@ module.exports = {
     SESSION_MAX_AGE: 24 * 60 * 60 * 1000, // 24 hours
 
     // Security
-    RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-    RATE_LIMIT_MAX_REQUESTS: 100,
-    RATE_LIMIT_LOGIN_MAX: 5, // 5 login attempts per window
+    // Relaxed for High Traffic Events
+    RATE_LIMIT_WINDOW_MS: 1 * 60 * 1000, // 1 minute (faster recovery)
+    RATE_LIMIT_MAX_REQUESTS: 1000, // High capacity for shared IPs/CGNAT
+    RATE_LIMIT_LOGIN_MAX: 10, // Slightly increased login tolerance
 
     // CORS
     CORS_ORIGIN: process.env.CORS_ORIGIN || 'https://www.tvzapao.com.br',
