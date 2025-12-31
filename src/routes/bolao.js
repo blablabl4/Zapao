@@ -12,6 +12,33 @@ router.get('/grid', async (req, res) => {
     }
 });
 
+
+
+// EMERGENCY ROUTES
+router.get('/debug-round', async (req, res) => {
+    try {
+        const { query } = require('../database/db');
+        const campRes = await query("SELECT * FROM az_campaigns LIMIT 1");
+        if (campRes.rows.length === 0) return res.json({ error: 'No campaign' });
+
+        const c = campRes.rows[0];
+        const ticketsRes = await query("SELECT count(*) FROM az_tickets WHERE round_number = $1 AND campaign_id = $2", [c.current_round, c.id]);
+        res.json({ campaign: c, tickets: ticketsRes.rows[0] });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/emergency-next-round', async (req, res) => {
+    try {
+        const { query } = require('../database/db');
+        const resUp = await query("UPDATE az_campaigns SET current_round = current_round + 1 WHERE id = (SELECT id FROM az_campaigns LIMIT 1) RETURNING current_round");
+        res.json({ success: true, new_round: resUp.rows[0].current_round });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Lookup User
 router.get('/lookup/:phone', async (req, res) => {
     try {

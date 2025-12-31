@@ -11,14 +11,14 @@ let intervalId = null;
  */
 async function checkPendingPayments() {
     try {
-        // Get pending claims from last 2 hours (increased from 30 min)
+        // Get pending claims from last 2 hours
         const res = await query(`
             SELECT id, payment_id, campaign_id, phone, name
             FROM az_claims 
             WHERE status = 'PENDING' 
             AND type = 'BOLAO'
-            AND created_at > NOW() - INTERVAL '2 hours'
-            ORDER BY created_at DESC
+            AND claimed_at > NOW() - INTERVAL '2 hours'
+            ORDER BY claimed_at DESC
             LIMIT 50
         `);
 

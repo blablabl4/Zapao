@@ -12,6 +12,7 @@ const { initializeDatabase, closeDatabase, getPool } = require('./database/db');
 const expirationJob = require('./jobs/expirationJob');
 const drawExpirationJob = require('./jobs/drawExpirationJob');
 const paymentPollingJob = require('./jobs/paymentPollingJob');
+const ticketCleanupJob = require('./jobs/ticketCleanupJob');
 const { requireAdmin } = require('./middleware/adminAuth');
 
 const app = express();
@@ -165,11 +166,23 @@ app.get('/admin/amigos', requireAdmin, (req, res) => {
 // === ACTIVE API ROUTES ===
 app.use('/api/amigos', require('./routes/amigos'));
 app.use('/api/bolao', require('./routes/bolao'));
+app.use('/api/bolao', require('./routes/bolaoValidation')); // Participant validation
 app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
+app.use('/api/admin/bolao', requireAdmin, require('./routes/adminBolao'));
+
+// Admin Bolão Manager
+app.get('/admin/bolao', requireAdmin, (req, res) => {
+    res.sendFile('admin-bolao.html', { root: path.join(__dirname, '../public') });
+});
 
 // Bolão Frontend
 app.get('/bolao', (req, res) => {
     res.sendFile('bolao.html', { root: path.join(__dirname, '../public') });
+});
+
+// Bolão Validation Page (public)
+app.get('/validar', (req, res) => {
+    res.sendFile('validar.html', { root: path.join(__dirname, '../public') });
 });
 
 
@@ -193,6 +206,7 @@ async function startServer() {
         expirationJob.start();
         drawExpirationJob.start();
         paymentPollingJob.start();
+        ticketCleanupJob.start();
 
         // Start WhatsApp Bot (Bot Phase 9) - PAUSED
         // const { startBot } = require('./bot');
@@ -212,6 +226,7 @@ async function startServer() {
             expirationJob.stop();
             drawExpirationJob.stop();
             paymentPollingJob.stop();
+            ticketCleanupJob.stop();
 
             server.close(async () => {
                 await closeDatabase();
@@ -226,6 +241,7 @@ async function startServer() {
             expirationJob.stop();
             drawExpirationJob.stop();
             paymentPollingJob.stop();
+            ticketCleanupJob.stop();
 
             server.close(async () => {
                 await closeDatabase();

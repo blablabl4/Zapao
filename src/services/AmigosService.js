@@ -146,17 +146,19 @@ class AmigosService {
             const chunkSize = 5000;
             let insertedCount = 0;
 
+            const currentRound = camp.current_round || 1;
+            console.log(`[AmigosService] Using Round: ${currentRound}`);
+
             for (let i = 0; i < numbers.length; i += chunkSize) {
                 const chunk = numbers.slice(i, i + chunkSize);
 
-                // Construct values string: ($1, num1, 'AVAILABLE'), ($1, num2, 'AVAILABLE')...
-                // Since pg parameters can be slow for huge lists, we assume numbers are safe integers here.
-                const values = chunk.map(n => `(${campaignId}, ${n}, 'AVAILABLE')`).join(',');
+                // Construct values string: ($1, num1, round, 'AVAILABLE')...
+                const values = chunk.map(n => `(${campaignId}, ${n}, ${currentRound}, 'AVAILABLE')`).join(',');
 
                 const res = await client.query(`
-                    INSERT INTO az_tickets (campaign_id, number, status)
+                    INSERT INTO az_tickets (campaign_id, number, round_number, status)
                     VALUES ${values}
-                    ON CONFLICT (campaign_id, number) DO NOTHING
+                    ON CONFLICT (campaign_id, number, round_number) DO NOTHING
                 `);
                 insertedCount += res.rowCount;
             }

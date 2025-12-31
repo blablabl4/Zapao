@@ -12,8 +12,7 @@ class BolaoService {
     async getActiveBolao() {
         const res = await query(`
             SELECT * FROM az_campaigns 
-            WHERE type = 'BOLAO' AND is_active = true 
-            ORDER BY created_at DESC LIMIT 1
+            WHERE id = 21
         `);
         return res.rows[0];
     }
@@ -65,9 +64,13 @@ class BolaoService {
             grid.push({ number: i, status, owner });
         }
 
+        let singlePrice = parseFloat(campaign.price);
+        if (isNaN(singlePrice) || singlePrice <= 0) singlePrice = 20.00;
+
         return {
             round,
-            price: campaign.price || 20.00,
+            price: singlePrice,
+            round: round, // CRITICAL FIX
             grid
         };
     }
@@ -106,7 +109,8 @@ class BolaoService {
             const campaign = await this.getActiveBolao();
             if (!campaign) throw new Error('Bolão inativo.');
             const round = campaign.current_round || 1;
-            const singlePrice = parseFloat(campaign.price || 20.00);
+            let singlePrice = parseFloat(campaign.price);
+            if (isNaN(singlePrice) || singlePrice <= 0) singlePrice = 20.00;
 
             // 1. Process Tickets
             const ticketIds = [];
@@ -154,6 +158,7 @@ class BolaoService {
 
             // 2. Generate Mercado Pago PIX (One for Total)
             const payment = new Payment(mpClient);
+
             const totalAmount = singlePrice * numbers.length;
             const description = `Bolao Jogo #${round} Qtd ${numbers.length} Nums [${numbers.join(',')}]`;
 
@@ -164,6 +169,9 @@ class BolaoService {
                         transaction_amount: totalAmount,
                         description: description.substring(0, 250), // Limit char length
                         payment_method_id: 'pix',
+                        // Expiration: 14 minutes 55 seconds (just under 15 min reservation)
+                        // This gives users much more time to pay without "ghost" issues
+                        date_of_expiration: new Date(Date.now() + 14 * 60 * 1000 + 55 * 1000).toISOString(),
                         payer: {
                             email: `${cleanPhone}@tvzapao.com.br`,
                             first_name: name.split(' ')[0],
@@ -184,7 +192,8 @@ class BolaoService {
             }
 
             // 3. Create Pending Claim (One Claim for Multiple tickets)
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+            // 3. Create Pending Claim (One Claim for Multiple tickets)
+            const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min timeout
 
             const claimRes = await client.query(`
                 INSERT INTO az_claims 
@@ -226,7 +235,7 @@ class BolaoService {
     /**
      * Check Rotation (Auto New Round)
      */
-    async checkRotation(campaignId) {
+    async checkRotation(campaignId, force = false) {
         // Verify if 100 tickets are PAID for current round
         const campaignRes = await query('SELECT current_round FROM az_campaigns WHERE id = $1', [campaignId]);
         const round = campaignRes.rows[0].current_round;
@@ -238,8 +247,10 @@ class BolaoService {
         `, [campaignId, round]);
 
         const sold = parseInt(countRes.rows[0].c);
-        if (sold >= 100) {
-            console.log(`[Bolão] Round ${round} COMPLETED! Starting Round ${round + 1}`);
+        console.log(`[Bolão] Check Rotation: Round ${round} - Sold ${sold}/100 - Force: ${force}`);
+
+        if (sold >= 100 || force === true) {
+            console.log(`[Bolão] Round ${round} COMPLETED! Starting Round ${round + 1} (Force: ${force})`);
             await query('UPDATE az_campaigns SET current_round = current_round + 1 WHERE id = $1', [campaignId]);
             // Optional: Notify Admin
         }

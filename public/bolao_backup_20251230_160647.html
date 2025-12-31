@@ -92,27 +92,12 @@
             gap: 8px;
             padding: 10px;
             max-width: 500px;
-            width: 100%;
-            /* Ensure it doesnt overflow parent */
-            box-sizing: border-box;
-            /* Include padding in width */
             margin: 0 auto;
-        }
-
-        @media(max-width: 400px) {
-            .grid-container {
-                gap: 4px;
-                /* Tighter gap on small screens */
-                padding: 5px;
-            }
         }
 
         .ticket {
             aspect-ratio: 1;
-            background: #ffffff;
-            /* User requested white instead of green */
-            color: #000000;
-
+            background: var(--green);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -123,10 +108,6 @@
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             transition: transform 0.1s;
-            min-width: 0;
-            /* CRITICAL: Allows shrinking below content size */
-            overflow: hidden;
-            /* Ensure content doesnt spill */
         }
 
         .ticket:active {
@@ -241,146 +222,6 @@
             }
         }
 
-        /* ACCORDION STYLES */
-        .round-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            margin-bottom: 15px;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            overflow: hidden;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .round-section.active {
-            border-color: var(--green);
-            box-shadow: 0 0 20px rgba(40, 167, 69, 0.3);
-        }
-
-        .round-section.closed.collapsed {
-            position: relative;
-            background: linear-gradient(135deg, #ff6b6b, #c92a2a);
-            border-color: #ff0000;
-            /* Strong Red Border */
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
-
-        .round-section.closed.collapsed::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(45deg,
-                    transparent,
-                    transparent 10px,
-                    rgba(255, 255, 255, 0.1) 10px,
-                    rgba(255, 255, 255, 0.1) 20px);
-            pointer-events: none;
-        }
-
-        .round-header {
-            padding: 15px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.2);
-            transition: background 0.3s;
-            position: relative;
-            z-index: 1;
-        }
-
-        .round-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .round-badge {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.75rem;
-        }
-
-        .round-badge.active {
-            background: var(--green);
-            color: #fff;
-        }
-
-        .round-badge.closed {
-            background: #ff0000;
-            /* Strong Red Badge */
-            color: #fff;
-        }
-
-        .round-name {
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .round-info {
-            color: #fff;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .expand-icon {
-            color: var(--gold);
-            font-size: 1.2rem;
-            transition: transform 0.3s;
-        }
-
-        .round-section.collapsed .expand-icon {
-            transform: rotate(-90deg);
-        }
-
-        .round-content {
-            max-height: 5000px;
-            overflow: hidden;
-            transition: max-height 0.5s ease, padding 0.3s ease;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .round-section.collapsed .round-content {
-            max-height: 0;
-            padding: 0 15px;
-        }
-
-        /* Stats in Active Round */
-        .stats {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-around;
-            color: #fff;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--gold);
-        }
-
-        .stat-label {
-            font-size: 0.7rem;
-            color: #aaa;
-        }
-
         /* MODAL */
         .modal-overlay {
             position: fixed;
@@ -478,12 +319,16 @@
 
     <div class="header">
         <img src="/images/bolao-logo.jpg" alt="Logo" class="logo">
+        <div class="game-title" id="gameTitle">Carregando...</div>
+
+        <div class="info-bar">
+            <div class="info-item"><span>10</span>Dezenas</div>
+            <div class="info-item"><span id="totalCotas">100</span>Cotas</div>
+            <div class="info-item"><span id="priceDisplay">R$ 20,00</span>Valor</div>
+        </div>
     </div>
 
-    <!-- MAIN CONTAINER FOR ROUNDS -->
-    <div class="container mb-5" id="roundsContainer" style="padding: 0 10px;">
-        <p style="text-align: center; color: #aaa;">Carregando jogos...</p>
-    </div>
+    <div class="grid-container" id="grid"></div>
 
     <!-- Floating Cart Button -->
     <div class="floating-cart" id="floatingCart" onclick="openTermsModal()">
@@ -636,11 +481,6 @@
         }
         setInterval(loadGrid, 5000); // Auto-refresh every 5s
 
-        function toggleRound(header) {
-            const section = header.parentElement;
-            section.classList.toggle('collapsed');
-        }
-
         async function loadGrid() {
             try {
                 const res = await fetch('/api/bolao/grid');
@@ -648,85 +488,17 @@
 
                 currentRound = data.round || 1;
                 const price = parseFloat(data.price) || 20.00;
-                currentPrice = price;
+                document.getElementById('gameTitle').innerText = `BOLÃO DO ZAPÃO - JOGO #${currentRound}`;
+                document.getElementById('priceDisplay').innerText = `R$ ${price.toFixed(2).replace('.', ',')}`;
 
-                const container = document.getElementById('roundsContainer');
-
-                // Clear container for fresh render (simple approach)
-                container.innerHTML = '';
-
-                // 1. Render Solt Out Rounds (1 to currentRound - 1)
-                // Listing them effectively on top
-                for (let r = 1; r < currentRound; r++) {
-                    const closedHTML = `
-                        <div class="round-section closed collapsed">
-                            <div class="round-header" onclick="toggleRound(this)">
-                                <div class="round-title">
-                                    <span class="round-badge closed">ESGOTADO</span>
-                                    <span class="round-name">Jogo #${r}</span>
-                                </div>
-                                <div class="round-info">
-                                    <span>100/100 ✅</span>
-                                    <span class="expand-icon">▼</span>
-                                </div>
-                            </div>
-                            <div class="round-content">
-                                <p style="color: var(--gold); text-align: center; font-size: 0.9rem; font-weight: bold; margin: 10px 0;">
-                                    🏆 Jogo Finalizado
-                                </p>
-                                <p style="color: #aaa; text-align: center; font-size: 0.85rem;">
-                                    Todas as cotas vendidas!
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', closedHTML);
-                }
-
-                // 2. Render Active Round Container
-                const activeHTML = `
-                     <div class="round-section active">
-                        <div class="round-header" onclick="toggleRound(this)">
-                            <div class="round-title">
-                                <span class="round-badge active">ATIVO</span>
-                                <span class="round-name">Jogo #${currentRound} - Mega da Virada</span>
-                            </div>
-                            <div class="round-info">
-                                <span id="activeStats">...</span>
-                                <span class="expand-icon">▼</span>
-                            </div>
-                        </div>
-                        <div class="round-content">
-                            <div class="stats">
-                                <div class="stat-item">
-                                    <div class="stat-value" id="statSold">0</div>
-                                    <div class="stat-label">Vendidas</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value" id="statAvailable">0</div>
-                                    <div class="stat-label">Disponíveis</div>
-                                </div>
-                            </div>
-                            <div class="grid-container" id="grid">
-                                <!-- Grid injected here -->
-                            </div>
-                            <p style="color: #aaa; text-align: center; margin-top: 15px; font-size: 0.8rem;">
-                                ⬆️ Clique nos números verdes para comprar!
-                            </p>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', activeHTML);
-
-                // 3. Render Grid Items
                 if (data.grid && data.grid.length > 0) {
                     renderGrid(data.grid);
                 } else {
+                    // No grid data yet, render empty grid 1-100
                     const emptyGrid = [];
                     for (let i = 1; i <= 100; i++) emptyGrid.push({ number: i, status: 'AVAILABLE', owner: null });
                     renderGrid(emptyGrid);
                 }
-
             } catch (e) {
                 console.error(e);
             }
@@ -734,14 +506,9 @@
 
         function renderGrid(grid) {
             const container = document.getElementById('grid');
-            if (!container) return;
             container.innerHTML = '';
 
-            let soldCount = 0;
-
             grid.forEach(item => {
-                if (item.status !== 'AVAILABLE') soldCount++;
-
                 const el = document.createElement('div');
                 el.className = `ticket ${item.status.toLowerCase()}`;
                 el.dataset.number = item.number;
@@ -753,14 +520,14 @@
                 } else if (item.status === 'PENDING') {
                     el.innerText = item.number;
                 } else {
-                    // PAID
+                    // PAID - Show number on top, owner below
                     const num = document.createElement('div');
                     num.className = 'ticket-number';
                     num.innerText = item.number;
 
                     const name = document.createElement('div');
                     name.className = 'owner-name';
-                    // item.owner format: "First Name (...last 4 digits of phone)"
+                    // item.owner format: "Nome (...1234)"
                     name.innerText = item.owner || 'Vendido';
 
                     el.appendChild(num);
@@ -768,16 +535,6 @@
                 }
                 container.appendChild(el);
             });
-
-            // Update stats
-            const availableCount = 100 - soldCount;
-            const statSold = document.getElementById('statSold');
-            const statAvailable = document.getElementById('statAvailable');
-            const activeStats = document.getElementById('activeStats');
-
-            if (statSold) statSold.innerText = soldCount;
-            if (statAvailable) statAvailable.innerText = availableCount;
-            if (activeStats) activeStats.innerText = `${soldCount}/100`;
         }
 
         async function openModal(number) {

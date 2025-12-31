@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolão - Demo Rounds</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .round-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .round-section.active {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .round-section.closed {
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .round-header {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            transition: background 0.3s;
+        }
+
+        .round-header:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .round-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .round-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .round-badge.active {
+            background: #00ff88;
+            color: #000;
+        }
+
+        .round-badge.closed {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .round-name {
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .round-info {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .expand-icon {
+            color: #ffd700;
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+        }
+
+        .round-section.collapsed .expand-icon {
+            transform: rotate(-90deg);
+        }
+
+        .round-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.5s ease, padding 0.3s ease;
+            padding: 20px;
+        }
+
+        .round-section.collapsed .round-content {
+            max-height: 0;
+            padding: 0 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .ticket {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .ticket:hover {
+            transform: scale(1.05);
+        }
+
+        .ticket.available {
+            background: #00ff88;
+            color: #000;
+        }
+
+        .ticket.sold {
+            background: #e74c3c;
+            color: #fff;
+            font-size: 0.5rem;
+        }
+
+        .ticket-number {
+            font-size: 1rem;
+            font-weight: 900;
+        }
+
+        .owner-name {
+            font-size: 0.45rem;
+            opacity: 0.9;
+            text-align: center;
+        }
+
+        .stats {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-around;
+            color: #fff;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .sold-out-badge {
+            position: relative;
+            background: linear-gradient(135deg, #ff6b6b, #c92a2a);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+            overflow: hidden;
+        }
+
+        .sold-out-badge::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(255, 255, 255, 0.05) 10px,
+                    rgba(255, 255, 255, 0.05) 20px);
+            animation: slide 20s linear infinite;
+        }
+
+        @keyframes slide {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        .sold-out-text {
+            position: relative;
+            font-size: 2rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .sold-out-subtext {
+            position: relative;
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #00ff88, #00b359);
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.6);
+        }
+
+        .cta-button:active {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎰 Bolão do Zapão - Múltiplos Jogos</h1>
+
+        <!-- JOGO 3 - ATIVO (EXPANDIDO) -->
+        <div class="round-section active">
+            <div class="round-header" onclick="toggleRound(this)">
+                <div class="round-title">
+                    <span class="round-badge active">ATIVO</span>
+                    <span class="round-name">Jogo #3 - Mega da Virada 2025</span>
+                </div>
+                <div class="round-info">
+                    <span>23/100 vendidas</span>
+                    <span class="expand-icon">▼</span>
+                </div>
+            </div>
+            <div class="round-content">
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">23</div>
+                        <div class="stat-label">Vendidas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">77</div>
+                        <div class="stat-label">Disponíveis</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">R$ 460</div>
+                        <div class="stat-label">Arrecadado</div>
+                    </div>
+                </div>
+                <div class="grid-container">
+                    <div class="ticket sold">
+                        <div class="ticket-number">1</div>
+                        <div class="owner-name">João (...1234)</div>
+                    </div>
+                    <div class="ticket available">2</div>
+                    <div class="ticket available">3</div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">4</div>
+                        <div class="owner-name">Maria (...5678)</div>
+                    </div>
+                    <div class="ticket available">5</div>
+                    <div class="ticket available">6</div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">7</div>
+                        <div class="owner-name">Pedro (...9012)</div>
+                    </div>
+                    <div class="ticket available">8</div>
+                    <div class="ticket available">9</div>
+                    <div class="ticket available">10</div>
+                    <!-- Resto dos números (simplificado) -->
+                    <div class="ticket available">11</div>
+                    <div class="ticket available">12</div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">13</div>
+                        <div class="owner-name">Ana (...3456)</div>
+                    </div>
+                    <div class="ticket available">14</div>
+                    <div class="ticket available">15</div>
+                    <div class="ticket available">16</div>
+                    <div class="ticket available">17</div>
+                    <div class="ticket available">18</div>
+                    <div class="ticket available">19</div>
+                    <div class="ticket available">20</div>
+                </div>
+                <p style="color: #aaa; text-align: center; margin-top: 20px; font-size: 0.85rem;">
+                    ⬆️ Clique nos números verdes para comprar sua cota!
+                </p>
+            </div>
+        </div>
+
+        <!-- JOGO 2 - FECHADO (RECOLHIDO) -->
+        <div class="round-section closed collapsed">
+            <div class="round-header" onclick="toggleRound(this)">
+                <div class="round-title">
+                    <span class="round-badge closed">FECHADO</span>
+                    <span class="round-name">Jogo #2 - Concluído</span>
+                </div>
+                <div class="round-info">
+                    <span>100/100 vendidas ✅</span>
+                    <span class="expand-icon">▼</span>
+                </div>
+            </div>
+            <div class="round-content">
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">100</div>
+                        <div class="stat-label">Vendidas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">R$ 2.000</div>
+                        <div class="stat-label">Total Arrecadado</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">R$ 1.900</div>
+                        <div class="stat-label">Para Cotistas</div>
+                    </div>
+                </div>
+                <div class="grid-container">
+                    <!-- Todos vendidos -->
+                    <div class="ticket sold">
+                        <div class="ticket-number">1</div>
+                        <div class="owner-name">João (...1234)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">2</div>
+                        <div class="owner-name">Maria (...5678)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">3</div>
+                        <div class="owner-name">José (...9012)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">4</div>
+                        <div class="owner-name">Ana (...3456)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">5</div>
+                        <div class="owner-name">Carlos (...7890)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">6</div>
+                        <div class="owner-name">Lucia (...2345)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">7</div>
+                        <div class="owner-name">Paulo (...6789)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">8</div>
+                        <div class="owner-name">Rita (...0123)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">9</div>
+                        <div class="owner-name">Bruno (...4567)</div>
+                    </div>
+                    <div class="ticket sold">
+                        <div class="ticket-number">10</div>
+                        <div class="owner-name">Carla (...8901)</div>
+                    </div>
+                </div>
+                <p style="color: #ffd700; text-align: center; margin-top: 20px; font-size: 0.9rem; font-weight: bold;">
+                    🏆 Números Sorteados: 03, 12, 27, 35, 41, 58, 63, 72, 84, 96
+                </p>
+            </div>
+        </div>
+
+        <!-- JOGO 1 - FECHADO (RECOLHIDO) -->
+        <div class="round-section closed collapsed">
+            <div class="round-header" onclick="toggleRound(this)">
+                <div class="round-title">
+                    <span class="round-badge closed">FECHADO</span>
+                    <span class="round-name">Jogo #1 - Concluído</span>
+                </div>
+                <div class="round-info">
+                    <span>100/100 vendidas ✅</span>
+                    <span class="expand-icon">▼</span>
+                </div>
+            </div>
+            <div class="round-content">
+                <div class="sold-out-badge">
+                    <div class="sold-out-text">🔥 ESGOTADO 🔥</div>
+                    <div class="sold-out-subtext">Todas as 100 cotas foram vendidas!</div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">100</div>
+                        <div class="stat-label">Vendidas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">R$ 2.000</div>
+                        <div class="stat-label">Total Arrecadado</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">R$ 1.900</div>
+                        <div class="stat-label">Para Cotistas</div>
+                    </div>
+                </div>
+
+                <button class="cta-button" onclick="alert('Aqui mostraria todos os números vendidos')">
+                    📋 Ver Todos os Números
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleRound(header) {
+            const section = header.parentElement;
+            section.classList.toggle('collapsed');
+        }
+    </script>
+</body>
+
+</html>
