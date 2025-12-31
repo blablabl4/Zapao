@@ -36,11 +36,12 @@ router.get('/sales', async (req, res) => {
         // Also get simple stats
         const statsRes = await query(`
         SELECT
-            count(DISTINCT phone) as unique_players,
-            sum(total_qty) FILTER(WHERE status = 'PAID') as total_tickets,
-            sum(total_qty * 20) FILTER(WHERE status = 'PAID') as total_revenue
-        FROM az_claims
-        WHERE campaign_id = 21
+            (SELECT count(DISTINCT phone) FROM az_claims WHERE campaign_id = 21) as unique_players,
+            (SELECT sum(total_qty) FROM az_claims WHERE campaign_id = 21 AND status='PAID') as total_tickets,
+            (SELECT sum(total_qty * 20) FROM az_claims WHERE campaign_id = 21 AND status='PAID') as total_revenue,
+            (SELECT count(DISTINCT phone) FROM az_bolao_validations) as total_validations,
+            (SELECT count(*) FROM az_bolao_validations WHERE status = 'disputed') as disputed_validations,
+            (SELECT count(*) FROM az_bolao_validations WHERE status = 'confirmed') as confirmed_validations
         `);
 
         const stats = statsRes.rows[0];
@@ -54,6 +55,9 @@ router.get('/sales', async (req, res) => {
             stats: {
                 uniquePlayers: parseInt(stats.unique_players || 0),
                 totalTickets: parseInt(stats.total_tickets || 0),
+                totalValidations: parseInt(stats.total_validations || 0),
+                disputedValidations: parseInt(stats.disputed_validations || 0),
+                confirmedValidations: parseInt(stats.confirmed_validations || 0),
                 maxCapacity: maxCapacity,
                 grossRevenue: gross,
                 netRevenue: net

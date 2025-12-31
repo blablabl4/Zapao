@@ -220,6 +220,18 @@
                 <h3>Jogadores Únicos</h3>
                 <div class="value" id="uniquePlayers">0</div>
             </div>
+            <div class="card" style="border-left: 5px solid #ff9800;">
+                <h3>Faltam Validar</h3>
+                <div class="value" id="missingValidations" style="color:#ff9800">0</div>
+            </div>
+            <div class="card" style="border-left: 5px solid #dc3545;">
+                <h3>Contestaram</h3>
+                <div class="value" id="disputedValidations" style="color:#dc3545">0</div>
+            </div>
+            <div class="card" style="border-left: 5px solid #28a745;">
+                <h3>Confirmados</h3>
+                <div class="value" id="confirmedValidations" style="color:#28a745">0</div>
+            </div>
         </div>
 
         <!-- Tab Navigation -->
@@ -340,6 +352,12 @@
                     const ticketsText = `${data.stats.totalTickets} de ${data.stats.maxCapacity}`;
                     document.getElementById('totalTickets').innerText = ticketsText;
                     document.getElementById('uniquePlayers').innerText = data.stats.uniquePlayers;
+
+                    // Missing Validations Calculation
+                    const missing = data.stats.uniquePlayers - (data.stats.totalValidations || 0);
+                    document.getElementById('missingValidations').innerText = missing > 0 ? missing : '0 ✅';
+                    document.getElementById('disputedValidations').innerText = data.stats.disputedValidations;
+                    document.getElementById('confirmedValidations').innerText = data.stats.confirmedValidations;
 
                     // Build Table
                     tbody.innerHTML = '';
