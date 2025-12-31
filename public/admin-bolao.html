@@ -213,12 +213,12 @@
                 <div class="value" id="netRevenue" style="color:var(--blue)">R$ 0,00</div>
             </div>
             <div class="card">
-                <h3>Total Tickets</h3>
-                <div class="value" id="totalTickets">0</div>
+                <h3>Cotas Vendidas</h3>
+                <div class="value" id="totalTickets">0 de 600</div>
             </div>
             <div class="card">
-                <h3>Total Pedidos</h3>
-                <div class="value" id="totalOrders">0</div>
+                <h3>Jogadores Únicos</h3>
+                <div class="value" id="uniquePlayers">0</div>
             </div>
         </div>
 
@@ -247,7 +247,7 @@
                     <thead>
                         <tr>
                             <th style="cursor:pointer" onclick="sortTable('claimed_at')">Data ↕</th>
-                            <th style="cursor:pointer" onclick="sortTable('round_number')">Rodada ↕</th>
+                            <th style="cursor:pointer" onclick="sortTable('round_number')">Bolão ↕</th>
                             <th>Cotas</th>
                             <th style="cursor:pointer" onclick="sortTable('name')">Nome ↕</th>
                             <th style="cursor:pointer" onclick="sortTable('phone')">WhatsApp ↕</th>
@@ -285,7 +285,7 @@
                             <th>Status</th>
                             <th>Nome</th>
                             <th>Telefone</th>
-                            <th>Jogos/Cotas</th>
+                            <th>Bolões/Cotas</th>
                             <th>Data</th>
                         </tr>
                     </thead>
@@ -333,10 +333,13 @@
                     const data = await res.json();
 
                     // Build Stats
-                    document.getElementById('grossRevenue').innerText = `R$ ${data.stats.grossRevenue.toFixed(2).replace('.', ',')}`;
-                    document.getElementById('netRevenue').innerText = `R$ ${data.stats.netRevenue.toFixed(2).replace('.', ',')}`;
-                    document.getElementById('totalTickets').innerText = data.stats.totalTickets;
-                    document.getElementById('totalOrders').innerText = data.stats.totalOrders;
+                    document.getElementById('grossRevenue').innerText = data.stats.grossRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    document.getElementById('netRevenue').innerText = data.stats.netRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                    // New Stats Format
+                    const ticketsText = `${data.stats.totalTickets} de ${data.stats.maxCapacity}`;
+                    document.getElementById('totalTickets').innerText = ticketsText;
+                    document.getElementById('uniquePlayers').innerText = data.stats.uniquePlayers;
 
                     // Build Table
                     tbody.innerHTML = '';
@@ -486,7 +489,7 @@
                         const statusIcon = v.status === 'confirmed' ? '✅' : '⚠️';
                         const statusColor = v.status === 'confirmed' ? 'var(--green)' : '#dc3545';
                         const games = v.games_shown ? Object.entries(v.games_shown)
-                            .map(([j, c]) => `J${j}: ${c}`)
+                            .map(([j, c]) => `B${j}: ${c}`)
                             .join(', ') : '-';
                         const date = new Date(v.validated_at).toLocaleString('pt-BR');
 

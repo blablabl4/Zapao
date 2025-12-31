@@ -36,23 +36,25 @@ router.get('/sales', async (req, res) => {
         // Also get simple stats
         const statsRes = await query(`
         SELECT
-        count(*) FILTER(WHERE status = 'PAID') as total_orders,
+            count(DISTINCT phone) as unique_players,
             sum(total_qty) FILTER(WHERE status = 'PAID') as total_tickets,
-                sum(total_qty * 20) FILTER(WHERE status = 'PAID') as total_revenue
-            FROM az_claims
-            WHERE campaign_id = 21
-            `);
+            sum(total_qty * 20) FILTER(WHERE status = 'PAID') as total_revenue
+        FROM az_claims
+        WHERE campaign_id = 21
+        `);
 
         const stats = statsRes.rows[0];
         const gross = parseFloat(stats.total_revenue || 0);
         const fee = gross * 0.0099; // 0.99% fee
         const net = gross - fee;
+        const maxCapacity = 600; // 6 games × 100 cotas
 
         res.json({
             sales: result.rows,
             stats: {
-                totalOrders: parseInt(stats.total_orders || 0),
+                uniquePlayers: parseInt(stats.unique_players || 0),
                 totalTickets: parseInt(stats.total_tickets || 0),
+                maxCapacity: maxCapacity,
                 grossRevenue: gross,
                 netRevenue: net
             }
