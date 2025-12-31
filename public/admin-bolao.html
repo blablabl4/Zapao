@@ -511,6 +511,8 @@
                             .join(', ') : '-';
                         const date = new Date(v.validated_at).toLocaleString('pt-BR');
 
+                        const isDisputed = v.status === 'disputed' || v.status === 'pending';
+
                         return `
                         <tr style="border-left: 4px solid ${statusColor}">
                             <td style="font-size:1.5rem">${statusIcon}</td>
