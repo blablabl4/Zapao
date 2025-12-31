@@ -222,122 +222,159 @@
             </div>
         </div>
 
-        <div class="table-responsive">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="margin:0; padding-bottom:10px;">Vendas Recentes</h2>
-                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Buscar..."
-                    style="padding:8px; border-radius:5px; border:1px solid #ddd;">
-            </div>
-
-            <table id="salesTable">
-                <thead>
-                    <tr>
-                        <th style="cursor:pointer" onclick="sortTable('claimed_at')">Data ↕</th>
-                        <th style="cursor:pointer" onclick="sortTable('round_number')">Rodada ↕</th>
-                        <th>Cotas</th>
-                        <th style="cursor:pointer" onclick="sortTable('name')">Nome ↕</th>
-                        <th style="cursor:pointer" onclick="sortTable('phone')">WhatsApp ↕</th>
-                        <th style="cursor:pointer" onclick="sortTable('total_qty')">Qtd ↕</th>
-                        <th>Valor</th>
-                        <th style="cursor:pointer" onclick="sortTable('status')">Status ↕</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="7" style="text-align:center">Carregando...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Tab Navigation -->
+        <div class="tab-nav" style="display:flex; gap:10px; margin-bottom:20px;">
+            <button class="tab-btn active" onclick="switchTab('vendas')" id="tabVendas"
+                style="padding:12px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; background:var(--green); color:white;">
+                📊 Vendas
+            </button>
+            <button class="tab-btn" onclick="switchTab('validacoes')" id="tabValidacoes"
+                style="padding:12px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; background:#555; color:white;">
+                📋 Validações
+            </button>
         </div>
 
-        <!-- Validações Section -->
-        <div class="table-responsive" style="margin-top:20px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <h2 style="margin:0; padding-bottom:10px;">📋 Validações de Participantes</h2>
-                <div>
-                    <button class="btn" onclick="loadValidations('all')" style="background:#555">Todos</button>
-                    <button class="btn" onclick="loadValidations('confirmed')" style="background:var(--green)">✅
-                        Confirmados</button>
-                    <button class="btn" onclick="loadValidations('disputed')" style="background:#dc3545">⚠️
-                        Disputas</button>
+        <!-- Tab: Vendas -->
+        <div id="panelVendas" class="tab-panel">
+            <div class="table-responsive">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 style="margin:0; padding-bottom:10px;">Vendas Recentes</h2>
+                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Buscar..."
+                        style="padding:8px; border-radius:5px; border:1px solid #ddd;">
                 </div>
+
+                <table id="salesTable">
+                    <thead>
+                        <tr>
+                            <th style="cursor:pointer" onclick="sortTable('claimed_at')">Data ↕</th>
+                            <th style="cursor:pointer" onclick="sortTable('round_number')">Rodada ↕</th>
+                            <th>Cotas</th>
+                            <th style="cursor:pointer" onclick="sortTable('name')">Nome ↕</th>
+                            <th style="cursor:pointer" onclick="sortTable('phone')">WhatsApp ↕</th>
+                            <th style="cursor:pointer" onclick="sortTable('total_qty')">Qtd ↕</th>
+                            <th>Valor</th>
+                            <th style="cursor:pointer" onclick="sortTable('status')">Status ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" style="text-align:center">Carregando...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-
-            <table id="validationsTable">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Jogos/Cotas</th>
-                        <th>Data</th>
-                    </tr>
-                </thead>
-                <tbody id="validationsBody">
-                    <tr>
-                        <td colspan="5" style="text-align:center">Carregando...</td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
-    </div>
 
-    <script>
-        async function loadData() {
-            const tbody = document.querySelector('#salesTable tbody');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Carregando...</td></tr>';
+        <!-- Tab: Validações (hidden by default) -->
+        <div id="panelValidacoes" class="tab-panel" style="display:none;">
+            <div class="table-responsive">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <h2 style="margin:0; padding-bottom:10px;">📋 Validações de Participantes</h2>
+                    <div>
+                        <button class="btn" onclick="loadValidations('all')" style="background:#555">Todos</button>
+                        <button class="btn" onclick="loadValidations('confirmed')" style="background:var(--green)">✅
+                            Confirmados</button>
+                        <button class="btn" onclick="loadValidations('disputed')" style="background:#dc3545">⚠️
+                            Disputas</button>
+                    </div>
+                </div>
 
-            try {
-                const res = await fetch('/api/admin/bolao/sales');
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/admin-login.html';
-                    return;
+                <table id="validationsTable">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Jogos/Cotas</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="validationsBody">
+                        <tr>
+                            <td colspan="5" style="text-align:center">Carregando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            // Tab switching
+            function switchTab(tab) {
+                const panelVendas = document.getElementById('panelVendas');
+                const panelValidacoes = document.getElementById('panelValidacoes');
+                const tabVendas = document.getElementById('tabVendas');
+                const tabValidacoes = document.getElementById('tabValidacoes');
+
+                if (tab === 'vendas') {
+                    panelVendas.style.display = 'block';
+                    panelValidacoes.style.display = 'none';
+                    tabVendas.style.background = 'var(--green)';
+                    tabValidacoes.style.background = '#555';
+                } else {
+                    panelVendas.style.display = 'none';
+                    panelValidacoes.style.display = 'block';
+                    tabVendas.style.background = '#555';
+                    tabValidacoes.style.background = 'var(--green)';
+                    loadValidations();
                 }
-                const data = await res.json();
-
-                // Build Stats
-                document.getElementById('grossRevenue').innerText = `R$ ${data.stats.grossRevenue.toFixed(2).replace('.', ',')}`;
-                document.getElementById('netRevenue').innerText = `R$ ${data.stats.netRevenue.toFixed(2).replace('.', ',')}`;
-                document.getElementById('totalTickets').innerText = data.stats.totalTickets;
-                document.getElementById('totalOrders').innerText = data.stats.totalOrders;
-
-                // Build Table
-                tbody.innerHTML = '';
-                if (data.sales.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Nenhuma venda encontrada.</td></tr>';
-                    return;
-                }
-
-                window.originalData = data.sales; // Store for filtering
-                renderTable(data.sales);
-
-            } catch (e) {
-                console.error(e);
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red">Erro ao carregar dados.</td></tr>';
             }
-        }
 
-        function renderTable(salesData) {
-            try {
+            async function loadData() {
                 const tbody = document.querySelector('#salesTable tbody');
-                if (!tbody) return;
-                tbody.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Carregando...</td></tr>';
 
-                salesData.forEach(row => {
-                    const tr = document.createElement('tr');
+                try {
+                    const res = await fetch('/api/admin/bolao/sales');
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '/admin-login.html';
+                        return;
+                    }
+                    const data = await res.json();
 
-                    let dateStr = '-';
-                    if (row.claimed_at) dateStr = new Date(row.claimed_at).toLocaleString('pt-BR');
-                    else if (row.created_at) dateStr = new Date(row.created_at).toLocaleString('pt-BR');
+                    // Build Stats
+                    document.getElementById('grossRevenue').innerText = `R$ ${data.stats.grossRevenue.toFixed(2).replace('.', ',')}`;
+                    document.getElementById('netRevenue').innerText = `R$ ${data.stats.netRevenue.toFixed(2).replace('.', ',')}`;
+                    document.getElementById('totalTickets').innerText = data.stats.totalTickets;
+                    document.getElementById('totalOrders').innerText = data.stats.totalOrders;
 
-                    const value = (row.total_qty * 20).toFixed(2).replace('.', ',');
+                    // Build Table
+                    tbody.innerHTML = '';
+                    if (data.sales.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Nenhuma venda encontrada.</td></tr>';
+                        return;
+                    }
 
-                    let statusClass = 'status-pd';
-                    if (row.status === 'PAID') statusClass = 'status-paid';
-                    else if (row.status === 'PENDING') statusClass = 'status-pending';
-                    else statusClass = 'status-expired';
+                    window.originalData = data.sales; // Store for filtering
+                    renderTable(data.sales);
 
-                    tr.innerHTML = `
+                } catch (e) {
+                    console.error(e);
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red">Erro ao carregar dados.</td></tr>';
+                }
+            }
+
+            function renderTable(salesData) {
+                try {
+                    const tbody = document.querySelector('#salesTable tbody');
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+
+                    salesData.forEach(row => {
+                        const tr = document.createElement('tr');
+
+                        let dateStr = '-';
+                        if (row.claimed_at) dateStr = new Date(row.claimed_at).toLocaleString('pt-BR');
+                        else if (row.created_at) dateStr = new Date(row.created_at).toLocaleString('pt-BR');
+
+                        const value = (row.total_qty * 20).toFixed(2).replace('.', ',');
+
+                        let statusClass = 'status-pd';
+                        if (row.status === 'PAID') statusClass = 'status-paid';
+                        else if (row.status === 'PENDING') statusClass = 'status-pending';
+                        else statusClass = 'status-expired';
+
+                        tr.innerHTML = `
                         <td style="font-size:0.8rem">${dateStr}</td>
                         <td>#${row.round_number || '?'}</td>
                         <td style="font-size:0.85rem; font-weight:bold; word-break:break-all; white-space:normal; max-width:80px;">${row.ticket_numbers || '-'}</td>
@@ -347,113 +384,113 @@
                         <td style="font-weight:bold">R$ ${value}</td>
                         <td><span class="status-badge ${statusClass}">${row.status}</span></td>
                     `;
-                    tbody.appendChild(tr);
+                        tbody.appendChild(tr);
+                    });
+                } catch (e) {
+                    console.error('Error rendering table:', e);
+                }
+            }
+
+            function filterTable() {
+                const term = document.getElementById('searchInput').value.toLowerCase();
+                if (!window.originalData) return;
+
+                const filtered = window.originalData.filter(row => {
+                    return (row.name && row.name.toLowerCase().includes(term)) ||
+                        (row.phone && row.phone.includes(term)) ||
+                        (row.status && row.status.toLowerCase().includes(term)) ||
+                        (row.round_number && row.round_number.toString().includes(term));
                 });
-            } catch (e) {
-                console.error('Error rendering table:', e);
+                renderTable(filtered);
             }
-        }
 
-        function filterTable() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            if (!window.originalData) return;
+            let sortDir = 1;
+            function sortTable(key) {
+                if (!window.originalData) return;
+                sortDir *= -1;
 
-            const filtered = window.originalData.filter(row => {
-                return (row.name && row.name.toLowerCase().includes(term)) ||
-                    (row.phone && row.phone.includes(term)) ||
-                    (row.status && row.status.toLowerCase().includes(term)) ||
-                    (row.round_number && row.round_number.toString().includes(term));
-            });
-            renderTable(filtered);
-        }
+                window.originalData.sort((a, b) => {
+                    let va = a[key] || '';
+                    let vb = b[key] || '';
 
-        let sortDir = 1;
-        function sortTable(key) {
-            if (!window.originalData) return;
-            sortDir *= -1;
+                    if (key === 'total_qty' || key === 'round_number') {
+                        va = parseInt(va) || 0;
+                        vb = parseInt(vb) || 0;
+                    }
 
-            window.originalData.sort((a, b) => {
-                let va = a[key] || '';
-                let vb = b[key] || '';
+                    if (va < vb) return -1 * sortDir;
+                    if (va > vb) return 1 * sortDir;
+                    return 0;
+                });
+                renderTable(window.originalData);
+            }
 
-                if (key === 'total_qty' || key === 'round_number') {
-                    va = parseInt(va) || 0;
-                    vb = parseInt(vb) || 0;
+            async function exportXLSX() {
+                try {
+                    const btn = document.getElementById('btnExport');
+                    const oldText = btn.innerText;
+                    btn.innerText = 'Baixando...';
+
+                    const res = await fetch('/api/admin/bolao/tickets');
+                    const data = await res.json();
+
+                    if (data.error) throw new Error(data.error);
+
+                    const worksheet = XLSX.utils.json_to_sheet(data);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Cotas");
+                    XLSX.writeFile(workbook, "Relatorio_Cotas_Bolao.xlsx");
+
+                    btn.innerText = oldText;
+                } catch (e) {
+                    alert('Erro ao exportar: ' + e.message);
+                    document.getElementById('btnExport').innerText = '📥 Exportar Excel';
                 }
-
-                if (va < vb) return -1 * sortDir;
-                if (va > vb) return 1 * sortDir;
-                return 0;
-            });
-            renderTable(window.originalData);
-        }
-
-        async function exportXLSX() {
-            try {
-                const btn = document.getElementById('btnExport');
-                const oldText = btn.innerText;
-                btn.innerText = 'Baixando...';
-
-                const res = await fetch('/api/admin/bolao/tickets');
-                const data = await res.json();
-
-                if (data.error) throw new Error(data.error);
-
-                const worksheet = XLSX.utils.json_to_sheet(data);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Cotas");
-                XLSX.writeFile(workbook, "Relatorio_Cotas_Bolao.xlsx");
-
-                btn.innerText = oldText;
-            } catch (e) {
-                alert('Erro ao exportar: ' + e.message);
-                document.getElementById('btnExport').innerText = '📥 Exportar Excel';
             }
-        }
 
-        async function forceRotation() {
-            if (!confirm('Deseja forçar a verificação de rotação de rodada?')) return;
-            try {
-                const res = await fetch('/api/admin/bolao/force-rotation', { method: 'POST' });
-                const data = await res.json();
-                alert(data.message || 'Verificação concluída');
-                loadData();
-            } catch (e) {
-                alert('Erro: ' + e.message);
-            }
-        }
-
-        function formatPhone(phone) {
-            if (!phone) return '-';
-            return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-        }
-
-        // Load validations from API
-        async function loadValidations(status = 'all') {
-            const tbody = document.getElementById('validationsBody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Carregando...</td></tr>';
-
-            try {
-                const url = status === 'all'
-                    ? '/api/bolao/validations'
-                    : `/api/bolao/validations?status=${status}`;
-                const res = await fetch(url);
-                const data = await res.json();
-
-                if (!data.success || data.validations.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Nenhuma validação encontrada</td></tr>';
-                    return;
+            async function forceRotation() {
+                if (!confirm('Deseja forçar a verificação de rotação de rodada?')) return;
+                try {
+                    const res = await fetch('/api/admin/bolao/force-rotation', { method: 'POST' });
+                    const data = await res.json();
+                    alert(data.message || 'Verificação concluída');
+                    loadData();
+                } catch (e) {
+                    alert('Erro: ' + e.message);
                 }
+            }
 
-                tbody.innerHTML = data.validations.map(v => {
-                    const statusIcon = v.status === 'confirmed' ? '✅' : '⚠️';
-                    const statusColor = v.status === 'confirmed' ? 'var(--green)' : '#dc3545';
-                    const games = v.games_shown ? Object.entries(v.games_shown)
-                        .map(([j, c]) => `J${j}: ${c}`)
-                        .join(', ') : '-';
-                    const date = new Date(v.validated_at).toLocaleString('pt-BR');
+            function formatPhone(phone) {
+                if (!phone) return '-';
+                return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            }
 
-                    return `
+            // Load validations from API
+            async function loadValidations(status = 'all') {
+                const tbody = document.getElementById('validationsBody');
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Carregando...</td></tr>';
+
+                try {
+                    const url = status === 'all'
+                        ? '/api/bolao/validations'
+                        : `/api/bolao/validations?status=${status}`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (!data.success || data.validations.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Nenhuma validação encontrada</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = data.validations.map(v => {
+                        const statusIcon = v.status === 'confirmed' ? '✅' : '⚠️';
+                        const statusColor = v.status === 'confirmed' ? 'var(--green)' : '#dc3545';
+                        const games = v.games_shown ? Object.entries(v.games_shown)
+                            .map(([j, c]) => `J${j}: ${c}`)
+                            .join(', ') : '-';
+                        const date = new Date(v.validated_at).toLocaleString('pt-BR');
+
+                        return `
                         <tr style="border-left: 4px solid ${statusColor}">
                             <td style="font-size:1.5rem">${statusIcon}</td>
                             <td>${v.name || '-'}</td>
@@ -462,17 +499,17 @@
                             <td>${date}</td>
                         </tr>
                     `;
-                }).join('');
+                    }).join('');
 
-            } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red">Erro ao carregar</td></tr>';
+                } catch (e) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red">Erro ao carregar</td></tr>';
+                }
             }
-        }
 
-        // Init
-        loadData();
-        loadValidations();
-    </script>
+            // Init
+            loadData();
+            loadValidations();
+        </script>
 </body>
 
 </html>
