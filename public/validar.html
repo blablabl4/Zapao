@@ -348,9 +348,8 @@
             <div id="searchForm">
                 <h2 class="modal-title">🔍 Buscar Participação</h2>
                 <div class="input-group">
-                    <label for="identifier">Digite seu CPF ou Telefone:</label>
-                    <input type="text" id="identifier" placeholder="Ex: 11999998888 ou 12345678900"
-                        oninput="formatInput(this)">
+                    <label for="identifier">Digite seu WhatsApp:</label>
+                    <input type="text" id="identifier" placeholder="Ex: 11999998888" oninput="formatInput(this)">
                 </div>
                 <button class="btn-primary" onclick="searchParticipant()">Buscar</button>
                 <button class="btn-close" onclick="closeModal()">Cancelar</button>
@@ -409,25 +408,29 @@
             const identifier = document.getElementById('identifier').value.trim();
 
             if (identifier.length < 10) {
-                document.getElementById('errorText').textContent = 'Digite um CPF ou telefone válido';
+                document.getElementById('errorText').textContent = 'Digite um WhatsApp válido (DDD + Número)';
                 document.getElementById('errorText').style.display = 'block';
                 return;
             }
+
+            // CPF Removed
+            const cpf = "";
 
             document.getElementById('searchForm').style.display = 'none';
             document.getElementById('loadingState').classList.add('active');
 
             try {
-                const response = await fetch('/api/bolao/validate-lookup', {
+                // Send identifier (phone)
+                const res = await fetch('/api/bolao/validate-lookup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ identifier })
+                    body: JSON.stringify({ identifier: identifier })
                 });
 
-                const data = await response.json();
+                const data = await res.json(); // Changed 'response' to 'res'
                 document.getElementById('loadingState').classList.remove('active');
 
-                if (!response.ok || !data.success) {
+                if (!res.ok || !data.success) { // Changed 'response' to 'res'
                     document.getElementById('searchForm').style.display = 'block';
                     document.getElementById('errorText').textContent = data.message || 'Participante não encontrado';
                     document.getElementById('errorText').style.display = 'block';
@@ -466,6 +469,14 @@
                 <div class="total-row">
                     <span>Total</span>
                     <span>${total} cota${total > 1 ? 's' : ''}</span>
+                </div>
+            `;
+
+            html += `
+                <!-- CPF REMOVED as per request -->
+                <div class="input-group" style="display:none">
+                    <label>CPF (Opcional)</label>
+                    <input type="text" id="cpf" class="form-control" placeholder="000.000.000-00">
                 </div>
             `;
 
