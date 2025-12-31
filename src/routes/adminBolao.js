@@ -23,7 +23,7 @@ router.get('/sales', async (req, res) => {
                 string_agg(t.number::text, ', ') as ticket_numbers
             FROM az_claims c
             LEFT JOIN az_tickets t ON c.id = t.assigned_claim_id
-            WHERE c.type = 'BOLAO'
+            WHERE c.campaign_id = 21
             GROUP BY c.id
             ORDER BY 
                 CASE WHEN c.status = 'PAID' THEN 1 
@@ -40,7 +40,7 @@ router.get('/sales', async (req, res) => {
             sum(total_qty) FILTER(WHERE status = 'PAID') as total_tickets,
                 sum(total_qty * 20) FILTER(WHERE status = 'PAID') as total_revenue
             FROM az_claims
-            WHERE type = 'BOLAO'
+            WHERE campaign_id = 21
             `);
 
         const stats = statsRes.rows[0];
