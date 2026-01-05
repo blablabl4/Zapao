@@ -483,6 +483,68 @@ class DrawService {
 
         return this.getCurrentDraw();
     }
+    /**
+     * Get Affiliate Stats for a Draw (Candidate List)
+     * @param {number} drawId
+     */
+    async getAffiliateStats(drawId) {
+        // Count paid tickets per referrer
+        const result = await query(`
+            SELECT referrer_id, COUNT(*) as ticket_count
+            FROM orders 
+            WHERE draw_id = $1 
+              AND status = 'PAID' 
+              AND referrer_id IS NOT NULL 
+              AND referrer_id != ''
+            GROUP BY referrer_id
+            ORDER BY ticket_count DESC
+        `, [drawId]);
+
+        return result.rows.map(row => ({
+            referrer_id: row.referrer_id,
+            ticket_count: parseInt(row.ticket_count)
+        }));
+    }
+
+    /**
+     * Perform Secondary Draw for Affiliates
+     * @param {number} drawId
+     */
+    async performAffiliateDraw(drawId) {
+        const stats = await this.getAffiliateStats(drawId);
+
+        if (stats.length === 0) {
+            throw new Error('Nenhum afiliado elegível para este sorteio.');
+        }
+
+        // Create weighted pool (virtual urn)
+        // Instead of massive array, we use cumulative weights for performance
+        let totalTickets = 0;
+        const pool = [];
+
+        for (const candidate of stats) {
+            totalTickets += candidate.ticket_count;
+            pool.push({
+                referrer_id: candidate.referrer_id,
+                rangeEnd: totalTickets,
+                tickets: candidate.ticket_count
+            });
+        }
+
+        // Pick random ticket 1 to totalTickets
+        const winningTicket = Math.floor(Math.random() * totalTickets) + 1;
+
+        // Find winner
+        const winner = pool.find(p => winningTicket <= p.rangeEnd);
+
+        return {
+            winner_referrer_id: winner.referrer_id,
+            winning_ticket_index: winningTicket,
+            total_tickets: totalTickets,
+            candidates_count: stats.length,
+            candidate_tickets: winner.tickets
+        };
+    }
 }
 
 module.exports = new DrawService();

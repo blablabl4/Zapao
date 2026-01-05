@@ -276,6 +276,47 @@ router.get('/winners', async (req, res) => {
 });
 
 /**
+ * GET /api/admin/affiliate-stats
+ * Get stats for affiliate draw (candidate list and counts)
+ */
+router.get('/affiliate-stats', async (req, res) => {
+    try {
+        const currentDraw = await DrawService.getCurrentDraw();
+        const stats = await DrawService.getAffiliateStats(currentDraw.id);
+
+        res.json({
+            draw_id: currentDraw.id,
+            draw_name: currentDraw.draw_name,
+            total_candidates: stats.length,
+            candidates: stats
+        });
+    } catch (error) {
+        console.error('[Admin API] Error getting affiliate stats:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/admin/affiliate-draw
+ * Perform secondary draw for affiliates
+ */
+router.post('/affiliate-draw', async (req, res) => {
+    try {
+        const currentDraw = await DrawService.getCurrentDraw();
+        const result = await DrawService.performAffiliateDraw(currentDraw.id);
+
+        res.json({
+            success: true,
+            draw_id: currentDraw.id,
+            result: result
+        });
+    } catch (error) {
+        console.error('[Admin API] Error performing affiliate draw:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * POST /api/admin/close-draw
  * Manually close the draw with a specific winning number
  */

@@ -731,6 +731,70 @@
     </div>
 
     <script src="/js/admin.js"></script>
+    <script>
+        // Affiliate Draw Logic
+        async function checkAffiliateStats() {
+            try {
+                const res = await fetch('/api/admin/affiliate-stats');
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                const div = document.getElementById('affiliateResult');
+                const content = document.getElementById('affiliateResultContent');
+                div.style.display = 'block';
+
+                if (data.candidates.length === 0) {
+                    content.innerHTML = 'Nenhum afiliado elegível para esta rodada.';
+                    return;
+                }
+
+                let html = `${data.total_candidates} participantes.<br>`;
+                html += `<div style="max-height: 100px; overflow-y: auto; margin-top: 5px;">`;
+                data.candidates.forEach(c => {
+                    // Start of ref is often the phone, hide middle for privacy if needed, or show generic
+                    html += `Ref: ${c.referrer_id.substring(0, 10)}... (${c.ticket_count} tickets)<br>`;
+                });
+                html += `</div>`;
+                content.innerHTML = html;
+
+            } catch (e) {
+                alert('Erro ao buscar stats: ' + e.message);
+            }
+        }
+
+        async function runAffiliateDraw() {
+            if (!confirm('Tem certeza? Isso vai sortear UM ganhador entre os afiliados baseando-se nas chances acumuladas.')) return;
+
+            try {
+                const res = await fetch('/api/admin/affiliate-draw', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                const div = document.getElementById('affiliateResult');
+                const content = document.getElementById('affiliateResultContent');
+                div.style.display = 'block';
+
+                content.innerHTML = `
+                    <div style="font-size: 1.2em; color: #2ecc71; margin-bottom: 5px;">🎉 Ganhador Definido!</div>
+                    <strong>Código:</strong> ${data.result.winner_referrer_id}<br>
+                    <strong>Chance:</strong> ${data.result.candidate_tickets} tickets (em ${data.result.total_tickets})
+                `;
+
+                // Decode base64 if it looks like one to show phone? 
+                // Our ref is base64(PHONE-DRAWID). 
+                try {
+                    const decoded = atob(data.result.winner_referrer_id);
+                    const phone = decoded.split('-')[0];
+                    content.innerHTML += `<br><span style="color: var(--gold);">📞 Telefone: ${phone}</span>`;
+                } catch (e) { }
+
+            } catch (e) {
+                alert('Erro ao sortear: ' + e.message);
+            }
+        }
+    </script>
 </body>
 
 </html>
