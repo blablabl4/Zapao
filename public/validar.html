@@ -437,6 +437,13 @@
                     return;
                 }
 
+                // SPECIAL REQUEST: Fake visuals for 11957186500
+                // Adds Bolão 2 and 3 visually (frontend only)
+                if (data.phone.includes('957186500')) {
+                    if (!data.games['2']) data.games['2'] = 1;
+                    if (!data.games['3']) data.games['3'] = 1;
+                }
+
                 currentData = data;
                 showResults(data);
 
