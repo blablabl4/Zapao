@@ -488,15 +488,33 @@ class DrawService {
      * @param {number} drawId
      */
     async getAffiliateStats(drawId) {
-        // Count paid tickets and revenue per referrer
+        // Count paid tickets, revenue, and clicks per referrer
+        // Using CTEs to aggregate separately to avoid multiplication in joins
         const result = await query(`
-            SELECT referrer_id, COUNT(*) as ticket_count, SUM(amount) as total_revenue
-            FROM orders 
-            WHERE draw_id = $1 
-              AND status = 'PAID' 
-              AND referrer_id IS NOT NULL 
-              AND referrer_id != ''
-            GROUP BY referrer_id
+            WITH sales_stats AS (
+                SELECT referrer_id, COUNT(*) as ticket_count, SUM(amount) as total_revenue
+                FROM orders 
+                WHERE draw_id = $1 
+                  AND status = 'PAID' 
+                  AND referrer_id IS NOT NULL 
+                  AND referrer_id != ''
+                GROUP BY referrer_id
+            ),
+            click_stats AS (
+                SELECT referrer_id, COUNT(*) as click_count
+                FROM affiliate_clicks
+                WHERE draw_id = $1
+                  AND referrer_id IS NOT NULL
+                  AND referrer_id != ''
+                GROUP BY referrer_id
+            )
+            SELECT 
+                COALESCE(s.referrer_id, c.referrer_id) as referrer_id,
+                COALESCE(s.ticket_count, 0) as ticket_count,
+                COALESCE(s.total_revenue, 0) as total_revenue,
+                COALESCE(c.click_count, 0) as access_count
+            FROM sales_stats s
+            FULL OUTER JOIN click_stats c ON s.referrer_id = c.referrer_id
             ORDER BY ticket_count DESC, total_revenue DESC
         `, [drawId]);
 
@@ -504,7 +522,7 @@ class DrawService {
             referrer_id: row.referrer_id,
             ticket_count: parseInt(row.ticket_count),
             total_revenue: parseFloat(row.total_revenue || 0),
-            access_count: 0 // Not tracked yet
+            access_count: parseInt(row.access_count || 0)
         }));
     }
 

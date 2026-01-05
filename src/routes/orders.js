@@ -3,6 +3,33 @@ const router = express.Router();
 const OrderService = require('../services/OrderService');
 const DrawService = require('../services/DrawService');
 const { getPaymentProvider } = require('../services/PaymentProvider');
+const { query } = require('../database/db');
+
+/**
+ * POST /api/orders/affiliate-click
+ * Track clicks on affiliate links
+ */
+router.post('/affiliate-click', async (req, res) => {
+    try {
+        const { referrer_id, draw_id } = req.body;
+
+        // Silent fail if missing data (it's analytics)
+        if (!referrer_id || !draw_id) return res.json({ ok: true });
+
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+
+        await query(
+            'INSERT INTO affiliate_clicks (referrer_id, draw_id, ip_address, user_agent) VALUES ($1, $2, $3, $4)',
+            [referrer_id, draw_id, ip, userAgent]
+        );
+
+        res.json({ ok: true });
+    } catch (e) {
+        console.error('Click track error:', e);
+        res.status(500).json({ error: 'Internal Error' });
+    }
+});
 
 /**
  * POST /api/orders/bulk

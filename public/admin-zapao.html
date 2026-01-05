@@ -518,42 +518,40 @@
                 <button class="btn btn-success" onclick="openSlotMachine()">Abrir Roleta</button>
             </div>
 
-            <!-- Confirmation Card (Manual Draw & Affiliate Draw) -->
-            <div class="section-card">
-                <h2>✅ Finalizar Sorteios</h2>
-                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <!-- Manual Draw -->
-                    <div style="flex: 1; min-width: 250px;">
-                        <h4 style="margin-bottom: 10px;">Rifa Principal</h4>
-                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 10px;">
-                            Defina o ganhador da rifa principal manualmente aqui.
-                        </p>
-                        <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 0;">
-                            <input type="number" id="manualWinnerInput" placeholder="Nº Sorteado"
-                                style="max-width: 120px;">
-                            <button onclick="confirmManualDraw()" class="btn btn-success" style="flex:1;">
-                                <i class="fas fa-check-circle"></i> Confirmar
-                            </button>
-                        </div>
-                    </div>
+            <!-- Final Actions Container -->
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
 
-                    <!-- Affiliate Draw Action -->
-                    <div
-                        style="flex: 1; min-width: 250px; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 20px;">
-                        <h4 style="margin-bottom: 10px; color: var(--gold);">Sorteio Afiliados</h4>
-                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 10px;">
-                            Sorteie um ganhador entre os padrinhos indicados.
-                        </p>
-                        <button onclick="runAffiliateDraw()" class="btn btn-success"
-                            style="width: 100%; background: linear-gradient(60deg, #28a745, #218838);">
-                            🎲 Sortear Ganhador Agora
+                <!-- Manual Draw Card -->
+                <div class="section-card" style="flex: 1; min-width: 300px;">
+                    <h2>✅ Finalizar Sorteios</h2>
+                    <h4 style="margin-bottom: 10px;">Rifa Principal</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 10px;">
+                        Defina o ganhador da rifa principal manualmente aqui.
+                    </p>
+                    <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 0;">
+                        <input type="number" id="manualWinnerInput" placeholder="Nº Sorteado" style="max-width: 120px;">
+                        <button onclick="confirmManualDraw()" class="btn btn-success" style="flex:1;">
+                            <i class="fas fa-check-circle"></i> Confirmar
                         </button>
-                        <div id="affiliateResult"
-                            style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; display: none;">
-                            <div id="affiliateResultContent" style="color: #fff; font-size: 0.9em;"></div>
-                        </div>
                     </div>
                 </div>
+
+                <!-- Affiliate Draw Card (Side by Side) -->
+                <div class="section-card" style="flex: 1; min-width: 300px; border-left: 2px solid var(--gold);">
+                    <h2 style="color: var(--gold);">🏆 Sorteio Afiliados</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 15px;">
+                        Sorteie um ganhador entre os padrinhos indicados.
+                    </p>
+                    <button onclick="runAffiliateDraw()" class="btn btn-success"
+                        style="width: 100%; background: linear-gradient(60deg, #28a745, #218838);">
+                        🎲 Sortear Ganhador Agora
+                    </button>
+                    <div id="affiliateResult"
+                        style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; display: none;">
+                        <div id="affiliateResultContent" style="color: #fff; font-size: 0.9em;"></div>
+                    </div>
+                </div>
+
             </div>
         </div>
 

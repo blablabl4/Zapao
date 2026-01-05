@@ -131,6 +131,16 @@ async function loadStats() {
                 drawId: drawStats.current_draw.id
             };
             localStorage.setItem('affiliateData', JSON.stringify(affiliateData));
+
+            // TRACK CLICK (Fire and forget)
+            fetch('/api/orders/affiliate-click', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    referrer_id: refParam,
+                    draw_id: drawStats.current_draw.id
+                })
+            }).catch(e => console.log('Tracking error', e));
         }
 
     } catch (error) {
