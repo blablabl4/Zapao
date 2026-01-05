@@ -32,6 +32,8 @@ function switchTab(tabName) {
     if (rankingView) rankingView.style.display = 'none';
     const financeView = document.getElementById('view-financial');
     if (financeView) financeView.style.display = 'none';
+    const affiliateView = document.getElementById('view-affiliates');
+    if (affiliateView) affiliateView.style.display = 'none';
 
     // Activate
     const tabBtn = document.getElementById(`tab-${tabName}`);
@@ -46,6 +48,11 @@ function switchTab(tabName) {
         loadRanking();
     } else if (tabName === 'financial') {
         loadFinancials();
+    } else if (tabName === 'affiliates') {
+        // Auto load status when opening tab
+        if (typeof checkAffiliateStats === 'function') {
+            checkAffiliateStats();
+        }
     }
 }
 
