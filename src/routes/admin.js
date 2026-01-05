@@ -111,6 +111,21 @@ router.post('/toggle-pause', async (req, res) => {
 });
 
 /**
+ * GET /api/admin/migrate-affiliate
+ * Temporary endpoint to run DB migration
+ */
+router.get('/migrate-affiliate', async (req, res) => {
+    try {
+        const { query } = require('../database/db');
+        await query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS referrer_id TEXT;');
+        res.json({ success: true, message: 'Migration successful: referrer_id column added' });
+    } catch (error) {
+        console.error('Migration failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * POST /api/admin/start-draw
  * Start a new draw with scheduled end time
  */
