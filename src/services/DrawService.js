@@ -488,21 +488,23 @@ class DrawService {
      * @param {number} drawId
      */
     async getAffiliateStats(drawId) {
-        // Count paid tickets per referrer
+        // Count paid tickets and revenue per referrer
         const result = await query(`
-            SELECT referrer_id, COUNT(*) as ticket_count
+            SELECT referrer_id, COUNT(*) as ticket_count, SUM(amount) as total_revenue
             FROM orders 
             WHERE draw_id = $1 
               AND status = 'PAID' 
               AND referrer_id IS NOT NULL 
               AND referrer_id != ''
             GROUP BY referrer_id
-            ORDER BY ticket_count DESC
+            ORDER BY ticket_count DESC, total_revenue DESC
         `, [drawId]);
 
         return result.rows.map(row => ({
             referrer_id: row.referrer_id,
-            ticket_count: parseInt(row.ticket_count)
+            ticket_count: parseInt(row.ticket_count),
+            total_revenue: parseFloat(row.total_revenue || 0),
+            access_count: 0 // Not tracked yet
         }));
     }
 

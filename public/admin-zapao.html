@@ -518,17 +518,41 @@
                 <button class="btn btn-success" onclick="openSlotMachine()">Abrir Roleta</button>
             </div>
 
-            <!-- Confirmation Card -->
+            <!-- Confirmation Card (Manual Draw & Affiliate Draw) -->
             <div class="section-card">
-                <h2>✅ Confirmar Sorteio</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
-                    Finalize a rodada atual e define o ganhador manualmente.
-                </p>
-                <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 0;">
-                    <input type="number" id="manualWinnerInput" placeholder="Nº Sorteado" style="max-width: 120px;">
-                    <button onclick="confirmManualDraw()" class="btn btn-success" style="flex:1;">
-                        <i class="fas fa-check-circle"></i> Confirmar
-                    </button>
+                <h2>✅ Finalizar Sorteios</h2>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <!-- Manual Draw -->
+                    <div style="flex: 1; min-width: 250px;">
+                        <h4 style="margin-bottom: 10px;">Rifa Principal</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 10px;">
+                            Defina o ganhador da rifa principal manualmente aqui.
+                        </p>
+                        <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 0;">
+                            <input type="number" id="manualWinnerInput" placeholder="Nº Sorteado"
+                                style="max-width: 120px;">
+                            <button onclick="confirmManualDraw()" class="btn btn-success" style="flex:1;">
+                                <i class="fas fa-check-circle"></i> Confirmar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Affiliate Draw Action -->
+                    <div
+                        style="flex: 1; min-width: 250px; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 20px;">
+                        <h4 style="margin-bottom: 10px; color: var(--gold);">Sorteio Afiliados</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 10px;">
+                            Sorteie um ganhador entre os padrinhos indicados.
+                        </p>
+                        <button onclick="runAffiliateDraw()" class="btn btn-success"
+                            style="width: 100%; background: linear-gradient(60deg, #28a745, #218838);">
+                            🎲 Sortear Ganhador Agora
+                        </button>
+                        <div id="affiliateResult"
+                            style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; display: none;">
+                            <div id="affiliateResultContent" style="color: #fff; font-size: 0.9em;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -656,74 +680,80 @@
         <div class="section-card full-width">
             <h2>🏆 Sorteio de Afiliados (Indicação Premiada)</h2>
             <div class="summary-bar">
-                <button class="btn btn-secondary" onclick="checkAffiliateStats()"
-                    style="width: auto; padding: 8px 16px;">
-                    🔄 Atualizar Lista
-                </button>
-                <span style="color: var(--text-secondary); margin-left:10px;">
-                    Cada venda paga pelo link do afiliado gera 1 cupom na urna virtual.
-                </span>
+                <button class="btn btn-secondary" onclick="checkAffiliateStats()" <!-- TABLE SECTION: AFFILIATES (NEW
+                    TAB) -->
+                    <div id="view-affiliates" style="display: none;">
+                        <div class="section-card full-width">
+                            <h2>🏆 Desempenho de Afiliados</h2>
+                            <div class="summary-bar">
+                                <button class="btn btn-secondary" onclick="checkAffiliateStats()"
+                                    style="width: auto; padding: 8px 16px;">
+                                    🔄 Atualizar Tabela
+                                </button>
+                                <span style="color: var(--text-secondary); margin-left:10px;">
+                                    Ranking de padrinhos por vendas pagas e receita gerada.
+                                </span>
+                            </div>
+
+                            <div style="overflow-x: auto;">
+                                <table class="payments-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Padrinho / Telefone</th>
+                                            <th>Acessos (Cliques)</th>
+                                            <th>Vendas (Tickets)</th>
+                                            <th>Receita Gerada</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="affiliatesTableBody">
+                                        <tr>
+                                            <td colspan="4"
+                                                style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                                Carregando dados...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
             </div>
 
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                <!-- Controls -->
-                <div
-                    style="flex: 1; min-width: 300px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
-                    <h3 style="color: var(--gold); margin-bottom: 15px;">Realizar Sorteio</h3>
-                    <p style="font-size: 0.9em; margin-bottom: 15px; color: #ccc;">
-                        O sistema irá escolher aleatoriamente um ganhador baseado nas probabilidades (quantidade de
-                        convites pagos).
-                    </p>
-                    <button onclick="runAffiliateDraw()" class="btn btn-success"
-                        style="background: linear-gradient(60deg, #28a745, #218838);">
-                        🎲 Sortear Ganhador Agora
-                    </button>
-                </div>
-
-                <!-- Results / List -->
-                <div style="flex: 2; min-width: 300px;">
-                    <h3 style="margin-bottom: 10px;">Urna Virtual (Participantes)</h3>
-                    <div id="affiliateResult"
-                        style="background: rgba(0,0,0,0.3); border-radius: 5px; padding: 15px; min-height: 100px;">
-                        <div id="affiliateResultContent" style="color: #fff; font-size: 0.9em;">
-                            Clique em "Atualizar Lista" para ver os participantes.
-                        </div>
+            <!-- TABLE SECTION: HISTORY -->
+            <div id="view-history" style="display: none;">
+                <div class="section-card full-width">
+                    <h2><span>🏆</span> Histórico Global de Ganhadores</h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border-color);">
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Rodada
+                                    </th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Nº</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Ganhador
+                                    </th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Telefone
+                                    </th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Pix</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Prêmio
+                                    </th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Data</th>
+                                </tr>
+                            </thead>
+                            <tbody id="winnersHistoryBody">
+                                <tr>
+                                    <td colspan="6"
+                                        style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                                        Carregando histórico...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- TABLE SECTION: HISTORY -->
-    <div id="view-history" style="display: none;">
-        <div class="section-card full-width">
-            <h2><span>🏆</span> Histórico Global de Ganhadores</h2>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid var(--border-color);">
-                            <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Rodada</th>
-                            <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Nº</th>
-                            <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Ganhador</th>
-                            <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Telefone</th>
-                            <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Pix</th>
-                            <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Prêmio</th>
-                            <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Data</th>
-                        </tr>
-                    </thead>
-                    <tbody id="winnersHistoryBody">
-                        <tr>
-                            <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-                                Carregando histórico...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
         </div>
-    </div>
-
-    </div>
     </div>
     </div>
 
@@ -786,25 +816,43 @@
 
                 if (data.error) throw new Error(data.error);
 
-                const div = document.getElementById('affiliateResult');
-                const content = document.getElementById('affiliateResultContent');
-                div.style.display = 'block';
+                const tbody = document.getElementById('affiliatesTableBody');
+                if (!tbody) return; // Tab might be hidden or missing?
 
                 if (data.candidates.length === 0) {
-                    content.innerHTML = 'Nenhum afiliado elegível para esta rodada.';
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum participante ainda.</td></tr>`;
                     return;
                 }
 
-                let html = `${data.total_candidates} participantes.<br>`;
-                html += `<div style="max-height: 100px; overflow-y: auto; margin-top: 5px;">`;
+                let html = '';
                 data.candidates.forEach(c => {
-                    // Start of ref is often the phone, hide middle for privacy if needed, or show generic
-                    html += `Ref: ${c.referrer_id.substring(0, 10)}... (${c.ticket_count} tickets)<br>`;
+                    let phoneDisplay = c.referrer_id.substring(0, 10) + '...';
+                    try {
+                        // Attempt decode: ref = base64(PHONE-DRAWID)
+                        const decoded = atob(c.referrer_id);
+                        if (decoded.includes('-')) {
+                            phoneDisplay = decoded.split('-')[0];
+                        }
+                    } catch (e) { }
+
+                    const revenue = parseFloat(c.total_revenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                    html += `
+                        <tr>
+                            <td>
+                                <div style="font-weight:bold; color:var(--gold);">${phoneDisplay}</div>
+                                <div style="font-size:0.75em; color:var(--text-secondary);">${c.referrer_id.substring(0, 8)}...</div>
+                            </td>
+                            <td style="text-align:center;">${c.access_count || 0}</td>
+                            <td style="text-align:center;">${c.ticket_count}</td>
+                            <td style="text-align:right; color:#4ade80;">${revenue}</td>
+                        </tr>
+                    `;
                 });
-                html += `</div>`;
-                content.innerHTML = html;
+                tbody.innerHTML = html;
 
             } catch (e) {
+                console.error(e);
                 alert('Erro ao buscar stats: ' + e.message);
             }
         }
