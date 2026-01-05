@@ -76,6 +76,16 @@ app.use(session({
 }));
 
 // Static files
+// Block direct access to admin HTML files - redirect to protected routes
+app.use((req, res, next) => {
+    const adminHtmlFiles = ['/admin-zapao.html', '/admin-amigos.html', '/admin-hub.html'];
+    if (adminHtmlFiles.includes(req.path)) {
+        // Redirect to protected route (without .html)
+        const protectedPath = req.path.replace('.html', '');
+        return res.redirect(protectedPath);
+    }
+    next();
+});
 // Static files (disabled cache for updates)
 app.use(express.static(path.join(__dirname, '../public'), {
     maxAge: '0',
@@ -88,9 +98,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Admin authentication routes (unprotected)
 app.use('/admin', require('./routes/adminAuth'));
 
-// Admin Panel - redirect to Amigos Admin
+// Admin Panel - Hub
 app.get('/admin', requireAdmin, (req, res) => {
-    res.redirect('/admin/amigos');
+    res.sendFile('admin-hub.html', { root: 'public' });
 });
 
 // ARCHIVED: admin-hub, admin-luck routes removed (not in use)
@@ -148,9 +158,14 @@ app.get('/p/:token', async (req, res) => {
     }
 });
 
-// Root redirect to main app
+// Zapão da Sorte (Path: /zapao-da-sorte)
+app.get('/zapao-da-sorte', (req, res) => {
+    res.sendFile('zapao-da-sorte.html', { root: path.join(__dirname, '../public') });
+});
+
+// Root Redirect (Optional: Send to Zapão)
 app.get('/', (req, res) => {
-    res.redirect('/amigos-do-zapao');
+    res.redirect('/zapao-da-sorte');
 });
 
 // Amigos do Zapão page
@@ -165,28 +180,93 @@ app.get('/admin/amigos', requireAdmin, (req, res) => {
 
 // === ACTIVE API ROUTES ===
 app.use('/api/amigos', require('./routes/amigos'));
-app.use('/api/bolao', require('./routes/bolao'));
-app.use('/api/bolao', require('./routes/bolaoValidation')); // Participant validation
+// BOLÃO ROUTES REMOVED (Project Archived)
 app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
-app.use('/api/admin/bolao', requireAdmin, require('./routes/adminBolao'));
 
-// Admin Bolão Manager
-app.get('/admin/bolao', requireAdmin, (req, res) => {
-    res.sendFile('admin-bolao.html', { root: path.join(__dirname, '../public') });
-});
-
-// Bolão Frontend
-app.get('/bolao', (req, res) => {
-    res.sendFile('bolao.html', { root: path.join(__dirname, '../public') });
-});
-
-// Bolão Validation Page (public)
-app.get('/validar', (req, res) => {
-    res.sendFile('validar.html', { root: path.join(__dirname, '../public') });
+// Admin Zapão (Protected)
+app.get('/admin-zapao', requireAdmin, (req, res) => {
+    res.sendFile('admin-zapao.html', { root: path.join(__dirname, '../public') });
 });
 
 
-// ARCHIVED: orders, webhooks, history routes removed (not in use)
+// Zapão Routes
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/webhooks', require('./routes/webhooks'));
+app.use('/api/history', require('./routes/history'));
+
+// Admin Zapão API Routes (stats, payments, winners, draw management)
+app.use('/api/admin', requireAdmin, require('./routes/admin'));
+
+// Temporary Migration Endpoint (Public)
+app.get('/api/migrate-temp', async (req, res) => {
+    try {
+        const { query } = require('./database/db');
+        await query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS referrer_id TEXT;');
+        res.json({ success: true, message: 'Migration successful (Public)' });
+    } catch (error) {
+        console.error('Migration failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Public winners endpoint (for popup - no auth needed)
+app.get('/api/public/winners', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 5;
+        const { query } = require('./database/db');
+        const result = await query(`
+            SELECT o.buyer_ref, d.draw_name, d.closed_at
+            FROM orders o
+            JOIN draws d ON o.draw_id = d.id
+            WHERE o.status = 'PAID' 
+              AND o.number = d.drawn_number
+              AND d.status = 'CLOSED'
+            ORDER BY d.closed_at DESC
+            LIMIT $1
+        `, [limit]);
+
+        const winners = result.rows.map(row => {
+            const parts = row.buyer_ref ? row.buyer_ref.split('|') : [];
+            return {
+                name: parts[0] || 'Ganhador',
+                bairro: parts[3] || '',
+                cidade: parts[4] || ''
+            };
+        });
+
+        res.json({ winners });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Erro ao buscar ganhadores' });
+    }
+});
+
+// Public Draws List (Accordion)
+app.get('/api/public/draws', async (req, res) => {
+    try {
+        const DrawService = require('./services/DrawService');
+        const draws = await DrawService.getPublicDraws();
+        res.json({ draws });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Erro ao buscar rifas' });
+    }
+});
+
+// Public draw endpoint (for timer and prize display)
+app.get('/api/public/draw', async (req, res) => {
+    try {
+        const DrawService = require('./services/DrawService');
+        const currentDraw = await DrawService.getCurrentDraw();
+
+        res.json({ current_draw: currentDraw });
+    } catch (error) {
+        console.error('[Public API] Error getting draw:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.use('/api/admin', requireAdmin, require('./routes/admin')); // Zapão admin routes
 
 // Health check endpoints (/health, /health/detailed, /health/ready, /health/live)
 app.use('/health', require('./routes/health'));
@@ -211,6 +291,56 @@ async function startServer() {
         // Start WhatsApp Bot (Bot Phase 9) - PAUSED
         // const { startBot } = require('./bot');
         // startBot();
+
+        // Temporary fix for legacy orders (mixed PAID/EXPIRED)
+        app.get('/api/public/fix-legacy', async (req, res) => {
+            try {
+                const { query } = require('./database/db');
+
+                // Find distinct buyer_refs that have at least one PAID order
+                // And update all other orders with same buyer_ref and created within 1 min to PAID
+                const result = await query(`
+            WITH PaidOrders AS (
+                SELECT DISTINCT buyer_ref, created_at 
+                FROM orders 
+                WHERE status = 'PAID'
+            )
+            UPDATE orders o
+            SET status = 'PAID'
+            FROM PaidOrders p
+            WHERE o.buyer_ref = p.buyer_ref 
+              AND o.status IN ('PENDING', 'EXPIRED')
+              AND o.created_at > p.created_at - interval '2 minutes'
+              AND o.created_at < p.created_at + interval '2 minutes'
+            RETURNING o.order_id, o.buyer_ref
+        `);
+
+                res.json({
+                    success: true,
+                    fixed_count: result.rowCount,
+                    fixed_orders: result.rows
+                });
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Temporary fix for Draw 3
+        app.get('/api/public/fix-draw-3', async (req, res) => {
+            try {
+                const { query } = require('./database/db');
+                await query(`
+                    UPDATE draws 
+                    SET drawn_number = 47,
+                        winners_count = 2,
+                        payout_each = (prize_base + reserve_amount) / 2
+                    WHERE id = 3
+                `);
+                res.json({ success: true, message: 'Draw 3 fixed to #47 with 2 winners' });
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        });
 
         // Start HTTP server
         const server = app.listen(config.PORT, () => {
