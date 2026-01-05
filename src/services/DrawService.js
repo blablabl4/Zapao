@@ -3,7 +3,7 @@ const OrderService = require('./OrderService');
 
 class DrawService {
     constructor() {
-        this.prizeBase = parseFloat(process.env.PRIZE_BASE_AMOUNT || '500.00');
+        this.prizeBase = parseFloat(process.env.PRIZE_BASE_AMOUNT || '100.00');
     }
 
     /**
@@ -11,9 +11,11 @@ class DrawService {
      * @returns {object} Current draw with calculated current_prize
      */
     async getCurrentDraw() {
+
+        // Now including PAUSED so the frontend can show the "Paused" state
         const result = await query(`
             SELECT * FROM draws 
-            WHERE status IN ('ACTIVE', 'SCHEDULED') 
+            WHERE status IN ('ACTIVE', 'SCHEDULED', 'PAUSED') 
             ORDER BY created_at DESC 
             LIMIT 1
         `);
@@ -21,20 +23,59 @@ class DrawService {
         let draw = result.rows[0];
 
         if (!draw) {
-            // Create first draw (SCHEDULED until admin starts it)
-            const insertResult = await query(`
-                INSERT INTO draws (draw_name, status, prize_base, reserve_amount, sales_locked, duration_minutes)
-                VALUES ($1, 'SCHEDULED', $2, 0.00, FALSE, 60)
-                RETURNING *
-            `, ['Rodada Inicial', this.prizeBase]);
-
-            draw = insertResult.rows[0];
-            console.log(`[DrawService] Created new draw #${draw.id}`);
+            // NO AUTO-CREATION! Admin must create raffles manually
+            console.log('[DrawService] No active draw found. Admin must create one.');
+            return null;
         }
 
         // Calculate current prize (base + reserve)
         draw.current_prize = parseFloat(draw.prize_base) + parseFloat(draw.reserve_amount);
         draw.sales_locked = Boolean(draw.sales_locked);
+        // Ensure total_numbers is returned (defaults to 75 if null)
+        draw.total_numbers = draw.total_numbers || 75;
+
+        return draw;
+    }
+
+    /**
+     * Update current draw's end_time and/or prize_base
+     * @param {object} updates - { end_time, prize_base }
+     * @returns {object} Updated draw
+     */
+    async updateCurrentDraw(updates) {
+        const currentDraw = await this.getCurrentDraw();
+
+        const setClauses = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (updates.end_time) {
+            setClauses.push(`end_time = $${paramCount++}`);
+            values.push(updates.end_time);
+        }
+
+        if (updates.prize_base !== undefined) {
+            setClauses.push(`prize_base = $${paramCount++}`);
+            values.push(updates.prize_base);
+        }
+
+        if (setClauses.length === 0) {
+            return currentDraw;
+        }
+
+        values.push(currentDraw.id);
+
+        const result = await query(`
+            UPDATE draws 
+            SET ${setClauses.join(', ')}
+            WHERE id = $${paramCount}
+            RETURNING *
+        `, values);
+
+        const draw = result.rows[0];
+        draw.current_prize = parseFloat(draw.prize_base) + parseFloat(draw.reserve_amount);
+
+        console.log(`[DrawService] Updated draw #${draw.id}, new end_time: ${draw.end_time}`);
 
         return draw;
     }
@@ -60,6 +101,31 @@ class DrawService {
         draw.current_prize = parseFloat(draw.prize_base) + parseFloat(draw.reserve_amount);
 
         console.log(`[DrawService] Started draw #${draw.id}: ${drawName} (ends at ${endTime.toISOString()})`);
+
+        return draw;
+    }
+
+    /**
+     * Start a draw with explicit end time (for scheduled draws)
+     * @param {string} drawName - Name of the draw
+     * @param {number} prizeBase - Base prize amount
+     * @param {Date} startTime - When started
+     * @param {Date} endTime - When draw should happen
+     * @returns {object} Started draw
+     */
+    async startDrawWithEndTime(drawName, prizeBase, startTime, endTime) {
+        const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (60 * 1000));
+
+        const result = await query(`
+            INSERT INTO draws (draw_name, status, prize_base, reserve_amount, start_time, end_time, duration_minutes, sales_locked)
+            VALUES ($1, 'ACTIVE', $2, 0.00, $3, $4, $5, FALSE)
+            RETURNING *
+        `, [drawName, prizeBase, startTime, endTime, durationMinutes]);
+
+        const draw = result.rows[0];
+        draw.current_prize = parseFloat(draw.prize_base) + parseFloat(draw.reserve_amount);
+
+        console.log(`[DrawService] Started scheduled draw #${draw.id}: ${drawName} (ends at ${endTime.toISOString()})`);
 
         return draw;
     }
@@ -109,7 +175,7 @@ class DrawService {
             }
 
             // Get all paid orders for the drawn number
-            const winners = await OrderService.getPaidOrdersByNumber(drawn_number);
+            const winners = await OrderService.getPaidOrdersByNumber(drawn_number, currentDraw.id);
             const winnersCount = winners.length;
 
             const currentPrize = currentDraw.current_prize;
@@ -139,15 +205,9 @@ class DrawService {
                 WHERE id = $5
             `, [drawn_number, new Date(), winnersCount, payoutEach, currentDraw.id]);
 
-            // Create next draw with updated reserve
-            await client.query(`
-                INSERT INTO draws (draw_name, status, prize_base, reserve_amount, sales_locked)
-                VALUES ($1, 'SCHEDULED', $2, $3, FALSE)
-            `, ['Próxima Rodada', this.prizeBase, newReserveAmount]);
-
             await client.query('COMMIT');
 
-            console.log(`[DrawService] Created next draw with reserve R$ ${newReserveAmount.toFixed(2)}`);
+            console.log(`[DrawService] Draw closed. Auto-creation disabled.`);
 
             return {
                 draw_id: currentDraw.id,
@@ -161,7 +221,11 @@ class DrawService {
                     order_id: w.order_id,
                     paid_at: w.paid_at,
                     amount: parseFloat(w.amount),
-                    buyer_ref: w.buyer_ref
+                    buyer_ref: w.buyer_ref,
+                    buyer_ref: w.buyer_ref,
+                    buyer_name: w.buyer.name, // Export parsed name
+                    city: w.buyer.city || '',
+                    bairro: w.buyer.bairro || ''
                 }))
             };
 
@@ -190,29 +254,158 @@ class DrawService {
     }
 
     /**
+     * Get all winners across all draws
+     */
+    async getAllWinners() {
+        const result = await query(`
+            SELECT 
+                d.id as draw_id,
+                d.draw_name,
+                d.drawn_number,
+                d.closed_at,
+                d.payout_each,
+                o.buyer_ref,
+                o.created_at as order_date
+            FROM draws d
+            JOIN orders o ON o.draw_id = d.id AND o.number = d.drawn_number
+            WHERE d.status = 'CLOSED' AND o.status = 'PAID'
+            ORDER BY d.closed_at DESC
+        `);
+
+        return result.rows.map(row => {
+            const parts = (row.buyer_ref || '').split('|');
+            return {
+                draw_name: row.draw_name,
+                number: row.drawn_number,
+                prize: parseFloat(row.payout_each),
+                date: row.order_date, // Use specific purchase time
+                winner: {
+                    name: parts[0] || 'Desconhecido',
+                    phone: parts[1] || '-',
+                    pix: parts[2] || '-'
+                }
+            };
+        });
+    }
+
+    /**
+     * Get public draws list (Active & Closed)
+     */
+    async getPublicDraws() {
+        // Get all draws
+        const drawsRes = await query(`
+            SELECT * FROM draws 
+            ORDER BY id ASC
+        `);
+
+        const draws = drawsRes.rows;
+        const result = [];
+
+        for (const draw of draws) {
+            let winners = [];
+            if (draw.status === 'CLOSED') {
+                // Get winners for this draw
+                const winnersRes = await query(`
+                    SELECT o.number, o.buyer_ref, o.created_at
+                    FROM orders o
+                    WHERE o.draw_id = $1 AND o.status = 'PAID' AND o.number = $2
+                `, [draw.id, draw.drawn_number]);
+
+                winners = winnersRes.rows.map(w => {
+                    const parts = (w.buyer_ref || '').split('|');
+                    // Format New: Name|Phone|Pix|Bairro|City|CEP
+                    // Format Legacy: Name|Phone|Pix|Bairro|City
+
+                    // Robust extraction attempting to find Bairro/City
+                    // Index 3 is usually Bairro, Index 4 is usually City
+
+                    let bairro = parts[3] || 'Bairro';
+                    let city = parts[4] || 'Cidade';
+
+                    // Basic cleanup if data is weird (like BATCH ids)
+                    if (bairro.includes('BATCH') || bairro.length > 30) bairro = '';
+                    if (city.includes('BATCH')) city = 'Brasil';
+
+                    return {
+                        number: w.number,
+                        name: parts[0] ? parts[0].split(' ')[0] + ' ' + (parts[0].split(' ')[1] || '') : 'Ganhador',
+                        phone: parts[1] || '',
+                        pix: parts[2] || '',
+                        date: w.created_at,
+                        city: city,
+                        bairro: bairro
+                    };
+                });
+            }
+
+            result.push({
+                id: draw.id,
+                name: draw.draw_name,
+                prize: parseFloat(draw.current_prize || draw.prize_base), // Support legacy
+                status: draw.status,
+                total_numbers: draw.total_numbers || 75,
+                winners: winners,
+                winning_number: draw.drawn_number
+            });
+        }
+
+        return result;
+    }
+
+    /**
      * Get admin statistics
      * @returns {object} Admin stats
      */
     async getAdminStats() {
         const currentDraw = await this.getCurrentDraw();
-        const orderStats = await OrderService.getStats();
+
+        if (!currentDraw) {
+            // Return empty/default stats if no active draw
+            return {
+                current_draw: {
+                    id: null,
+                    draw_name: 'Nenhuma Rifa Ativa',
+                    prize_base: this.prizeBase, // 100.00
+                    reserve_amount: 0,
+                    current_prize: this.prizeBase, // 100.00
+                    is_reinforced: false,
+                    sales_locked: true,
+                    start_time: null,
+                    end_time: null,
+                    status: 'INACTIVE'
+                },
+                orders: {
+                    paid_total: 0,
+                    revenue_total_paid: 0
+                }
+            };
+        }
+
+        const orderStats = await OrderService.getStats(currentDraw.id); // Filter by current draw
+
+        // Ensure current_prize is calculated (it should be set by getCurrentDraw, but fallback just in case)
+        const calculatedPrize = currentDraw.current_prize ||
+            (parseFloat(currentDraw.prize_base || 0) + parseFloat(currentDraw.reserve_amount || 0));
 
         return {
             current_draw: {
                 id: currentDraw.id,
-                draw_name: currentDraw.draw_name,
-                prize_base: parseFloat(currentDraw.prize_base),
-                reserve_amount: parseFloat(currentDraw.reserve_amount),
-                current_prize: currentDraw.current_prize,
-                is_reinforced: parseFloat(currentDraw.reserve_amount) > 0,
-                sales_locked: currentDraw.sales_locked,
+                draw_name: currentDraw.draw_name || 'Rodada Atual',
+                prize_base: parseFloat(currentDraw.prize_base || 0),
+                reserve_amount: parseFloat(currentDraw.reserve_amount || 0),
+                current_prize: calculatedPrize,
+                is_reinforced: parseFloat(currentDraw.reserve_amount || 0) > 0,
+                sales_locked: currentDraw.sales_locked || false,
                 start_time: currentDraw.start_time,
                 end_time: currentDraw.end_time,
-                status: currentDraw.status
+                status: currentDraw.status || 'ACTIVE',
+                scheduled_for: currentDraw.scheduled_for
             },
             orders: {
-                paid_total: orderStats.paid_total,
-                revenue_total_paid: orderStats.revenue_total_paid
+                paid_total: orderStats.paid_total || 0,
+                transactions_total: orderStats.transactions_total || 0,
+                revenue_total_paid: orderStats.revenue_total_paid || 0,
+                unique_customers: orderStats.unique_customers || 0
             }
         };
     }
@@ -263,6 +456,30 @@ class DrawService {
             [locked, lockTime, currentDraw.id]);
 
         console.log(`[DrawService] Sales ${locked ? 'locked' : 'unlocked'} for draw #${currentDraw.id}`);
+
+        return this.getCurrentDraw();
+    }
+
+    /**
+     * Toggle PAUSE status for current draw
+     * @param {boolean} paused - Pause status
+     * @returns {object} Updated draw
+     */
+    async togglePause(paused) {
+        const currentDraw = await this.getCurrentDraw();
+
+        // Cannot pause a closed draw
+        if (currentDraw.status === 'CLOSED') {
+            throw new Error('Não é possível pausar uma rifa encerrada');
+        }
+
+        const newStatus = paused ? 'PAUSED' : 'ACTIVE';
+        const salesLocked = paused; // Pause always locks sales
+
+        await query('UPDATE draws SET status = $1, sales_locked = $2 WHERE id = $3',
+            [newStatus, salesLocked, currentDraw.id]);
+
+        console.log(`[DrawService] Draw #${currentDraw.id} status set to ${newStatus}`);
 
         return this.getCurrentDraw();
     }

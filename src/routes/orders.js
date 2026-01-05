@@ -10,11 +10,11 @@ const { getPaymentProvider } = require('../services/PaymentProvider');
  */
 router.post('/bulk', async (req, res) => {
     try {
-        const { numbers, buyer_ref } = req.body;
+        const { numbers, buyer_ref, referrer_id } = req.body;
 
-        // Validate input
-        if (!Array.isArray(numbers) || numbers.length === 0 || numbers.length > 3) {
-            return res.status(400).json({ error: 'Selecione 1 a 3 números' });
+        // Validate input - UNLIMITED numbers allowed
+        if (!Array.isArray(numbers) || numbers.length === 0) {
+            return res.status(400).json({ error: 'Selecione pelo menos 1 número' });
         }
 
         if (!buyer_ref) {
@@ -34,29 +34,36 @@ router.post('/bulk', async (req, res) => {
         const phone = parts[1];
 
         if (phone) {
-            const purchaseCount = await OrderService.countPurchasesByPhone(phone);
-            if (purchaseCount + numbers.length > 3) {
-                return res.status(403).json({
-                    error: 'Limite excedido',
-                    message: `Você já tem ${purchaseCount} número(s). Pode comprar apenas ${3 - purchaseCount} mais.`
-                });
-            }
+            // No limit check
         }
+
+        // Create unique batch ID for grouping this purchase
+        const batchId = `BATCH-${Date.now()}`;
+        const uniqueBuyerRef = `${buyer_ref}|${batchId}`;
 
         // Create all orders
         const orders = [];
+        const { query } = require('../database/db'); // Import query access
+
         for (const number of numbers) {
             const numValue = parseInt(number);
-            if (isNaN(numValue) || numValue < 0 || numValue > 99) {
-                return res.status(400).json({ error: `Número inválido: ${number}` });
+            // Validate range
+            // Use currentDraw.total_numbers if available, fallback to 75
+            const maxNum = currentDraw.total_numbers || 75;
+            if (isNaN(numValue) || numValue < 1 || numValue > maxNum) {
+                return res.status(400).json({ error: `Número inválido: ${number} (Max: ${maxNum})` });
             }
 
-            const order = await OrderService.createOrder(numValue, buyer_ref, currentDraw.id);
+            // Locking logic: REMOVED as per user request. 
+            // Multiple users can buy the same number.
+            // const check = ... (removed)
+
+            const order = await OrderService.createOrder(numValue, uniqueBuyerRef, currentDraw.id, referrer_id);
             orders.push(order);
         }
 
         // Calculate total amount
-        const totalAmount = numbers.length * 1.00;
+        const totalAmount = numbers.length * 1.50;
 
         // Extract buyer info for transaction description
         const buyerInfo = {
@@ -125,20 +132,9 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Number must be between 0 and 99' });
         }
 
-        // Check purchase limit (3 per person)
+        // Check purchase limit (Limit REMOVED)
         if (buyer_ref) {
-            const parts = buyer_ref.split('|');
-            const phone = parts[1];
-
-            if (phone) {
-                const purchaseCount = await OrderService.countPurchasesByPhone(phone);
-                if (purchaseCount >= 3) {
-                    return res.status(403).json({
-                        error: 'Limite atingido',
-                        message: 'Você já comprou 3 números. Limite máximo por pessoa.'
-                    });
-                }
-            }
+            // Unlimited
         }
 
         // Create order
@@ -203,6 +199,80 @@ router.get('/stats/global', async (req, res) => {
     } catch (error) {
         console.error('[API /orders/stats/global] Error:', error.message);
         res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/orders/buyers/:number
+ * Get all buyers for a specific number (Admin usage)
+ */
+router.get('/buyers/:number', async (req, res) => {
+    try {
+        const number = parseInt(req.params.number);
+        if (isNaN(number)) {
+            return res.status(400).json({ error: 'Invalid number' });
+        }
+
+        const buyers = await OrderService.getPaidOrdersByNumber(number);
+        res.json({ count: buyers.length, buyers });
+    } catch (error) {
+        console.error('[API /orders/buyers/:number] Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/orders/my-numbers/:phone
+ * Get all paid numbers for a specific phone in current draw
+ */
+router.get('/my-numbers/:phone', async (req, res) => {
+    try {
+        const phone = req.params.phone.replace(/\D/g, ''); // Clean phone
+        if (!phone || phone.length < 10) {
+            return res.status(400).json({ error: 'Telefone inválido' });
+        }
+
+        // Get current draw
+        const currentDraw = await DrawService.getCurrentDraw();
+
+        // Query: Find all PAID orders for this phone in current draw
+        const { query } = require('../database/db');
+        const result = await query(`
+            SELECT number, created_at 
+            FROM orders 
+            WHERE draw_id = $1 
+              AND status = 'PAID' 
+              AND buyer_ref LIKE $2
+            ORDER BY number ASC
+        `, [currentDraw.id, `%|${phone}|%`]);
+
+        // Also try matching phone at different positions in buyer_ref
+        const result2 = await query(`
+            SELECT number, created_at 
+            FROM orders 
+            WHERE draw_id = $1 
+              AND status = 'PAID' 
+              AND buyer_ref LIKE $2
+            ORDER BY number ASC
+        `, [currentDraw.id, `%${phone}%`]);
+
+        // Merge and dedupe results
+        const allNumbers = [...result.rows, ...result2.rows];
+        const uniqueNumbers = [...new Map(allNumbers.map(r => [r.number, r])).values()];
+
+        res.json({
+            draw_name: currentDraw.draw_name,
+            phone: phone,
+            numbers: uniqueNumbers.map(r => ({
+                number: r.number,
+                purchased_at: r.created_at
+            })),
+            count: uniqueNumbers.length
+        });
+
+    } catch (error) {
+        console.error('[API /orders/my-numbers] Error:', error.message);
+        res.status(500).json({ error: 'Erro ao buscar números' });
     }
 });
 

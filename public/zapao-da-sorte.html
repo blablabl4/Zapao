@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zapão da Sorte - Escolha seu número</title>
+
+    <!-- Meta Tags for Sharing -->
+    <meta name="description" content="Escolha seu número da sorte de 01 a 75 e concorra a prêmios!">
+    <meta property="og:title" content="🍀 Zapão da Sorte">
+    <meta property="og:description" content="Escolha seu número da sorte e concorra a prêmios em dinheiro!">
+    <meta property="og:image" content="https://www.tvzapao.com.br/images/share-banner.png">
+    <meta property="og:url" content="https://www.tvzapao.com.br/zapao-da-sorte">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========== RESET & BASE ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(26, 26, 35, 0.9);
+            --bg-card-solid: #1a1a23;
+            --text-primary: #ffffff;
+            --text-secondary: #8a8a9a;
+            --border-color: rgba(212, 175, 55, 0.3);
+            --gold: #D4AF37;
+            --gold-light: #FFD700;
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            --green: #22c55e;
+            --gradient-gold: linear-gradient(135deg, #FFD700, #D4AF37, #B8860B);
+            --gradient-dark: linear-gradient(180deg, #0a0a0f 0%, #1a1a23 50%, #0d0d12 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gradient-dark);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 120px;
+            position: relative;
+        }
+
+        /* Background decorative elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            text-align: center;
+            padding: 30px 0 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px var(--gold-glow));
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            background: var(--gradient-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px var(--gold-glow);
+            letter-spacing: 1px;
+        }
+
+        .prize {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 15px 0;
+            text-shadow: 0 0 30px var(--gold-glow);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 10px var(--gold-glow));
+            }
+
+            50% {
+                filter: drop-shadow(0 0 25px var(--gold-glow));
+            }
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+
+        /* ========== GRID DE NÚMEROS ========== */
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-width: 420px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .num-btn {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #1f1f2a, #15151d);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .num-btn:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 20px var(--gold-glow);
+            transform: translateY(-2px);
+        }
+
+        .num-btn.selected {
+            background: var(--gradient-gold);
+            color: #000;
+            border-color: var(--gold-light);
+            transform: scale(1.08);
+            font-weight: 700;
+            box-shadow: 0 0 25px var(--gold-glow);
+        }
+
+        .num-btn.taken {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* ========== BOTÃO FLUTUANTE ========== */
+        #floatBtn {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient-gold);
+            color: #000;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 50px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 30px var(--gold-glow);
+            display: none;
+            z-index: 9999;
+            width: 90%;
+            max-width: 360px;
+            transition: all 0.3s ease;
+        }
+
+        #floatBtn:hover {
+            transform: translateX(-50%) translateY(-3px);
+            box-shadow: 0 8px 40px var(--gold-glow);
+        }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-card);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.2rem;
+            color: var(--gold-light);
+        }
+
+        .modal-header .amount {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold-light), var(--gold));
+            color: #000;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        /* ACCORDION STYLES */
+        .draws-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .draw-card {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .draw-card.open {
+            border-color: var(--gold);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1);
+        }
+
+        .draw-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            transition: background 0.2s;
+        }
+
+        .draw-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .draw-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .draw-card h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge.active {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--green);
+        }
+
+        .badge.closed {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .draw-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .draw-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.3s ease;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .draw-card.open .draw-body {
+            max-height: 2000px;
+            /* Adjust based on content */
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .draw-card i.fa-chevron-down {
+            transition: transform 0.3s;
+        }
+
+        .draw-card.open i.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        /* WINNERS LIST STYLE */
+        .winners-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .winner-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--gold);
+        }
+
+        .winner-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .winner-name {
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .winner-location {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .winner-number {
+            font-family: monospace;
+            background: var(--gold);
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .stats-text {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .action-area {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Pix Section */
+        .pix-section {
+            text-align: center;
+        }
+
+        .pix-section img {
+            max-width: 200px;
+            margin: 20px auto;
+            border-radius: 8px;
+        }
+
+        .pix-section textarea {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 10px;
+            font-size: 0.8rem;
+            resize: none;
+        }
+
+        .success-section {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .success-section h3 {
+            color: var(--green);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* MOBILE OPTIMIZATION */
+        /* MOBILE OPTIMIZATION */
+        @media (max-width: 600px) {
+            .main-card {
+                padding: 12px;
+                margin: 5px;
+                border: none;
+                width: 100%;
+            }
+
+            .header h1 {
+                font-size: 1.6rem;
+            }
+
+            .numbers-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 5px;
+                padding: 8px;
+            }
+
+            .num-btn {
+                font-size: 0.95rem;
+                border-radius: 8px;
+            }
+
+            /* Stacked Header for Mobile */
+            .draw-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 12px;
+            }
+
+            .draw-title-row {
+                width: 100%;
+                justify-content: flex-start;
+                gap: 10px;
+            }
+
+            .draw-title-row h3 {
+                font-size: 1rem;
+                white-space: normal;
+                /* Allow text wrap */
+                line-height: 1.3;
+                flex: 1;
+            }
+
+            .draw-meta {
+                width: 100%;
+                justify-content: space-between;
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.7);
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                padding-top: 8px;
+                margin-top: 4px;
+            }
+
+            .badge {
+                font-size: 0.65rem;
+                padding: 3px 6px;
+                align-self: flex-start;
+                /* Align badge to top if title wraps */
+            }
+
+            .btn {
+                padding: 14px;
+                font-size: 1rem;
+            }
+
+            #floatBtn {
+                padding: 12px 25px;
+                font-size: 1rem;
+                width: 85%;
+                bottom: 15px;
+            }
+        }
+
+        /* ========== COUNTDOWN TIMER ========== */
+        .countdown-container {
+            text-align: center;
+            margin: 20px auto 30px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(255, 215, 0, 0.05));
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            max-width: 350px;
+        }
+
+        .countdown-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .countdown-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-width: 55px;
+            text-align: center;
+        }
+
+        .countdown-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold-light);
+        }
+
+        .countdown-unit {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- WINNERS POPUP -->
+    <div id="winnersPopup"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center;">
+        <div
+            style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 3px solid var(--gold); border-radius: 20px; padding: 30px; text-align: center; max-width: 400px; width: 90%; position: relative;">
+            <h2 style="color: var(--gold-light); margin-bottom: 20px;">🏆 MURAL DE GANHADORES</h2>
+            <div id="winnersContent"></div>
+            <button onclick="closeWinnersPopup()"
+                style="margin-top: 20px; padding: 12px 30px; background: var(--gold); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">
+                Quero Participar! 🎰
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes shine {
+            0% {
+                background-position: -200% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        .shine-text {
+            background: linear-gradient(90deg, var(--gold), #fff, var(--gold), #fff, var(--gold));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        .winner-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--gold);
+        }
+
+        .winner-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .winner-location {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+    </style>
+
+
+
+    <!-- TEMPLATES (Hidden) -->
+    <template id="tpl-draw-active">
+        <div class="draw-card active" id="draw-{id}">
+            <div class="draw-header" onclick="toggleDraw({id})">
+                <div class="draw-title-row">
+                    <span class="badge active">EM ANDAMENTO</span>
+                    <h3>{name}</h3>
+                </div>
+                <div class="draw-meta">
+                    <span>💰 Prêmio: R$ {prize}</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="draw-body" id="draw-body-{id}">
+                <!-- Progress bar and Stats text removed as per user request -->
+
+
+                <div class="action-area">
+                    <button class="btn btn-primary btn-lg pulse" onclick="openDrawGrid({id})">
+                        PARTICIPAR AGORA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-draw-closed">
+        <div class="draw-card closed" id="draw-{id}">
+            <div class="draw-header" onclick="toggleDraw({id})">
+                <div class="draw-title-row">
+                    <span class="badge closed">ENCERRADO</span>
+                    <h3>{name}</h3>
+                </div>
+                <div class="draw-meta">
+                    <span>🏆 Ganhadores Definidos</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="draw-body" id="draw-body-{id}">
+                <div class="winners-list">
+                    <!-- Winners injected here -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- HEADER -->
+    <div class="header">
+        <img id="campaignBannerImg" src="/images/logo.png" alt="Logo" onerror="this.style.display='none'"
+            style="max-width: 200px; max-height: 100px;">
+        <h1 id="campaignTitleEl">🍀 Zapão da Sorte</h1>
+        <div class="prize" id="prizeDisplay">R$ 100,00</div>
+        <p class="subtitle">Escolha um número de 01 a 75 e concorra!</p>
+    </div>
+
+    <!-- COUNTDOWN TIMER -->
+    <div class="countdown-container" id="countdownContainer">
+        <div class="countdown-label">⏰ Sorteio em:</div>
+        <div class="countdown-timer" id="countdownTimer">
+            <div class="countdown-box">
+                <div class="countdown-value" id="countDays">00</div>
+                <div class="countdown-unit">Dias</div>
+            </div>
+            <div class="countdown-box">
+                <div class="countdown-value" id="countHours">00</div>
+                <div class="countdown-unit">Horas</div>
+            </div>
+            <div class="countdown-box">
+                <div class="countdown-value" id="countMinutes">00</div>
+                <div class="countdown-unit">Min</div>
+            </div>
+            <div class="countdown-box">
+                <div class="countdown-value" id="countSeconds">00</div>
+                <div class="countdown-unit">Seg</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAW LIST CONTAINER (Moved) -->
+    <div id="drawsList" class="draws-list">
+        <!-- Draws will be loaded here via JS -->
+        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <div class="spinner"></div> Carregando rifas...
+        </div>
+    </div>
+
+    <!-- BOTÃO FLUTUANTE -->
+    <button id="floatBtn" onclick="openCheckout()">🛒 Comprar</button>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+            <!-- ETAPA 1: FORMULÁRIO -->
+            <div id="stepForm">
+                <div class="modal-header">
+                    <h2>Números: <span id="modalNumbers">--</span></h2>
+                    <div class="amount" id="modalTotal">R$ 0,00</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Celular (WhatsApp) *</label>
+                    <input type="tel" id="inputPhone" placeholder="(11) 99999-9999" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Nome completo *</label>
+                    <input type="text" id="inputName" placeholder="Seu nome" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Chave Pix (para receber prêmio) *</label>
+                    <input type="text" id="inputPixKey" placeholder="CPF, telefone, email ou chave aleatória" required>
+                </div>
+
+                <div class="form-group">
+                    <label>CEP *</label>
+                    <input type="text" id="inputCep" placeholder="00000-000" maxlength="9" oninput="formatCep(this)"
+                        onblur="fetchCepData()" required>
+                    <div id="cepLocation" style="font-size: 0.85rem; color: var(--gold-light); margin-top: 5px;"></div>
+                </div>
+
+                <button class="btn btn-primary" onclick="submitOrder()">Pagar com Pix</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+            </div>
+
+            <!-- ETAPA 2: PIX -->
+            <div id="stepPix" class="pix-section hidden">
+                <div class="modal-header">
+                    <h2>Aguardando Pagamento</h2>
+                    <div class="amount" id="pixTotal">R$ 0,00</div>
+                </div>
+
+                <p style="color: var(--text-secondary);">Escaneie o QR Code:</p>
+                <img id="qrImage" src="" alt="QR Code">
+
+                <p style="color: var(--text-secondary); margin-top: 10px;">Ou copie o código:</p>
+                <textarea id="pixCode" readonly></textarea>
+
+                <button class="btn btn-primary" onclick="copyPix()">📋 Copiar Código</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+            </div>
+
+            <!-- ETAPA 3: SUCESSO -->
+            <div id="stepSuccess" class="success-section hidden">
+                <h3>✅ Pagamento Confirmado!</h3>
+                <p>Seus números foram registrados com sucesso!</p>
+                <p style="margin-top: 10px; font-weight: 600;">Boa sorte no sorteio! 🍀</p>
+
+                <div
+                    style="margin: 20px 0; padding: 15px; background: rgba(37, 211, 102, 0.1); border-radius: 10px; border: 1px solid rgba(37, 211, 102, 0.3);">
+                    <p style="margin-bottom: 10px; font-size: 0.95rem;">Entre no grupo e acompanhe o resultado!</p>
+                    <a href="https://chat.whatsapp.com/INrlQgZGqYXCwQNZ2gg1yH" target="_blank" class="btn"
+                        style="background-color: #25D366; color: white; display: inline-flex; align-items: center; gap: 8px; width: auto; padding: 10px 20px; font-size: 0.9rem;">
+                        <i class="fab fa-whatsapp"></i> Entrar no Grupo
+                    </a>
+                </div>
+                <button class="btn btn-primary" onclick="buyMore()">🎰 Comprar Mais</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ========== CONFIGURAÇÃO ==========
+        const CONFIG = {
+            totalNumbers: 75, // Default, will update per draw
+            price: 1.50
+        };
+
+        // ========== ESTADO ==========
+        let selected = [];
+        let currentOrderId = null;
+        let pollInterval = null;
+        let currentDrawId = null; // Active draw ID
+        let drawsData = []; // Store fetched draws
+
+        // ========== INICIALIZAÇÃO ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDrawsList();
+            loadCampaignBranding();
+        });
+
+        // ========== ACCORDION LOGIC ==========
+        async function loadDrawsList() {
+            const listEl = document.getElementById('drawsList');
+            try {
+                const res = await fetch('/api/public/draws');
+                const data = await res.json();
+                drawsData = data.draws;
+                listEl.innerHTML = ''; // Clear loading
+
+                if (!drawsData || drawsData.length === 0) {
+                    listEl.innerHTML = '<div style="text-align: center; padding: 20px;">Nenhuma rifa disponível.</div>';
+                    return;
+                }
+
+                // Sort by ID ascending to assign labels
+                drawsData.sort((a, b) => a.id - b.id);
+
+                // Assign labels based on chronological order
+                drawsData.forEach((draw, index) => {
+                    draw.displayName = `#${index + 1} Rifa`;
+                });
+
+                // Reverse for display (Newest First)
+                drawsData.reverse();
+
+                // Render each draw
+                drawsData.forEach((draw) => { // Index removed used previously
+                    const isClosed = draw.status === 'CLOSED';
+                    const tplId = isClosed ? 'tpl-draw-closed' : 'tpl-draw-active';
+                    const tpl = document.getElementById(tplId).innerHTML;
+
+                    let html = tpl
+                        .replace(/{id}/g, draw.id)
+                        .replace(/{name}/g, draw.displayName) // Use pre-assigned name
+                        .replace(/{prize}/g, draw.prize.toFixed(2));
+
+                    if (isClosed) {
+                        // Render winners
+                        // Wait, we need to inject winners list. 
+                        // For now we render the card structure, then populate body.
+                        // We'll replace the winners placeholder
+                    } else {
+                        // Active draw logic...
+                        // We want to SHOW NUMBERS DIRECTLY.
+                        // So we schedule openDrawGrid to run after this card is added to DOM.
+                        setTimeout(() => openDrawGrid(draw.id), 100);
+
+                        // Hide stats initially since openDrawGrid will re-render them?
+                        // Actually openDrawGrid handles rendering into .numbers-grid
+                        // so we just need to ensure the container exists.
+
+                        const percentage = 0;
+                        const sold = 0;
+                        html = html
+                            .replace(/{percentage}/g, percentage)
+                            .replace(/{sold}/g, sold)
+                            .replace(/{total}/g, draw.total_numbers);
+                    }
+
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = html;
+                    const card = wrapper.firstElementChild;
+                    listEl.appendChild(card);
+
+                    // Inject Winners if closed
+                    if (isClosed && draw.winners && draw.winners.length > 0) {
+                        const body = card.querySelector('.winners-list');
+                        let winnersHtml = '';
+                        draw.winners.forEach(w => {
+                            winnersHtml += `
+                                <div class="winner-row">
+                                    <div class="winner-info">
+                                        <span class="winner-name">🎉 ${w.name}</span>
+                                        <span class="winner-location">${(w.bairro || w.city) ? '📍 ' + [w.bairro, w.city].filter(Boolean).join(' - ') : ''}</span>
+                                    </div>
+                                    <div class="winner-number">#${w.number}</div>
+                                </div>
+                            `;
+                        });
+                        body.innerHTML = winnersHtml;
+                    }
+                });
+
+                // Auto-open first active draw (which is now likely the top one)
+                const firstActive = drawsData.find(d => d.status !== 'CLOSED');
+                if (firstActive) {
+                    toggleDraw(firstActive.id);
+                    // Also load stats/grid for this active draw to update UI
+                    // But grid is hidden until "PARTICIPAR" is clicked
+                }
+
+            } catch (e) {
+                console.error(e);
+                listEl.innerHTML = '<div style="text-align: center; color: red;">Erro ao carregar rifas.</div>';
+            }
+        }
+
+        function toggleDraw(id) {
+            // Close all others? User style preference. Accordion typically allows one open.
+            // Let's implement exclusive open.
+            document.querySelectorAll('.draw-card').forEach(card => {
+                if (card.id !== `draw-${id}`) {
+                    card.classList.remove('open');
+                }
+            });
+
+            const card = document.getElementById(`draw-${id}`);
+            card.classList.toggle('open');
+        }
+
+        // ========== OPEN DRAW GRID ==========
+        function openDrawGrid(id) {
+            currentDrawId = id;
+            selected = []; // Clear selection when switching draws
+            updateFloatBtn();
+
+            const draw = drawsData.find(d => d.id === id);
+            if (!draw) return;
+
+            // Update Global Prize Display
+            document.getElementById('prizeDisplay').textContent = `R$ ${draw.prize.toFixed(2)}`;
+
+            // Render Grid INSIDE the accordion
+            const body = document.getElementById(`draw-body-${id}`);
+            const actionArea = body.querySelector('.action-area');
+
+            // Create or reuse grid container inside this draw's body
+            let gridContainer = body.querySelector('.numbers-grid');
+            if (!gridContainer) {
+                gridContainer = document.createElement('div');
+                gridContainer.className = 'numbers-grid';
+                // Add some top margin to separate from stats
+                gridContainer.style.marginTop = '15px';
+                // Hide the "Participar" button
+                if (actionArea) actionArea.style.display = 'none';
+                body.appendChild(gridContainer);
+            }
+
+            // Render numbers into this container
+            renderGrid(draw.total_numbers, gridContainer);
+
+            // Load availability (this function should assume currentDrawId is set)
+            loadAvailability(id);
+        }
+
+        async function loadAvailability(drawId) {
+            // We need an endpoint for sold numbers of a specific draw.
+            // Currently /api/public/draw returns "current active". 
+            // We'll trust the main logic handles the "Active" draw correctly if there's only one.
+            // If multiple active draws exist, we need to parameterize.
+            // Assuming user will have 1 active draw mostly. 
+            // If accordion has multiple active, we need backend support for /api/public/draw/:id/stats
+
+            // For now, let's just refresh existing stats which grabs the active one.
+            loadStats();
+        }
+
+
+        // ========== CARREGAR BRANDING CUSTOMIZADO ==========
+        function loadCampaignBranding() {
+            try {
+                const saved = localStorage.getItem('campaignBranding');
+                if (saved) {
+                    const branding = JSON.parse(saved);
+
+                    // Apply custom title
+                    if (branding.title) {
+                        document.getElementById('campaignTitleEl').textContent = branding.title;
+                    }
+
+                    // Apply custom banner
+                    if (branding.banner) {
+                        const bannerEl = document.getElementById('campaignBannerImg');
+                        bannerEl.src = branding.banner;
+                        bannerEl.style.maxWidth = '250px';
+                        bannerEl.style.maxHeight = '120px';
+                    }
+                }
+            } catch (e) {
+                console.log('No custom branding');
+            }
+        }
+
+        // ========== CEP HELPERS ==========
+        function formatCep(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length > 5) {
+                value = value.substring(0, 5) + '-' + value.substring(5, 8);
+            }
+            input.value = value;
+        }
+
+        async function fetchCepData() {
+            const cepInput = document.getElementById('inputCep');
+            const locationDiv = document.getElementById('cepLocation');
+            const cep = cepInput.value.replace(/\D/g, '');
+
+            if (cep.length !== 8) {
+                locationDiv.textContent = '';
+                return;
+            }
+
+            locationDiv.textContent = 'Buscando...';
+
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await res.json();
+
+                if (data.erro) {
+                    locationDiv.innerHTML = '<span style="color: #f87171;">CEP não encontrado</span>';
+                    currentLocation = { bairro: '', cidade: '' };
+                } else {
+                    currentLocation = { bairro: data.bairro || '', cidade: data.localidade || '' };
+                    locationDiv.innerHTML = `📍 ${data.bairro || 'Centro'}, ${data.localidade} - ${data.uf}`;
+                }
+            } catch (e) {
+                locationDiv.innerHTML = '<span style="color: #f87171;">Erro ao buscar CEP</span>';
+            }
+        }
+
+        // ========== RENDER GRID ==========
+        function renderGrid(limit, container) {
+            container.innerHTML = '';
+            // CSS class .numbers-grid should be added to container by the caller or template
+
+            for (let i = 1; i <= limit; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'num-btn';
+                btn.textContent = i.toString().padStart(2, '0');
+                btn.dataset.num = i;
+                btn.onclick = () => toggleSelect(i, btn);
+                container.appendChild(btn);
+            }
+        }
+
+        // ========== SELEÇÃO ==========
+        function toggleSelect(num, el) {
+            if (el.classList.contains('taken')) return;
+
+            if (el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                selected = selected.filter(n => n !== num);
+            } else {
+                el.classList.add('selected');
+                selected.push(num);
+            }
+
+            updateFloatBtn();
+        }
+
+        function updateFloatBtn() {
+            const btn = document.getElementById('floatBtn');
+            if (selected.length > 0) {
+                const total = selected.length * CONFIG.price;
+                btn.textContent = `🛒 Comprar ${selected.length} (R$ ${total.toFixed(2)})`;
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        // ========== MODAL ==========
+        function openCheckout() {
+            if (selected.length === 0) return;
+
+            const sorted = [...selected].sort((a, b) => a - b);
+            const total = sorted.length * CONFIG.price;
+
+            document.getElementById('modalNumbers').textContent = sorted.map(n => n.toString().padStart(2, '0')).join(', ');
+            document.getElementById('modalTotal').textContent = `R$ ${total.toFixed(2)}`;
+
+            // Reset steps
+            document.getElementById('stepForm').classList.remove('hidden');
+            document.getElementById('stepPix').classList.add('hidden');
+            document.getElementById('stepSuccess').classList.add('hidden');
+
+            // Add CEP listener if not already there
+            const cepInput = document.getElementById('inputCep');
+            if (cepInput && !cepInput.hasAttribute('data-has-listener')) {
+                cepInput.setAttribute('data-has-listener', 'true');
+                cepInput.addEventListener('blur', async function () {
+                    const cep = this.value.replace(/\D/g, '');
+                    if (cep.length === 8) {
+                        try {
+                            const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                            const data = await res.json();
+                            if (!data.erro) {
+                                currentLocation.bairro = data.bairro;
+                                currentLocation.cidade = data.localidade;
+                                // Optional user feedback
+                                const feedback = document.createElement('div');
+                                feedback.className = 'cep-feedback';
+                                feedback.style.color = 'var(--primary)';
+                                feedback.style.fontSize = '0.8rem';
+                                feedback.style.marginTop = '4px';
+                                feedback.textContent = `📍 Localizado: ${data.bairro}, ${data.localidade}`;
+
+                                // Remove old feedback
+                                const old = this.parentNode.querySelector('.cep-feedback');
+                                if (old) old.remove();
+                                this.parentNode.appendChild(feedback);
+                            } else {
+                                alert('CEP não encontrado!');
+                                currentLocation = { bairro: '', cidade: '' };
+                            }
+                        } catch (e) { console.error('CEP error', e); }
+                    }
+                });
+            }
+
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            if (pollInterval) clearInterval(pollInterval);
+        }
+
+        // ========== SUBMIT ORDER ==========
+        let currentLocation = { bairro: '', cidade: '' };
+
+        async function submitOrder() {
+            const name = document.getElementById('inputName').value.trim();
+            const phone = document.getElementById('inputPhone').value.trim();
+            const pixKey = document.getElementById('inputPixKey').value.trim();
+            const cep = document.getElementById('inputCep').value.trim();
+
+            if (!name || !phone || !pixKey || !cep) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+
+            // VALIDATION: Phone
+            const cleanPhone = phone.replace(/\D/g, '');
+            if (cleanPhone.length < 10 || /^(\d)\1+$/.test(cleanPhone)) {
+                alert('Por favor, insira um telefone válido!');
+                return;
+            }
+
+            // VALIDATION: CEP (Strict)
+            const cleanCep = cep.replace(/\D/g, '');
+            if (cleanCep.length !== 8 || /^(\d)\1+$/.test(cleanCep)) {
+                alert('O CEP informado é inválido!');
+                return;
+            }
+
+            // Verify if location is loaded. If not, force check.
+            if (!currentLocation.bairro || !currentLocation.cidade) {
+                try {
+                    const btn = document.querySelector('#stepForm button');
+                    const originalText = btn.textContent;
+                    if (btn) { btn.textContent = 'Verificando CEP...'; btn.disabled = true; }
+
+                    const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+                    const data = await res.json();
+
+                    if (btn) { btn.textContent = originalText; btn.disabled = false; }
+
+                    if (data.erro) {
+                        alert('CEP não encontrado! Verifique o número digitado.');
+                        const cepEl = document.getElementById('inputCep');
+                        if (cepEl) { cepEl.value = ''; cepEl.focus(); }
+                        return;
+                    }
+
+                    currentLocation.bairro = data.bairro;
+                    currentLocation.cidade = data.localidade;
+
+                    // Re-check empty response (some CEPs return no error but empty fields)
+                    if (!data.localidade) {
+                        alert('CEP Válido mas sem cidade associada. Tente outro.');
+                        return;
+                    }
+
+                } catch (e) {
+                    alert('Erro ao validar CEP. Verifique sua conexão.');
+                    const btn = document.querySelector('#stepForm button');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+            }
+
+            // Fallback for Neighborhood if empty (Rural)
+            if (!currentLocation.bairro && currentLocation.cidade) currentLocation.bairro = 'Centro';
+
+            // Final check
+            if (!currentLocation.bairro || !currentLocation.cidade) {
+                alert('Não foi possível identificar seu endereço pelo CEP. Tente novamente.');
+                return;
+            }
+
+            const numbers = [...selected].sort((a, b) => a - b);
+            // Format: name|phone|pixKey|bairro|cidade|cep
+            const buyer_ref = `${name}|${phone}|${pixKey}|${currentLocation.bairro}|${currentLocation.cidade}|${cleanCep}`;
+
+            try {
+                const res = await fetch('/api/orders/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ numbers, buyer_ref })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || err.message || 'Erro ao criar pedido');
+                }
+
+                const data = await res.json();
+                currentOrderId = data.orders[0].order_id;
+
+                // Show Pix
+                document.getElementById('stepForm').classList.add('hidden');
+                document.getElementById('stepPix').classList.remove('hidden');
+                document.getElementById('pixTotal').textContent = `R$ ${(numbers.length * CONFIG.price).toFixed(2)}`;
+                document.getElementById('qrImage').src = data.qr_image_data_url;
+                document.getElementById('pixCode').value = data.pix_copy_paste;
+
+                // Start polling
+                startPolling(currentOrderId);
+
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        function copyPix() {
+            const code = document.getElementById('pixCode');
+            code.select();
+            document.execCommand('copy');
+            alert('Código copiado!');
+        }
+
+        async function simulatePay() {
+            if (!currentOrderId) return;
+            try {
+                await fetch(`/api/mock/pay/${currentOrderId}`, { method: 'POST' });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function startPolling(orderId) {
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/orders/${orderId}`);
+                    const order = await res.json();
+
+                    if (order.status === 'PAID') {
+                        clearInterval(pollInterval);
+                        document.getElementById('stepPix').classList.add('hidden');
+                        document.getElementById('stepSuccess').classList.remove('hidden');
+
+                        // Clear selection
+                        selected = [];
+                        document.querySelectorAll('.num-btn.selected').forEach(el => el.classList.remove('selected'));
+                        updateFloatBtn();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }, 2000);
+        }
+
+        function buyMore() {
+            closeModal();
+        }
+
+        // ========== STATS & COUNTDOWN ==========
+        let drawEndTime = null;
+        let countdownInterval = null;
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/public/draw');
+                const data = await res.json();
+                document.getElementById('prizeDisplay').textContent = `R$ ${data.current_draw.current_prize.toFixed(2)}`;
+
+                // Handle PAUSED state
+                const countdownContainer = document.getElementById('countdownContainer');
+
+                if (data.current_draw.status === 'PAUSED') {
+                    countdownContainer.style.display = 'block';
+                    countdownContainer.innerHTML = `
+                        <div style="text-align: center; padding: 10px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--gold); margin-bottom: 5px;">
+                                ⏸️ VENDAS PAUSADAS
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                Aguarde o retorno das vendas!
+                            </div>
+                        </div>
+                    `;
+                    // Hide any active grid that might be open?
+                    // Optional: could loop through draws and hide action areas.
+                    return;
+                }
+
+                // Update countdown target time
+                if (data.current_draw.end_time) {
+                    drawEndTime = new Date(data.current_draw.end_time);
+                    if (!countdownInterval) {
+                        countdownContainer.innerHTML = `
+                             <div class="countdown-label">⏰ Sorteio em:</div>
+                                <div class="countdown-timer" id="countdownTimer">
+                                    <div class="countdown-box">
+                                        <div class="countdown-value" id="countDays">00</div>
+                                        <div class="countdown-unit">Dias</div>
+                                    </div>
+                                    <div class="countdown-box">
+                                        <div class="countdown-value" id="countHours">00</div>
+                                        <div class="countdown-unit">Horas</div>
+                                    </div>
+                                    <div class="countdown-box">
+                                        <div class="countdown-value" id="countMinutes">00</div>
+                                        <div class="countdown-unit">Min</div>
+                                    </div>
+                                    <div class="countdown-box">
+                                        <div class="countdown-value" id="countSeconds">00</div>
+                                        <div class="countdown-unit">Seg</div>
+                                    </div>
+                                </div>
+                        `;
+                        countdownInterval = setInterval(updateCountdown, 1000);
+                        updateCountdown(); // Immediate update
+                    }
+                } else {
+                    // No end time set, hide countdown
+                    countdownContainer.style.display = 'none';
+                }
+            } catch (e) {
+                console.log('Stats not loaded');
+            }
+        }
+
+        function updateCountdown() {
+            if (!drawEndTime) return;
+
+            // Get current time (browser uses local time, São Paulo is UTC-3)
+            const now = new Date();
+            const diff = drawEndTime.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                // Draw time passed - show expired and block sales
+                const countdownContainer = document.getElementById('countdownContainer');
+                countdownContainer.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); padding: 25px; border-radius: 16px; text-align: center; animation: pulse 1.5s infinite;">
+                        <div style="font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                            ⏰ TEMPO ESGOTADO
+                        </div>
+                        <div style="color: rgba(255,255,255,0.9); margin-top: 10px; font-size: 1.1rem;">
+                            Aguarde o sorteio!
+                        </div>
+                    </div>
+                `;
+
+                // Disable the grid
+                const grid = document.getElementById('numbersGrid');
+                grid.style.opacity = '0.4';
+                grid.style.pointerEvents = 'none';
+
+                // Hide floating button
+                document.getElementById('floatingBtn').style.display = 'none';
+
+                // Add pulse animation
+                const style = document.createElement('style');
+                style.textContent = '@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }';
+                document.head.appendChild(style);
+
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                return;
+            }
+
+            // Calculate time units
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            // Hide days box if less than 1 day remaining
+            const daysBox = document.getElementById('countDays').parentElement;
+            if (days === 0) {
+                daysBox.style.display = 'none';
+            } else {
+                daysBox.style.display = 'block';
+                document.getElementById('countDays').textContent = days.toString().padStart(2, '0');
+            }
+
+            // Update display
+            document.getElementById('countHours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('countMinutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('countSeconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        // Refresh stats every 30 seconds to keep countdown accurate
+        setInterval(loadStats, 30000);
+
+        // ========== NUMBER LOOKUP BY PHONE ==========
+        async function lookupMyNumbers() {
+            const phoneInput = document.getElementById('lookupPhone');
+            const resultDiv = document.getElementById('lookupResult');
+            const phone = phoneInput.value.replace(/\D/g, '');
+
+            if (phone.length < 10) {
+                resultDiv.innerHTML = '<div class="lookup-error">Digite um telefone válido com DDD</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="lookup-loading">🔍 Buscando...</div>';
+
+            try {
+                const response = await fetch(`/api/orders/my-numbers/${phone}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    resultDiv.innerHTML = `<div class="lookup-error">${data.error || 'Erro ao buscar'}</div>`;
+                    return;
+                }
+
+                if (data.count === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="lookup-empty">
+                            😕 Nenhum número encontrado para este telefone na rifa atual.
+                        </div>`;
+                    return;
+                }
+
+                // Show results
+                const numbersHtml = data.numbers.map(n =>
+                    `<span class="lookup-number">${n.number.toString().padStart(2, '0')}</span>`
+                ).join('');
+
+                resultDiv.innerHTML = `
+                    <div class="lookup-success">
+                        <div class="lookup-title">🎟️ Seus números na <strong>${data.draw_name}</strong>:</div>
+                        <div class="lookup-numbers">${numbersHtml}</div>
+                        <div class="lookup-count">Total: ${data.count} número(s) comprado(s)</div>
+                    </div>`;
+
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="lookup-error">Erro de conexão. Tente novamente.</div>';
+            }
+        }
+    </script>
+
+    <!-- Number Lookup Section (Fixed Footer) -->
+    <section class="lookup-section">
+        <div class="lookup-container">
+            <h3>🔎 Consultar meus números</h3>
+            <p>Digite seu telefone para ver os números que você comprou nesta rifa:</p>
+            <div class="lookup-form">
+                <input type="tel" id="lookupPhone" placeholder="(11) 99999-9999" maxlength="15"
+                    oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
+                <button onclick="lookupMyNumbers()">Consultar</button>
+            </div>
+            <div id="lookupResult"></div>
+        </div>
+    </section>
+
+    <style>
+        .lookup-section {
+            background: linear-gradient(180deg, transparent, var(--bg-card-solid));
+            padding: 40px 20px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .lookup-container {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .lookup-section h3 {
+            color: var(--gold);
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .lookup-section p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .lookup-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .lookup-form input {
+            flex: 1;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .lookup-form input:focus {
+            border-color: var(--gold);
+        }
+
+        .lookup-form button {
+            padding: 14px 24px;
+            border-radius: 12px;
+            border: none;
+            background: var(--gradient-gold);
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .lookup-form button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px var(--gold-glow);
+        }
+
+        .lookup-loading {
+            color: var(--gold);
+            padding: 15px;
+        }
+
+        .lookup-error {
+            color: #f87171;
+            padding: 15px;
+            background: rgba(248, 113, 113, 0.1);
+            border-radius: 12px;
+        }
+
+        .lookup-empty {
+            color: var(--text-secondary);
+            padding: 15px;
+        }
+
+        .lookup-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .lookup-title {
+            color: var(--green);
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .lookup-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .lookup-number {
+            background: var(--gradient-gold);
+            color: #000;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        .lookup-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 480px) {
+            .lookup-form {
+                flex-direction: column;
+            }
+
+            .lookup-form button {
+                width: 100%;
+            }
+        }
+    </style>
+</body>
+
+</html>

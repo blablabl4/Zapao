@@ -38,13 +38,13 @@ function getPaymentProvider() {
         const hasInfinitePay = !!process.env.INFINITEPAY_HANDLE;
         const hasMercadoPago = !!process.env.MP_ACCESS_TOKEN;
 
-        // Priority: InfinitePay (zero fee) > MercadoPago > Mock
-        if (hasInfinitePay) {
-            console.log('[PaymentProvider] Using InfinitePay (auto-detected, zero fee)');
-            return new InfinitePayProvider();
-        } else if (hasMercadoPago && process.env.NODE_ENV === 'production') {
+        // Priority: MercadoPago (user preference) > InfinitePay > Mock
+        if (hasMercadoPago) {
             console.log('[PaymentProvider] Using MercadoPago (auto-detected)');
             return new MercadoPagoProvider();
+        } else if (hasInfinitePay) {
+            console.log('[PaymentProvider] Using InfinitePay (auto-detected)');
+            return new InfinitePayProvider();
         } else {
             console.log('[PaymentProvider] Using MockProvider (development)');
             return new MockPaymentSimulator();

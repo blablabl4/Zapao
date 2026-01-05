@@ -1,6 +1,7 @@
 const { query } = require('../database/db');
 const OrderService = require('./OrderService');
 const crypto = require('crypto');
+const Logger = require('./LoggerService');
 
 class PaymentService {
     /**
@@ -17,7 +18,7 @@ class PaymentService {
         // Check if already processed
         const existingEvent = await query('SELECT * FROM webhook_events WHERE hash = $1', [hash]);
         if (existingEvent.rows.length > 0) {
-            console.log(`[PaymentService] Webhook event already processed (hash: ${hash.substring(0, 8)}...)`);
+            Logger.warn('WEBHOOK_DUPLICATE', `Event already processed`, { hash: hash.substring(0, 8) });
             return {
                 success: true,
                 message: 'Event already processed',
@@ -45,7 +46,7 @@ class PaymentService {
             // Check if order_id contains multiple IDs (bulk purchase)
             const orderIds = order_id.includes(',') ? order_id.split(',') : [order_id];
 
-            console.log(`[PaymentService] Processing payment for ${orderIds.length} order(s)`);
+            Logger.info('WEBHOOK_RECEIVED', `Processing payment for ${orderIds.length} order(s)`, { orderIds, amount_paid });
 
             // Process each order
             for (const singleOrderId of orderIds) {
@@ -54,21 +55,30 @@ class PaymentService {
                 // Get order
                 const order = await OrderService.getOrder(trimmedOrderId);
                 if (!order) {
-                    console.error(`[PaymentService] Order not found: ${trimmedOrderId}`);
+                    Logger.error('PAYMENT_FAIL_NO_ORDER', `Order not found: ${trimmedOrderId}`, null);
                     continue; // Skip this order, process others
                 }
 
                 // Check if order is already paid
                 if (order.status === 'PAID') {
-                    console.log(`[PaymentService] Order ${trimmedOrderId} already paid, skipping`);
+                    Logger.info('PAYMENT_SKIP', `Order ${trimmedOrderId} already paid`, null);
                     continue;
                 }
 
                 // Verify order is still valid (not expired)
                 if (order.status === 'EXPIRED') {
-                    console.warn(`[PaymentService] Order ${trimmedOrderId} has expired`);
+                    Logger.warn('PAYMENT_EXPIRED', `Order ${trimmedOrderId} has expired`, null);
                     continue;
                 }
+
+                // RACE CONDITION CHECK: REMOVED. 
+                // We allow multiple winners for the same number.
+                // Prize will be split in DrawService.
+                // const existingWinner = ... (removed)
+
+                // Calculate actual paid amount per order (handle bulk)
+                const totalPaid = parseFloat(amount_paid) || 0;
+                const amountPerOrder = orderIds.length > 0 ? (totalPaid / orderIds.length) : 0;
 
                 // Create payment record (one per order)
                 try {
@@ -80,27 +90,27 @@ class PaymentService {
                         provider || 'MercadoPago',
                         txid || null,
                         e2eid || null,
-                        order.amount, // Individual order amount (R$ 1.00)
+                        amountPerOrder, // Use actual paid amount share
                         hash
                     ]);
                 } catch (err) {
                     if (err.message.includes('duplicate key') || err.message.includes('unique constraint')) {
-                        console.log(`[PaymentService] Payment already recorded for order ${trimmedOrderId}`);
+                        Logger.warn('PAYMENT_ALRAEDY_RECORDED', `Payment already recorded for order ${trimmedOrderId}`, null);
                         continue;
                     }
                     throw err;
                 }
 
-                // Update order status to PAID
-                await OrderService.updateOrderStatus(trimmedOrderId, 'PAID');
-                console.log(`[PaymentService] Order ${trimmedOrderId} marked as PAID`);
+                // Update ALL orders in this batch (grouped by buyer_ref)
+                await OrderService.updateBatchStatus(order.buyer_ref, 'PAID');
+                Logger.info('PAYMENT_SUCCESS', `Marked batch for ${order.buyer_ref} as PAID`, { amount: order.amount });
             }
 
             // Mark webhook as processed
             await query('UPDATE webhook_events SET status = $1, processed_at = $2 WHERE id = $3',
                 ['PROCESSED', new Date(), eventId]);
 
-            console.log(`[PaymentService] Payment processed successfully for ${orderIds.length} order(s)`);
+            Logger.info('WEBHOOK_COMPLETE', `Payment processed successfully for ${orderIds.length} order(s)`, null);
 
             return {
                 success: true,
@@ -114,7 +124,7 @@ class PaymentService {
             await query('UPDATE webhook_events SET status = $1, processed_at = $2 WHERE id = $3',
                 ['FAILED', new Date(), eventId]);
 
-            console.error(`[PaymentService] Error processing webhook:`, error.message);
+            Logger.error('WEBHOOK_FAIL', `Error processing webhook: ${error.message}`, { stack: error.stack });
 
             return {
                 success: false,

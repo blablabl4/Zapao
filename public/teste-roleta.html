@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peão Horizontal - 75 Números</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0d0d0d;
+            --bg-card: #1a1a1a;
+            --text-primary: #ffffff;
+            --gold: #D4AF37;
+            --gold-light: #FFD700;
+            --green: #4ade80;
+            --red: #f87171;
+            --shadow-gold: rgba(255, 215, 0, 0.2);
+            --shadow-green: rgba(74, 222, 128, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        h1 {
+            color: var(--gold);
+            font-weight: 800;
+            letter-spacing: -1px;
+            font-size: 2rem;
+            text-transform: uppercase;
+        }
+
+        /* Container Simulator (Admin Card) */
+        .admin-card-simulator {
+            background: var(--bg-card);
+            border: 1px solid #333;
+            border-radius: 20px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            perspective: 1000px;
+            /* 3D effect */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, #222 0%, #111 100%);
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        /* Fades */
+        .carousel-container::before,
+        .carousel-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .carousel-container::before {
+            left: 0;
+            background: linear-gradient(to right, #111, transparent);
+        }
+
+        .carousel-container::after {
+            right: 0;
+            background: linear-gradient(to left, #111, transparent);
+        }
+
+        .carousel-track {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            /* Space between numbers */
+            transform-style: preserve-3d;
+        }
+
+        .number-card {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            border-radius: 16px;
+            background: #252525;
+            color: #555;
+            border: 1px solid #333;
+            transition: all 0.1s cubic-bezier(0.2, 0, 0, 1);
+            position: relative;
+        }
+
+        /* 3D States */
+        .number-card.side {
+            transform: scale(0.85) translateZ(-50px) rotateY(0deg);
+            /* Flat but smaller */
+            opacity: 0.4;
+            filter: blur(1px);
+        }
+
+        .number-card.left {
+            transform: scale(0.8) perspective(500px) rotateY(25deg);
+        }
+
+        .number-card.right {
+            transform: scale(0.8) perspective(500px) rotateY(-25deg);
+        }
+
+        .number-card.center {
+            width: 130px;
+            height: 130px;
+            background: linear-gradient(135deg, var(--gold), #b8860b);
+            color: #000;
+            transform: scale(1.1) translateZ(50px);
+            z-index: 5;
+            border: none;
+            box-shadow: 0 0 30px var(--shadow-gold);
+        }
+
+        .number-card.winner {
+            background: linear-gradient(135deg, var(--green), #15803d) !important;
+            color: white !important;
+            box-shadow: 0 0 50px var(--shadow-green) !important;
+            animation: pulseWinner 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseWinner {
+            from {
+                transform: scale(1.1);
+                box-shadow: 0 0 30px var(--shadow-green);
+            }
+
+            to {
+                transform: scale(1.2);
+                box-shadow: 0 0 60px var(--shadow-green);
+            }
+        }
+
+        /* Pointers */
+        .pointer {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            z-index: 20;
+        }
+
+        .pointer-top {
+            top: 10px;
+            border-top: 15px solid var(--gold);
+        }
+
+        .pointer-bottom {
+            bottom: 10px;
+            border-bottom: 15px solid var(--gold);
+        }
+
+        .action-area {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-spin {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .btn-spin:disabled {
+            background: #333;
+            color: #666;
+            cursor: allowed;
+        }
+
+        .btn-confirm {
+            background: var(--green);
+            color: #000;
+            display: none;
+        }
+
+        .btn-confirm.visible {
+            display: block;
+        }
+
+        #status {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎰 PEÃO DA SORTE</h1>
+
+    <div class="admin-card-simulator">
+        <div class="carousel-container">
+            <div class="pointer pointer-top"></div>
+            <div class="pointer pointer-bottom"></div>
+
+            <div class="carousel-track">
+                <div class="number-card left side" id="numLeft">74</div>
+                <div class="number-card center" id="numCenter">75</div>
+                <div class="number-card right side" id="numRight">01</div>
+            </div>
+        </div>
+
+        <div id="status">Aguardando sorteio...</div>
+
+        <div class="action-area">
+            <button class="btn-spin" id="btnSpin" onclick="spinCarousel()">
+                <i class="fas fa-play"></i> INICIAR SORTEIO
+            </button>
+            <button class="btn-confirm" id="btnConfirm" onclick="confirmResult()">
+                <i class="fas fa-check"></i> CONFIRMAR: <span id="confirmNumber">00</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_NUMBERS = 75;
+        let isSpinning = false;
+        let finalNumber = null;
+        let currentIndex = 0; // 0-74
+
+        // Get adjacent numbers (wrapping around)
+        function getAdjacentNumbers(index) {
+            const left = ((index - 1) + TOTAL_NUMBERS) % TOTAL_NUMBERS;
+            const center = index;
+            const right = (index + 1) % TOTAL_NUMBERS;
+            return {
+                left: left + 1,      // Display as 1-75
+                center: center + 1,
+                right: right + 1
+            };
+        }
+
+        // Update display
+        function updateDisplay(index) {
+            const nums = getAdjacentNumbers(index);
+            // Format to 2 digits
+            document.getElementById('numLeft').textContent = nums.left.toString().padStart(2, '0');
+            document.getElementById('numCenter').textContent = nums.center.toString().padStart(2, '0');
+            document.getElementById('numRight').textContent = nums.right.toString().padStart(2, '0');
+        }
+
+        // Create tick sound
+        function playTick() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                // Higher pitch mechanic sound
+                oscillator.frequency.value = 800 + Math.random() * 200;
+                oscillator.type = 'square';
+
+                // Very short click
+                gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.05);
+            } catch (e) { }
+        }
+
+        // CONTROL VARIABLES
+        let animationFrameId = null;
+        let isDecelerating = false;
+        let speed = 0;
+
+        // Start infinite spinning (Wait for Server)
+        function startVisualSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            isDecelerating = false;
+            finalNumber = null;
+
+            const btnSpin = document.getElementById('btnSpin');
+            const btnConfirm = document.getElementById('btnConfirm');
+            const status = document.getElementById('status');
+            const centerCard = document.getElementById('numCenter');
+
+            btnSpin.disabled = true;
+            btnConfirm.classList.remove('visible');
+            status.textContent = '🎰 Buscando ganhador no servidor...';
+            centerCard.classList.remove('winner');
+
+            speed = 0;
+            const maxSpeed = 0.5; // Positions per frame (approx 30 numbers/sec)
+            const accel = 0.01;
+
+            let position = currentIndex; // Use float for smooth movement
+
+            function loop() {
+                // Accelerate until max speed
+                if (!isDecelerating && speed < maxSpeed) {
+                    speed += accel;
+                }
+
+                // Update position
+                position += speed;
+
+                // Wrap around
+                const rawIndex = Math.floor(position);
+                const actualIndex = ((rawIndex % TOTAL_NUMBERS) + TOTAL_NUMBERS) % TOTAL_NUMBERS;
+
+                if (actualIndex !== currentIndex) {
+                    playTick();
+                    currentIndex = actualIndex;
+                    updateDisplay(currentIndex);
+                }
+
+                if (!isDecelerating) {
+                    animationFrameId = requestAnimationFrame(loop);
+                }
+            }
+
+            loop();
+
+            // SIMULATION: After 2 seconds, simulate receiving backend response
+            // IN PRODUCTION: This setTimeout is replaced by the API fetch
+            setTimeout(() => {
+                // Simulate backend returning a random winner (e.g., random 1-75)
+                const serverWinner = Math.floor(Math.random() * TOTAL_NUMBERS) + 1;
+                status.textContent = `🎲 Servidor decidiu: ${serverWinner}. Parando roleta...`;
+                stopAt(serverWinner);
+            }, 2500);
+        }
+
+        // Stop at specific number (Deterministic)
+        function stopAt(targetNumber) {
+            isDecelerating = true;
+            const targetIndex = targetNumber - 1;
+
+            // WE NOW START A NEW CONTROLLED LOOP FOR STOPPING
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            // We want to stop in approx 4-5 seconds
+            // To look natural, we need to continue from current position
+            // and do X full rotations ending exactly at target
+
+            const fullRotations = 4;
+            const currentPos = currentIndex;
+
+            let stepsNeeded = ((targetIndex - currentPos) + TOTAL_NUMBERS) % TOTAL_NUMBERS;
+            stepsNeeded += (fullRotations * TOTAL_NUMBERS);
+
+            // Animation config
+            const duration = 5000;
+            const startTime = performance.now();
+
+            let lastSteppedIndex = 0; // Relative steps taken
+
+            function stopLoop(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Ease out cubic (starts fast, slows down at end)
+                const ease = 1 - Math.pow(1 - progress, 3);
+
+                const currentStepOffset = Math.floor(ease * stepsNeeded);
+
+                if (currentStepOffset > lastSteppedIndex) {
+                    const diff = currentStepOffset - lastSteppedIndex;
+
+                    // Simple tick only on change
+                    for (let i = 0; i < diff; i++) playTick();
+
+                    // Update index
+                    currentIndex = (currentIndex + diff) % TOTAL_NUMBERS;
+                    updateDisplay(currentIndex);
+
+                    lastSteppedIndex = currentStepOffset;
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(stopLoop);
+                } else {
+                    // FINISH
+                    isSpinning = false;
+                    finalNumber = targetNumber;
+
+                    // Force final alignment
+                    currentIndex = targetIndex;
+                    updateDisplay(currentIndex);
+
+                    const btnSpin = document.getElementById('btnSpin');
+                    const btnConfirm = document.getElementById('btnConfirm');
+                    const centerCard = document.getElementById('numCenter');
+                    const status = document.getElementById('status');
+
+                    status.textContent = `🎉 O NÚMERO É ${finalNumber}!`;
+                    centerCard.classList.add('winner');
+                    btnConfirm.classList.add('visible');
+                    document.getElementById('confirmNumber').textContent = finalNumber.toString().padStart(2, '0');
+
+                    btnSpin.disabled = false;
+                    btnSpin.innerHTML = '<i class="fas fa-redo"></i> GIRAR NOVAMENTE';
+                }
+            }
+
+            requestAnimationFrame(stopLoop);
+        }
+
+        function spinCarousel() {
+            startVisualSpin();
+        }
+
+        function confirmResult() {
+            alert(`✅ Confirmado!`);
+            document.getElementById('btnConfirm').classList.remove('visible');
+            document.getElementById('numCenter').classList.remove('winner');
+            document.getElementById('status').textContent = 'Pronto.';
+        }
+
+        // Initialize display
+        updateDisplay(currentIndex);
+    </script>
+</body>
+
+</html>

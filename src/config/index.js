@@ -32,8 +32,8 @@ module.exports = {
     // Security
     // Relaxed for High Traffic Events
     RATE_LIMIT_WINDOW_MS: 1 * 60 * 1000, // 1 minute (faster recovery)
-    RATE_LIMIT_MAX_REQUESTS: 1000, // High capacity for shared IPs/CGNAT
-    RATE_LIMIT_LOGIN_MAX: 10, // Slightly increased login tolerance
+    RATE_LIMIT_MAX_REQUESTS: 3000, // Very high capacity for admin polling
+    RATE_LIMIT_LOGIN_MAX: 50, // Increased tolerance for retries
 
     // CORS
     CORS_ORIGIN: process.env.CORS_ORIGIN || 'https://www.tvzapao.com.br',

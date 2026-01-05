@@ -197,18 +197,6 @@ app.use('/api/history', require('./routes/history'));
 // Admin Zapão API Routes (stats, payments, winners, draw management)
 app.use('/api/admin', requireAdmin, require('./routes/admin'));
 
-// Temporary Migration Endpoint (Public)
-app.get('/api/migrate-temp', async (req, res) => {
-    try {
-        const { query } = require('./database/db');
-        await query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS referrer_id TEXT;');
-        res.json({ success: true, message: 'Migration successful (Public)' });
-    } catch (error) {
-        console.error('Migration failed:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Public winners endpoint (for popup - no auth needed)
 app.get('/api/public/winners', async (req, res) => {
     try {

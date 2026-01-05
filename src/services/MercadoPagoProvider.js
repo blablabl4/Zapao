@@ -19,29 +19,41 @@ class MercadoPagoProvider {
      * Generate Pix payment via REST API
      * @param {string} orderId - Order ID
      * @param {number} amount - Amount in BRL
+     * @param {object} buyerInfo - Buyer details (name, phone)
      * @returns {object} Payment data with QR code
      */
-    async generatePix(orderId, amount) {
+    async generatePix(orderId, amount, buyerInfo = {}) {
         if (!this.client) {
             console.warn('[MercadoPago] Not configured, using mock');
             return this._generateMockPix(orderId, amount);
         }
 
         try {
+            // Build description with client info for easy lookup
+            const clientName = buyerInfo.name || 'Cliente';
+            const clientPhone = buyerInfo.phone || '';
+            const shortOrderId = orderId.substring(0, 8);
+            const description = `Ebook #${shortOrderId} - ${clientName}`;
+
             const paymentData = {
                 transaction_amount: Number(amount),
-                description: `TVZapão - Sorteio #${orderId}`,
+                description: description, // Includes client name + order ID
                 payment_method_id: 'pix',
                 external_reference: orderId,
                 payer: {
-                    email: 'comprador@tvzapao.com.br',
-                    first_name: 'Comprador',
-                    last_name: 'TVZapão'
+                    email: process.env.PAYER_EMAIL || 'cliente@tvzapao.com.br',
+                    first_name: clientName.split(' ')[0] || 'Cliente',
+                    last_name: clientName.split(' ').slice(1).join(' ') || 'Digital'
                 },
-                notification_url: `${process.env.APP_URL || 'https://www.tvzapao.com.br'}/api/webhooks/pix`
+                notification_url: `${process.env.APP_URL || 'https://www.tvzapao.com.br'}/api/webhooks/pix`,
+                metadata: {
+                    buyer_name: clientName,
+                    buyer_phone: clientPhone,
+                    order_id: orderId
+                }
             };
 
-            console.log('[MercadoPago] Creating Pix via REST API:', { orderId, amount });
+            console.log('[MercadoPago] Creating Pix:', { orderId, amount, clientName, clientPhone });
 
             // Call Mercado Pago REST API directly
             const response = await fetch('https://api.mercadopago.com/v1/payments', {

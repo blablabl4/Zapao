@@ -1,8 +1,7 @@
 /* ====== Theme System ====== */
 /* Gold Metallic Palette + Graphite Gray */
-/* Dark Mode (Default) */
-:root,
-[data-theme="dark"] {
+/* Dark Mode Enforced */
+:root {
     /* Gold Gradients */
     --primary-gradient: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
     --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -29,30 +28,8 @@
     --gold-glow: rgba(212, 175, 55, 0.5);
 }
 
-/* Light Mode */
-[data-theme="light"] {
-    --primary-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #8B6914 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --success-gradient: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
+/* Light Mode Overrides REMOVED to enforce Dark Mode */
 
-    --gold-shine: linear-gradient(135deg, #FFF8DC 0%, #FFD700 20%, #D4AF37 40%, #B8860B 60%, #8B6914 80%, #D4AF37 100%);
-    --gold-light: #FFD700;
-    --gold-base: #D4AF37;
-    --gold-dark: #B8860B;
-
-    --bg-dark: #f5f5f0;
-    --bg-card: #ffffff;
-    --bg-hover: #f0ebe0;
-    --text-primary: #1a1a2e;
-    --text-secondary: #5a5a6a;
-    --border-color: #d4c9a8;
-    --accent: #B8860B;
-    --success: #D4AF37;
-    --warning: #f5576c;
-    --bg-overlay: rgba(245, 245, 240, 0.92);
-    --shadow-color: rgba(0, 0, 0, 0.15);
-    --gold-glow: rgba(184, 134, 11, 0.4);
-}
 
 * {
     margin: 0;
@@ -474,22 +451,53 @@ body.has-header.header-scrolled {
 /* Only selected number gets the spotlight effect */
 
 /* Floating Buy Button - Gold */
+/* Floating Buy Button - FORCED VISIBILITY */
 .floating-buy-btn {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
-    color: #1a1a1a;
-    padding: 18px 32px;
-    border: none;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    padding: 1rem 2rem;
     border-radius: 50px;
-    font-size: 18px;
-    font-weight: bold;
-    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.5);
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: none;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
     cursor: pointer;
-    z-index: 999;
-    transition: all 0.3s ease;
-    animation: float-bounce 2s ease-in-out infinite;
+    z-index: 99999 !important;
+    /* Maximum Priority */
+    display: none;
+    /* Controlled by JS */
+    width: 90%;
+    max-width: 400px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 100px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+/* Ensure container doesn't hide it */
+#floatingDivHost {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    /* Don't block clicks */
+    z-index: 99999;
 }
 
 .floating-buy-btn:hover {
