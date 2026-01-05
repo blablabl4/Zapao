@@ -106,16 +106,68 @@ function updateStatsGrid(data) {
     // Use Intl for currency
     const fmtMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
-    document.getElementById('statCurrentPrize').innerText = fmtMoney(data.current_draw.current_prize);
-    document.getElementById('statPrizeBase').innerText = fmtMoney(data.current_draw.prize_base);
-    // document.getElementById('statReserve').innerText = fmtMoney(data.current_draw.reserve_amount); // Hidden
+    // 1. Prize (Guaranteed)
+    const prizeEl = document.getElementById('statCurrentPrize');
+    if (prizeEl) prizeEl.innerText = fmtMoney(data.current_draw.current_prize);
 
-    document.getElementById('statPaidTotal').innerText = data.orders.paid_total || 0;
-    if (document.getElementById('statTransactions')) {
-        document.getElementById('statTransactions').innerText = data.orders.transactions_total || 0;
+    // 2. Unique Customers
+    const uniqueEl = document.getElementById('statUniqueCustomers');
+    if (uniqueEl) uniqueEl.innerText = data.orders.unique_customers || 0;
+
+    // 3. Paid Sales
+    const paidEl = document.getElementById('statPaidTotal');
+    if (paidEl) paidEl.innerText = data.orders.paid_total || 0;
+
+    // 4. Time Remaining
+    if (current_draw && current_draw.draw_date) {
+        startCountdown(current_draw.draw_date);
+    } else {
+        const timeEl = document.getElementById('statTimeRemaining');
+        if (timeEl) timeEl.innerText = "--:--";
     }
-    document.getElementById('statUniqueCustomers').innerText = data.orders.unique_customers || 0;
-    document.getElementById('statRevenue').innerText = fmtMoney(data.orders.revenue_total_paid);
+
+    // 5. Revenue
+    const revEl = document.getElementById('statRevenue');
+    if (revEl) revEl.innerText = fmtMoney(data.orders.revenue_total_paid);
+}
+
+let countdownInterval = null;
+
+function startCountdown(targetDateStr) {
+    const timeEl = document.getElementById('statTimeRemaining');
+    if (!timeEl) return;
+
+    // Clear previous
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    const targetDate = new Date(targetDateStr);
+
+    function update() {
+        const now = new Date();
+        const diff = targetDate - now;
+
+        if (diff <= 0) {
+            timeEl.innerText = "Encerrado";
+            timeEl.style.color = "#ef4444"; // Red
+            clearInterval(countdownInterval);
+            return;
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        // const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        if (days > 0) {
+            timeEl.innerText = `${days}d ${hours}h ${minutes}m`;
+        } else {
+            timeEl.innerText = `${hours}h ${minutes}m`;
+        }
+        timeEl.style.color = "var(--gold)";
+    }
+
+    update(); // Immediate
+    countdownInterval = setInterval(update, 60000); // Update every minute
 }
 
 function updateControlPanel(draw) {
