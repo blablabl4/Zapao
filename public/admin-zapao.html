@@ -492,6 +492,29 @@
                 <div id="configStatus" class="status-msg"></div>
             </div>
 
+            <!-- Affiliate Draw -->
+            <div class="section-card">
+                <h2>🏆 Sorteio Afiliados</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
+                    Sorteio extra para quem indicou (Padrinhos).
+                </p>
+                <div style="display: flex; gap: 10px; flex-direction: column;">
+                    <button onclick="checkAffiliateStats()" class="btn btn-info">
+                        📊 Ver Participantes
+                    </button>
+                    <button onclick="runAffiliateDraw()" class="btn btn-success"
+                        style="background: linear-gradient(60deg, #28a745, #218838);">
+                        🎲 Sortear Ganhador
+                    </button>
+                </div>
+                <!-- Result Area -->
+                <div id="affiliateResult"
+                    style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; display: none;">
+                    <strong style="color: var(--gold);">Resultado:</strong>
+                    <div id="affiliateResultContent" style="color: #fff; font-size: 0.9em; margin-top: 5px;"></div>
+                </div>
+            </div>
+
             <!-- Campaign Branding -->
             <div class="section-card">
                 <h2>Personalizar Campanha</h2>
