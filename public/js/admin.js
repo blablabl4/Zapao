@@ -119,8 +119,8 @@ function updateStatsGrid(data) {
     if (paidEl) paidEl.innerText = data.orders.paid_total || 0;
 
     // 4. Time Remaining
-    if (current_draw && current_draw.draw_date) {
-        startCountdown(current_draw.draw_date);
+    if (current_draw && current_draw.end_time) {
+        startCountdown(current_draw.end_time);
     } else {
         const timeEl = document.getElementById('statTimeRemaining');
         if (timeEl) timeEl.innerText = "--:--";
@@ -156,18 +156,24 @@ function startCountdown(targetDateStr) {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        // const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        // Format like sales page: 00d 00h 00m 00s
+        const dStr = days.toString().padStart(2, '0');
+        const hStr = hours.toString().padStart(2, '0');
+        const mStr = minutes.toString().padStart(2, '0');
+        const sStr = seconds.toString().padStart(2, '0');
 
         if (days > 0) {
-            timeEl.innerText = `${days}d ${hours}h ${minutes}m`;
+            timeEl.innerText = `${dStr}d ${hStr}h ${mStr}m ${sStr}s`;
         } else {
-            timeEl.innerText = `${hours}h ${minutes}m`;
+            timeEl.innerText = `${hStr}h ${mStr}m ${sStr}s`;
         }
         timeEl.style.color = "var(--gold)";
     }
 
     update(); // Immediate
-    countdownInterval = setInterval(update, 60000); // Update every minute
+    countdownInterval = setInterval(update, 1000); // Update every second
 }
 
 function updateControlPanel(draw) {
