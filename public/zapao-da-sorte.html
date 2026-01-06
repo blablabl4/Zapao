@@ -893,30 +893,44 @@
             const refParam = urlParams.get('ref');
             if (!refParam) return;
 
+            // 1. Save immediately to LocalStorage (Critical for Sales Attribution)
+            try {
+                // Preserve existing data if any, update code
+                const existing = localStorage.getItem('affiliateData');
+                let data = existing ? JSON.parse(existing) : {};
+                data.code = refParam;
+                localStorage.setItem('affiliateData', JSON.stringify(data));
+                console.log('Affiliate code saved:', refParam);
+            } catch (e) {
+                console.error('Error saving affiliate data:', e);
+            }
+
+            // 2. Track the click on server (Analytics)
             try {
                 // Get current draw ID
                 const res = await fetch('/api/public/draw');
                 const data = await res.json();
                 const drawId = data.current_draw?.id;
-                if (!drawId) return;
 
-                // Store affiliate data in localStorage
-                const affiliateData = { code: refParam, drawId: drawId };
-                localStorage.setItem('affiliateData', JSON.stringify(affiliateData));
+                if (drawId) {
+                    // Update localStorage with drawId for completeness
+                    const current = JSON.parse(localStorage.getItem('affiliateData') || '{}');
+                    current.drawId = drawId;
+                    localStorage.setItem('affiliateData', JSON.stringify(current));
 
-                // Track the click (fire and forget)
-                fetch('/api/orders/affiliate-click', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        referrer_id: refParam,
-                        draw_id: drawId
-                    })
-                }).catch(e => console.log('Tracking error', e));
-
-                console.log('Affiliate click tracked:', refParam);
+                    // Fire and forget click tracking
+                    fetch('/api/orders/affiliate-click', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            referrer_id: refParam,
+                            draw_id: drawId
+                        })
+                    }).catch(e => console.log('Tracking error', e));
+                }
             } catch (e) {
                 console.error('Error tracking affiliate click:', e);
+                // Even if this fails, localStorage is saved, so Purchase Attribution works!
             }
         }
 
