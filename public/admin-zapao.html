@@ -902,7 +902,7 @@
         // Load all draws into the affiliate draw dropdown
         async function loadAffiliateDraws() {
             try {
-                const res = await fetch('/api/draws');
+                const res = await fetch('/api/admin/all-draws');
                 const data = await res.json();
 
                 const select = document.getElementById('affiliateDrawSelect');
