@@ -5,11 +5,13 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN || '' });
 
 let intervalId = null;
+let lastRun = null;
 
 /**
  * Check pending Bolão payments and confirm if paid
  */
 async function checkPendingPayments() {
+    lastRun = new Date();
     try {
         // Get pending claims from last 2 hours
         const res = await query(`
@@ -89,4 +91,4 @@ function stop() {
     }
 }
 
-module.exports = { start, stop };
+module.exports = { start, stop, getLastRun: () => lastRun };

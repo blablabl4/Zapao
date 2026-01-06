@@ -19,6 +19,13 @@ router.get('/', async (req, res) => {
     });
 });
 
+const expirationJob = require('../jobs/expirationJob');
+const drawExpirationJob = require('../jobs/drawExpirationJob');
+const paymentPollingJob = require('../jobs/paymentPollingJob');
+const ticketCleanupJob = require('../jobs/ticketCleanupJob');
+const paymentReconciliationJob = require('../jobs/paymentReconciliationJob');
+const webhookRetryJob = require('../jobs/webhookRetryJob');
+
 /**
  * GET /health/detailed
  * Detailed health check with DB status, memory, version
@@ -37,6 +44,14 @@ router.get('/detailed', async (req, res) => {
         },
         database: {
             status: 'unknown'
+        },
+        jobs: {
+            expirationJob: expirationJob.getLastRun(),
+            drawExpirationJob: drawExpirationJob.getLastRun(),
+            paymentPollingJob: paymentPollingJob.getLastRun(),
+            ticketCleanupJob: ticketCleanupJob.getLastRun(),
+            paymentReconciliationJob: paymentReconciliationJob.getLastRun(),
+            webhookRetryJob: webhookRetryJob.getLastRun()
         }
     };
 

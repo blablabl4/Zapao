@@ -8,9 +8,11 @@ class ExpirationJob {
     constructor() {
         this.intervalMinutes = 1;
         this.intervalId = null;
+        this.lastRun = null;
     }
 
     async run() {
+        this.lastRun = new Date();
         try {
             const count = await OrderService.markExpiredOrders();
             if (count > 0) {
@@ -40,6 +42,10 @@ class ExpirationJob {
             this.intervalId = null;
             console.log('[ExpirationJob] Job stopped');
         }
+    }
+
+    getLastRun() {
+        return this.lastRun;
     }
 }
 

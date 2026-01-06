@@ -2,6 +2,7 @@ const { query } = require('../database/db');
 const { getPaymentProvider } = require('../services/PaymentProvider');
 
 let intervalId = null;
+let lastRun = null;
 
 /**
  * Payment Reconciliation Job
@@ -9,6 +10,7 @@ let intervalId = null;
  * Runs every 5 minutes
  */
 async function reconcilePayments() {
+    lastRun = new Date();
     try {
         const provider = getPaymentProvider();
 
@@ -97,4 +99,4 @@ function stop() {
     }
 }
 
-module.exports = { start, stop };
+module.exports = { start, stop, getLastRun: () => lastRun };

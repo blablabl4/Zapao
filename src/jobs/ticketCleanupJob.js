@@ -1,11 +1,13 @@
 const { query } = require('../database/db');
 
 let intervalId = null;
+let lastRun = null;
 
 /**
  * Free expired tickets from PENDING claims
  */
 async function cleanupExpiredTickets() {
+    lastRun = new Date();
     try {
         // Find expired PENDING claims
         const expiredClaims = await query(`
@@ -61,4 +63,4 @@ function stop() {
     }
 }
 
-module.exports = { start, stop };
+module.exports = { start, stop, getLastRun: () => lastRun };

@@ -2,6 +2,7 @@ const { query } = require('../database/db');
 const PaymentService = require('../services/PaymentService');
 
 let intervalId = null;
+let lastRun = null;
 
 /**
  * Webhook Retry Job
@@ -9,6 +10,7 @@ let intervalId = null;
  * Runs every 10 minutes
  */
 async function retryFailedWebhooks() {
+    lastRun = new Date();
     try {
         console.log('[WebhookRetry] Checking for failed webhooks...');
 
@@ -76,4 +78,4 @@ function stop() {
     }
 }
 
-module.exports = { start, stop };
+module.exports = { start, stop, getLastRun: () => lastRun };

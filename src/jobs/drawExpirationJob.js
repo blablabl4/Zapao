@@ -8,9 +8,11 @@ class DrawExpirationJob {
     constructor() {
         this.intervalMinutes = 1;
         this.intervalId = null;
+        this.lastRun = null;
     }
 
     async run() {
+        this.lastRun = new Date();
         try {
             const lockedDraws = await DrawService.checkDrawExpiration();
             if (lockedDraws.length > 0) {
@@ -40,6 +42,10 @@ class DrawExpirationJob {
             this.intervalId = null;
             console.log('[DrawExpirationJob] Job stopped');
         }
+    }
+
+    getLastRun() {
+        return this.lastRun;
     }
 }
 

@@ -4,6 +4,8 @@ const OrderService = require('../services/OrderService');
 const DrawService = require('../services/DrawService');
 const { getPaymentProvider } = require('../services/PaymentProvider');
 const { query } = require('../database/db');
+const validateRequest = require('../middleware/validateRequest');
+const { createOrderSchema } = require('../validators/orderSchema');
 
 /**
  * POST /api/orders/affiliate-click
@@ -35,7 +37,7 @@ router.post('/affiliate-click', async (req, res) => {
  * POST /api/orders/bulk
  * Create multiple orders with single Pix payment
  */
-router.post('/bulk', async (req, res) => {
+router.post('/bulk', validateRequest(createOrderSchema), async (req, res) => {
     try {
         const { numbers, buyer_ref, referrer_id } = req.body;
 
