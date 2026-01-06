@@ -1712,11 +1712,10 @@
     </section>
 
     <!-- Public Affiliate Section -->
-    <section class="lookup-section"
-        style="background: linear-gradient(180deg, var(--bg-card-solid), #000); border-top: 1px solid var(--gold-glow);">
+    <section class="lookup-section" style="background: linear-gradient(180deg, var(--bg-card-solid), #000); border-top: 1px solid var(--gold-glow);">
         <div class="lookup-container">
-            <h3 style="color: var(--gold);">💸 Ganhe comissão!</h3>
-            <p>Gere seu link de afiliado agora e ganhe por cada venda:</p>
+            <h3 style="color: var(--gold);">🎁 Concorra a prêmios por indicação!</h3>
+            <p>Indique amigos e concorra sem custo nenhum:</p>
             <div class="lookup-form">
                 <input type="tel" id="affiliatePhone" placeholder="Seu WhatsApp" maxlength="15"
                     oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
@@ -1839,75 +1838,74 @@
                 right: 20px;
             }
         }
-    </style>
-    }
 
-    .lookup-form button:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 20px var(--gold-glow);
-    }
 
-    .lookup-loading {
-    color: var(--gold);
-    padding: 15px;
-    }
+        .lookup-form button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px var(--gold-glow);
+        }
 
-    .lookup-error {
-    color: #f87171;
-    padding: 15px;
-    background: rgba(248, 113, 113, 0.1);
-    border-radius: 12px;
-    }
+        .lookup-loading {
+            color: var(--gold);
+            padding: 15px;
+        }
 
-    .lookup-empty {
-    color: var(--text-secondary);
-    padding: 15px;
-    }
+        .lookup-error {
+            color: #f87171;
+            padding: 15px;
+            background: rgba(248, 113, 113, 0.1);
+            border-radius: 12px;
+        }
 
-    .lookup-success {
-    background: rgba(34, 197, 94, 0.1);
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    border-radius: 12px;
-    padding: 20px;
-    }
+        .lookup-empty {
+            color: var(--text-secondary);
+            padding: 15px;
+        }
 
-    .lookup-title {
-    color: var(--green);
-    margin-bottom: 15px;
-    font-size: 1rem;
-    }
+        .lookup-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
 
-    .lookup-numbers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 15px;
-    }
+        .lookup-title {
+            color: var(--green);
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
 
-    .lookup-number {
-    background: var(--gradient-gold);
-    color: #000;
-    font-weight: bold;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    }
+        .lookup-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
 
-    .lookup-count {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    }
+        .lookup-number {
+            background: var(--gradient-gold);
+            color: #000;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
 
-    @media (max-width: 480px) {
-    .lookup-form {
-    flex-direction: column;
-    }
+        .lookup-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
 
-    .lookup-form button {
-    width: 100%;
-    }
-    }
+        @media (max-width: 480px) {
+            .lookup-form {
+                flex-direction: column;
+            }
+
+            .lookup-form button {
+                width: 100%;
+            }
+        }
     </style>
 </body>
 
