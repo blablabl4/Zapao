@@ -170,7 +170,7 @@
                 <div class="input-group">
                     <label>Seu WhatsApp</label>
                     <input type="tel" id="checkPhone" placeholder="(11) 99999-9999" maxlength="15"
-                        oninput="formatPhone(this)">
+                        oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
                 </div>
 
                 <button onclick="checkStatus()">Gerar meu Link</button>
