@@ -803,37 +803,64 @@
 
             <!-- ETAPA 3: SUCESSO -->
             <div id="stepSuccess" class="success-section hidden">
-                <h3>✅ Pagamento Confirmado!</h3>
-                <p>Seus números foram registrados com sucesso!</p>
-                <p style="margin-top: 10px; font-weight: 600;">Boa sorte no sorteio! 🍀</p>
 
-                <div
-                    style="margin: 20px 0; padding: 15px; background: rgba(37, 211, 102, 0.1); border-radius: 10px; border: 1px solid rgba(37, 211, 102, 0.3);">
-                    <p style="margin-bottom: 10px; font-size: 0.95rem;">Entre no grupo e acompanhe o resultado!</p>
-                    <a href="https://chat.whatsapp.com/INrlQgZGqYXCwQNZ2gg1yH" target="_blank" class="btn"
-                        style="background-color: #25D366; color: white; display: inline-flex; align-items: center; gap: 8px; width: auto; padding: 10px 20px; font-size: 0.9rem;">
-                        <i class="fab fa-whatsapp"></i> Entrar no Grupo
-                    </a>
-                </div>
-
-                <!-- Affiliate Link Section (Indicação Premiada) -->
+                <!-- 🔥 50% - AFFILIATE LINK (DESTAQUE MÁXIMO) -->
                 <div id="affiliateLinkContainer"
-                    style="margin: 20px 0; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border: 1px solid var(--gold);">
-                    <p style="margin-bottom: 10px; font-size: 0.95rem; color: var(--gold);">
-                        🚀 <strong style="color:#fff;">Ganhe Prêmios Indicando!</strong><br>
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Envie este link para seus
-                            amigos:</span>
-                    </p>
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                    style="padding: 25px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.15)); border-radius: 16px; border: 2px solid var(--gold); margin-bottom: 15px; animation: pulse-gold 2s infinite;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">🏆</span>
+                        <h3
+                            style="color: var(--gold); margin: 0; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 1px;">
+                            INDICAÇÃO PREMIADA!</h3>
+                        <p style="font-size: 1rem; color: #fff; margin: 10px 0 0 0;">
+                            Indique amigos e <strong style="color: var(--gold);">CONCORRA A PRÊMIOS EXTRAS</strong>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
                         <input type="text" id="affiliateLinkInput" readonly
-                            style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 5px; font-size: 0.85em;">
+                            style="flex: 1; background: rgba(0,0,0,0.5); border: 2px solid var(--gold); color: #fff; padding: 14px; border-radius: 10px; font-size: 0.9em; font-weight: 500;">
                         <button onclick="copyAffiliateLink()" class="btn"
-                            style="width: auto; padding: 10px 14px; background: var(--gradient-gold); color: #000; font-weight: bold; border: none;">
-                            📋
+                            style="width: auto; padding: 14px 20px; background: var(--gradient-gold); color: #000; font-weight: bold; border: none; font-size: 1rem; border-radius: 10px;">
+                            📋 Copiar
                         </button>
                     </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin: 0;">
+                        🚀 Quanto mais amigos comprarem pelo seu link, <strong style="color: #fff;">mais chances você
+                            tem!</strong>
+                    </p>
                 </div>
-                <button class="btn btn-secondary" onclick="closeModal()" style="width: 100%;">Fechar</button>
+
+                <style>
+                    @keyframes pulse-gold {
+
+                        0%,
+                        100% {
+                            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+                        }
+
+                        50% {
+                            box-shadow: 0 0 30px rgba(212, 175, 55, 0.7);
+                        }
+                    }
+                </style>
+
+                <!-- 15% - CONFIRMAÇÃO -->
+                <div
+                    style="text-align: center; padding: 12px; background: rgba(74, 222, 128, 0.15); border-radius: 10px; margin-bottom: 15px;">
+                    <p style="margin: 0; font-size: 0.95rem;">
+                        ✅ <strong>Pagamento Confirmado!</strong> Boa sorte! 🍀
+                    </p>
+                </div>
+
+                <!-- RESTANTE - BOTÕES -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="https://chat.whatsapp.com/INrlQgZGqYXCwQNZ2gg1yH" target="_blank" class="btn"
+                        style="background-color: #25D366; color: white; display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px; font-size: 0.9rem; justify-content: center; border-radius: 8px;">
+                        <i class="fab fa-whatsapp"></i> Entrar no Grupo
+                    </a>
+                    <button class="btn btn-secondary" onclick="closeModal()"
+                        style="width: 100%; padding: 10px;">Fechar</button>
+                </div>
             </div>
         </div>
     </div>
