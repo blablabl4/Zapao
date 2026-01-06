@@ -191,6 +191,11 @@
                     <input type="text" id="regPix" placeholder="CPF, Email ou Telefone">
                 </div>
 
+                <div class="input-group">
+                    <label>CEP</label>
+                    <input type="tel" id="regCep" placeholder="00000-000" maxlength="9" oninput="formatCep(this)">
+                </div>
+
                 <button onclick="register()">Confirmar e Gerar Link</button>
                 <button onclick="backToStep1()"
                     style="background:transparent; color:#888; margin-top:10px;">Voltar</button>
@@ -227,6 +232,12 @@
             input.value = v;
         }
 
+        function formatCep(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 5) v = v.substring(0, 5) + '-' + v.substring(5, 8);
+            input.value = v;
+        }
+
         function showStep(id) {
             document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -249,11 +260,21 @@
                 const data = await res.json();
 
                 if (data.found) {
-                    // Update stored Name/Pix if available (optional enhancement)
-                    // Just show link
-                    showLink(cleanPhone);
+                    if (data.source === 'affiliate') {
+                        // Already full affiliate
+                        showLink(cleanPhone);
+                    } else {
+                        // Historical customer: pre-fill and confirm
+                        document.getElementById('regName').value = data.data.name || '';
+                        document.getElementById('regPix').value = data.data.pix_key || '';
+                        document.getElementById('regCep').value = data.data.cep || '';
+                        showStep('step2');
+                    }
                 } else {
-                    // Need registration
+                    // New user: clear and show form
+                    document.getElementById('regName').value = '';
+                    document.getElementById('regPix').value = '';
+                    document.getElementById('regCep').value = '';
                     showStep('step2');
                 }
 
@@ -270,8 +291,9 @@
         async function register() {
             const name = document.getElementById('regName').value.trim();
             const pix = document.getElementById('regPix').value.trim();
+            const cep = document.getElementById('regCep').value.trim();
 
-            if (!name || !pix) {
+            if (!name || !pix || !cep) {
                 alert('Preencha todos os campos!');
                 return;
             }
@@ -285,7 +307,8 @@
                     body: JSON.stringify({
                         phone: currentPhone,
                         name: name,
-                        pix_key: pix
+                        pix_key: pix,
+                        cep: cep.replace(/\D/g, '')
                     })
                 });
 
