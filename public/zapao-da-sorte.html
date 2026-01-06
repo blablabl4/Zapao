@@ -1240,8 +1240,24 @@
 
         // ========== SUBMIT ORDER ==========
         let currentLocation = { bairro: '', cidade: '' };
+        let isSubmitting = false; // ANTI-DUPLICATE: Prevent multiple submissions
 
         async function submitOrder() {
+            // ANTI-DUPLICATE: Block if already submitting
+            if (isSubmitting) {
+                console.log('[submitOrder] Already submitting, ignoring duplicate click');
+                return;
+            }
+            isSubmitting = true;
+
+            // Disable button immediately
+            const submitBtn = document.querySelector('#stepForm button[type="submit"], #stepForm button:not([type])');
+            const originalBtnText = submitBtn ? submitBtn.textContent : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Gerando PIX...';
+            }
+
             const name = document.getElementById('inputName').value.trim();
             const phone = document.getElementById('inputPhone').value.trim();
             const pixKey = document.getElementById('inputPixKey').value.trim();
@@ -1249,20 +1265,26 @@
 
             if (!name || !phone || !pixKey || !cep) {
                 alert('Preencha todos os campos!');
+                isSubmitting = false;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
                 return;
             }
 
             // VALIDATION: Phone
             const cleanPhone = phone.replace(/\D/g, '');
-            if (cleanPhone.length < 10 || /^(\d)\1+$/.test(cleanPhone)) {
+            if (cleanPhone.length < 10 || /(\d)\1+$/.test(cleanPhone)) {
                 alert('Por favor, insira um telefone válido!');
+                isSubmitting = false;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
                 return;
             }
 
             // VALIDATION: CEP (Strict)
             const cleanCep = cep.replace(/\D/g, '');
-            if (cleanCep.length !== 8 || /^(\d)\1+$/.test(cleanCep)) {
+            if (cleanCep.length !== 8 || /(\d)\1+$/.test(cleanCep)) {
                 alert('O CEP informado é inválido!');
+                isSubmitting = false;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
                 return;
             }
 
@@ -1351,6 +1373,12 @@
 
             } catch (e) {
                 alert(e.message);
+                // Re-habilita o botão para permitir nova tentativa
+                isSubmitting = false;
+                if (submitBtn) { 
+                    submitBtn.disabled = false; 
+                    submitBtn.textContent = originalBtnText || 'Gerar PIX';
+                }
             }
         }
 
