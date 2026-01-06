@@ -1279,9 +1279,9 @@
                 return;
             }
 
-            // VALIDATION: CEP (Strict)
+            // VALIDATION: CEP (Strict - only reject if ALL digits are the same)
             const cleanCep = cep.replace(/\D/g, '');
-            if (cleanCep.length !== 8 || /(\d)\1+$/.test(cleanCep)) {
+            if (cleanCep.length !== 8 || /^(\d)\1{7}$/.test(cleanCep)) {
                 alert('O CEP informado é inválido!');
                 isSubmitting = false;
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
@@ -1375,8 +1375,8 @@
                 alert(e.message);
                 // Re-habilita o botão para permitir nova tentativa
                 isSubmitting = false;
-                if (submitBtn) { 
-                    submitBtn.disabled = false; 
+                if (submitBtn) {
+                    submitBtn.disabled = false;
                     submitBtn.textContent = originalBtnText || 'Gerar PIX';
                 }
             }
