@@ -343,6 +343,29 @@ router.post('/close-draw', async (req, res) => {
 });
 
 /**
+ * GET /api/admin/draw-secret
+ * Generates a biased random number based on sales ranking +30% rule.
+ * Does NOT close the draw, just returns the number for the visual roulette.
+ */
+router.get('/draw-secret', async (req, res) => {
+    try {
+        const currentDraw = await DrawService.getCurrentDraw();
+
+        if (!currentDraw) {
+            return res.status(400).json({ error: 'Nenhuma rifa ativa' });
+        }
+
+        const number = await DrawService.getWeightedDrawResult(currentDraw.id);
+
+        res.json({ success: true, number: number });
+
+    } catch (error) {
+        console.error('[Admin API] Secret Draw Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * GET /api/admin/ranking
  * Get top selling numbers
  */

@@ -599,6 +599,71 @@ class DrawService {
             candidate_tickets: winner.tickets
         };
     }
+    /**
+     * Generate a weighted winning number based on sales ranking
+     * Rule: Ranking positions #65 to #75 have 30% more chance (Weight 1.3)
+     * Only sold numbers participate.
+     */
+    async getWeightedDrawResult(drawId) {
+        // 1. Get Ranking of Sold Numbers (Most sold to least sold)
+        // We group by number and count.
+        const res = await query(`
+            SELECT number, COUNT(*) as sales_count
+            FROM orders
+            WHERE draw_id = $1 AND status = 'PAID'
+            GROUP BY number
+            ORDER BY sales_count DESC, number ASC
+        `, [drawId]);
+
+        const ranking = res.rows;
+
+        if (ranking.length === 0) {
+            throw new Error('Nenhum número vendido para sortear.');
+        }
+
+        // 2. Assign Weights
+        // Normal Weight = 1.0 (100)
+        // Boosted Weight = 1.3 (130) -> 30% more chance
+
+        let candidates = ranking.map((item, index) => {
+            // Ranking is 1-based (index + 1)
+            const rank = index + 1;
+
+            // Check if ranked #65 to #75
+            // Note: If ranking.length < 65, this logic simply never applies (all normal weight)
+            const isBoosted = rank >= 65 && rank <= 75;
+
+            return {
+                number: parseInt(item.number),
+                weight: isBoosted ? 130 : 100
+            };
+        });
+
+        // 3. Create Weighted Pool
+        let totalWeight = 0;
+        const pool = [];
+
+        for (const candidate of candidates) {
+            totalWeight += candidate.weight;
+            pool.push({
+                number: candidate.number,
+                rangeEnd: totalWeight
+            });
+        }
+
+        // 4. Draw
+        // Random integer between 1 and totalWeight
+        const randomMetric = Math.floor(Math.random() * totalWeight) + 1;
+
+        const winner = pool.find(p => randomMetric <= p.rangeEnd);
+
+        if (!winner) {
+            // Fallback (should theoretically not happen)
+            return candidates[0].number;
+        }
+
+        return winner.number;
+    }
 }
 
 module.exports = new DrawService();

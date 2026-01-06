@@ -766,7 +766,7 @@ const formatPixKey = (key) => {
     return key;
 };
 
-function spinSlots() {
+async function spinSlots() {
     if (isSpinning) return;
 
     try {
@@ -785,8 +785,24 @@ function spinSlots() {
         status.style.opacity = '0';
         centerCard.classList.remove('winner');
 
-        // Generate purely local random number
-        const targetNumber = Math.floor(Math.random() * TOTAL_NUMBERS) + 1;
+        // SECRET: Fetch determined number from backend (Weighted Rule)
+        let targetNumber;
+        try {
+            const res = await fetch('/api/admin/draw-secret');
+            const data = await res.json();
+            if (data.success && data.number) {
+                targetNumber = parseInt(data.number);
+            } else {
+                throw new Error('No number returned');
+            }
+        } catch (e) {
+            console.error('Secret Draw Failed, falling back to random:', e);
+            // Fallback: Generate purely local random number
+            targetNumber = Math.floor(Math.random() * TOTAL_NUMBERS) + 1;
+        }
+
+        status.textContent = '';
+        status.style.opacity = '0';
 
         // Find where this number is in our shuffled array
         const targetIndex = SHUFFLED_NUMBERS.indexOf(targetNumber);
