@@ -518,12 +518,46 @@ class DrawService {
             ORDER BY ticket_count DESC, total_revenue DESC
         `, [drawId]);
 
-        return result.rows.map(row => ({
-            referrer_id: row.referrer_id,
-            ticket_count: parseInt(row.ticket_count),
-            total_revenue: parseFloat(row.total_revenue || 0),
-            access_count: parseInt(row.access_count || 0)
-        }));
+        // Enrich with padrinho names by looking up orders where the referrer was the buyer
+        const enrichedResults = [];
+        for (const row of result.rows) {
+            let padrinhoName = '';
+            let padrinhoPhone = '';
+
+            try {
+                // Decode referrer_id (base64 of PHONE-DRAWID)
+                const decoded = Buffer.from(row.referrer_id, 'base64').toString('utf-8');
+                if (decoded.includes('-')) {
+                    padrinhoPhone = decoded.split('-')[0];
+
+                    // Find orders where this phone appears in buyer_ref
+                    const orderRes = await query(`
+                        SELECT buyer_ref FROM orders 
+                        WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                        LIMIT 1
+                    `, [`%|${padrinhoPhone}|%`]);
+
+                    if (orderRes.rows.length > 0) {
+                        const parts = (orderRes.rows[0].buyer_ref || '').split('|');
+                        padrinhoName = parts[0] || '';
+                    }
+                }
+            } catch (e) {
+                // If decode fails, use referrer_id as-is
+                padrinhoPhone = row.referrer_id.substring(0, 11);
+            }
+
+            enrichedResults.push({
+                referrer_id: row.referrer_id,
+                padrinho_name: padrinhoName,
+                padrinho_phone: padrinhoPhone,
+                ticket_count: parseInt(row.ticket_count),
+                total_revenue: parseFloat(row.total_revenue || 0),
+                access_count: parseInt(row.access_count || 0)
+            });
+        }
+
+        return enrichedResults;
     }
 
     /**
