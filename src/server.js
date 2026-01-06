@@ -199,6 +199,17 @@ app.use('/api/amigos', require('./routes/amigos'));
 // BOLÃO ROUTES REMOVED (Project Archived)
 app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
 
+// Public Pages
+app.get('/zapao-da-sorte', (req, res) => {
+    res.sendFile('zapao-da-sorte.html', { root: path.join(__dirname, '../public') });
+});
+app.get('/meus-numeros', (req, res) => {
+    res.sendFile('meus-numeros.html', { root: path.join(__dirname, '../public') });
+});
+app.get('/afiliado', (req, res) => {
+    res.sendFile('afiliado.html', { root: path.join(__dirname, '../public') });
+});
+
 // Admin Zapão (Protected)
 app.get('/admin-zapao', requireAdmin, (req, res) => {
     res.sendFile('admin-zapao.html', { root: path.join(__dirname, '../public') });
@@ -209,6 +220,7 @@ app.get('/admin-zapao', requireAdmin, (req, res) => {
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/webhooks', require('./routes/webhooks'));
 app.use('/api/history', require('./routes/history'));
+app.use('/api/affiliates', require('./routes/affiliates')); // New Affiliate Route
 
 // Admin Zapão API Routes (stats, payments, winners, draw management)
 app.use('/api/admin', requireAdmin, require('./routes/admin'));

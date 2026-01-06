@@ -791,6 +791,11 @@
                     <div class="amount" id="pixTotal">R$ 0,00</div>
                 </div>
 
+                <div class="pix-timer" id="pixTimerContainer" style="margin-bottom: 15px;">
+                    <span style="font-size: 0.9rem; color: #ff6b6b;">⏳ Pague em: </span>
+                    <span id="pixCountdown" style="font-weight: bold; color: #ff6b6b; font-size: 1.1rem;">10:00</span>
+                </div>
+
                 <p style="color: var(--text-secondary);">Escaneie o QR Code:</p>
                 <img id="qrImage" src="" alt="QR Code">
 
@@ -1210,6 +1215,9 @@
             document.getElementById('stepPix').classList.add('hidden');
             document.getElementById('stepSuccess').classList.add('hidden');
 
+            // Hide Floating Button
+            toggleWhatsApp(false);
+
             // Add CEP listener if not already there
             const cepInput = document.getElementById('inputCep');
             if (cepInput && !cepInput.hasAttribute('data-has-listener')) {
@@ -1250,6 +1258,9 @@
         function closeModal() {
             document.getElementById('modal').classList.remove('active');
             if (pollInterval) clearInterval(pollInterval);
+
+            // Show Floating Button Again
+            toggleWhatsApp(true);
         }
 
         // ========== SUBMIT ORDER ==========
@@ -1411,6 +1422,55 @@
                 console.error(e);
             }
         }
+
+        }
+
+        // ========== PIX TIMER LOGIC ==========
+        let pixTimerInterval;
+        function startPixTimer() {
+            let duration = 600; // 10 minutes
+            const display = document.getElementById('pixCountdown');
+            clearInterval(pixTimerInterval);
+
+            pixTimerInterval = setInterval(() => {
+                const minutes = Math.floor(duration / 60);
+                const seconds = duration % 60;
+
+                display.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (--duration < 0) {
+                    clearInterval(pixTimerInterval);
+                    display.textContent = "EXPIRADO";
+                    display.style.color = "red";
+                }
+            }, 1000);
+        }
+
+        // ========== PUBLIC AFFILIATE LOGIC ==========
+        function generatePublicLink() {
+            const phone = document.getElementById('affiliatePhone').value.replace(/\D/g, '');
+            if (phone.length < 10) {
+                alert('Digite um telefone válido!');
+                return;
+            }
+            // Redirect to dedicated page for smart check/registration
+            window.location.href = `/afiliado?phone=${phone}`;
+        }
+
+        // ========== WHATSAPP VISIBILITY ==========
+        function toggleWhatsApp(visible) {
+            const btn = document.getElementById('whatsappFloat');
+            if (btn) btn.style.display = visible ? 'flex' : 'none';
+        }
+
+        // Hook into modal functions
+        const originalOpenModal = window.openModal; // If exists? No, openModal is not global, but openCheckout is.
+        // We need to modify openCheckout/closeModal logic manually or hook it.
+        // Let's modify the existing functions if possible, or add listeners.
+        // Since I can't overwrite easily without knowing exact lines, adding observers or modifying lines is better.
+        // Wait, I can see closeModal in previous views (line 1436). I will override it here safely?
+        // No, better to search and replace usage. 
+        // Or simpler: Add 'toggleWhatsApp(false)' to openCheckout and 'toggleWhatsApp(true)' to closeModal.
 
         function startPolling(orderId) {
             pollInterval = setInterval(async () => {
@@ -1651,6 +1711,29 @@
         </div>
     </section>
 
+    <!-- Public Affiliate Section -->
+    <section class="lookup-section"
+        style="background: linear-gradient(180deg, var(--bg-card-solid), #000); border-top: 1px solid var(--gold-glow);">
+        <div class="lookup-container">
+            <h3 style="color: var(--gold);">💸 Ganhe comissão!</h3>
+            <p>Gere seu link de afiliado agora e ganhe por cada venda:</p>
+            <div class="lookup-form">
+                <input type="tel" id="affiliatePhone" placeholder="Seu WhatsApp" maxlength="15"
+                    oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
+                <button onclick="generatePublicLink()">Gerar Link</button>
+            </div>
+            <div id="publicAffiliateResult" style="display:none; margin-top:15px;">
+                <!-- Result handled by redirect -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Floating WhatsApp -->
+    <a href="https://chat.whatsapp.com/INrlQgZGqYXCwQNZ2gg1yH" target="_blank" class="whatsapp-float"
+        id="whatsappFloat">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
     <style>
         .lookup-section {
             background: linear-gradient(180deg, transparent, var(--bg-card-solid));
@@ -1711,63 +1794,11 @@
         }
 
         .lookup-form button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 20px var(--gold-glow);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px var(--gold-glow);
         }
 
-        .lookup-loading {
-            color: var(--gold);
-            padding: 15px;
-        }
-
-        .lookup-error {
-            color: #f87171;
-            padding: 15px;
-            background: rgba(248, 113, 113, 0.1);
-            border-radius: 12px;
-        }
-
-        .lookup-empty {
-            color: var(--text-secondary);
-            padding: 15px;
-        }
-
-        .lookup-success {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .lookup-title {
-            color: var(--green);
-            margin-bottom: 15px;
-            font-size: 1rem;
-        }
-
-        .lookup-numbers {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-
-        .lookup-number {
-            background: var(--gradient-gold);
-            color: #000;
-            font-weight: bold;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-        }
-
-        .lookup-count {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
             .lookup-form {
                 flex-direction: column;
             }
@@ -1776,6 +1807,107 @@
                 width: 100%;
             }
         }
+
+        /* Floating WhatsApp */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background-color: #25d366;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 30px;
+            box-shadow: 2px 2px 3px #999;
+            z-index: 9990;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 600px) {
+            .whatsapp-float {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+    }
+
+    .lookup-form button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px var(--gold-glow);
+    }
+
+    .lookup-loading {
+    color: var(--gold);
+    padding: 15px;
+    }
+
+    .lookup-error {
+    color: #f87171;
+    padding: 15px;
+    background: rgba(248, 113, 113, 0.1);
+    border-radius: 12px;
+    }
+
+    .lookup-empty {
+    color: var(--text-secondary);
+    padding: 15px;
+    }
+
+    .lookup-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    }
+
+    .lookup-title {
+    color: var(--green);
+    margin-bottom: 15px;
+    font-size: 1rem;
+    }
+
+    .lookup-numbers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 15px;
+    }
+
+    .lookup-number {
+    background: var(--gradient-gold);
+    color: #000;
+    font-weight: bold;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    }
+
+    .lookup-count {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    }
+
+    @media (max-width: 480px) {
+    .lookup-form {
+    flex-direction: column;
+    }
+
+    .lookup-form button {
+    width: 100%;
+    }
+    }
     </style>
 </body>
 

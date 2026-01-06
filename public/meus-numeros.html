@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Números - TV Zapão</title>
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(26, 26, 35, 0.9);
+            --text-primary: #ffffff;
+            --text-secondary: #8a8a9a;
+            --border-color: rgba(212, 175, 55, 0.3);
+            --gold: #D4AF37;
+            --gradient-gold: linear-gradient(135deg, #FFD700, #D4AF37, #B8860B);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--gradient-gold);
+            color: #000;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .num-badge {
+            display: inline-block;
+            background: var(--gold);
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 3px;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <img src="/images/logo.png" alt="Zapão" class="logo">
+
+        <div class="card">
+            <h1>🔎 Meus Números</h1>
+            <p>Digite seu telefone para consultar seus números da sorte.</p>
+
+            <input type="tel" id="phone" placeholder="(11) 99999-9999" maxlength="15"
+                oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
+
+            <button onclick="checkNumbers()">Consultar</button>
+
+            <div id="result" class="result-box"></div>
+        </div>
+
+        <a href="/zapao-da-sorte" class="back-link">⬅ Voltar para o Sorteio</a>
+    </div>
+
+    <script>
+        async function checkNumbers() {
+            const phone = document.getElementById('phone').value.replace(/\D/g, '');
+            const resultDiv = document.getElementById('result');
+
+            if (phone.length < 10) {
+                alert('Digite um telefone válido!');
+                return;
+            }
+
+            resultDiv.innerHTML = '<p style="text-align:center">Buscando...</p>';
+
+            try {
+                const res = await fetch(`/api/orders/my-numbers/${phone}`);
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Erro ao buscar');
+
+                if (data.count === 0) {
+                    resultDiv.innerHTML = '<p style="color:#ef4444; text-align:center">Nenhum número encontrado para este telefone.</p>';
+                } else {
+                    const numberSpans = data.numbers.map(n => `<span class="num-badge">${n.number.toString().padStart(2, '0')}</span>`).join('');
+                    resultDiv.innerHTML = `
+                        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; border-left:3px solid var(--gold);">
+                            <h3 style="margin:0 0 10px 0; color:#fff;">Sorteio Atual</h3>
+                            <div style="margin-bottom:10px">${numberSpans}</div>
+                            <small style="color:#aaa">Total: ${data.count} números</small>
+                        </div>
+                    `;
+                }
+
+            } catch (e) {
+                resultDiv.innerHTML = `<p style="color:#ef4444; text-align:center">${e.message}</p>`;
+            }
+        }
+    </script>
+</body>
+
+</html>
