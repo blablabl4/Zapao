@@ -61,7 +61,44 @@ router.post('/bulk', async (req, res) => {
         const phone = parts[1];
 
         if (phone) {
-            // No limit check
+            // ANTI-DUPLICATE: Check for recent PENDING orders from this phone (within 60 seconds)
+            const recentPending = await query(`
+                SELECT order_id, created_at, number
+                FROM orders
+                WHERE buyer_ref LIKE $1
+                AND draw_id = $2
+                AND status = 'PENDING'
+                AND created_at >= NOW() - INTERVAL '60 seconds'
+                ORDER BY created_at DESC
+                LIMIT 1
+            `, [`%${phone}%`, currentDraw.id]);
+
+            if (recentPending.rows.length > 0) {
+                // Return existing pending order instead of creating new one
+                const existingOrderId = recentPending.rows[0].order_id;
+                console.log(`[ANTI-DUPLICATE] Phone ${phone} has pending order ${existingOrderId} from last 60s. Blocking new order.`);
+
+                return res.status(429).json({
+                    error: 'Você já tem um pedido em andamento. Aguarde o pagamento ou tente novamente em 1 minuto.',
+                    existing_order_id: existingOrderId
+                });
+            }
+
+            // ANTI-DUPLICATE: Check for orders created in last 60 seconds (any status)
+            const recentOrders = await query(`
+                SELECT COUNT(*) as count
+                FROM orders
+                WHERE buyer_ref LIKE $1
+                AND draw_id = $2
+                AND created_at >= NOW() - INTERVAL '60 seconds'
+            `, [`%${phone}%`, currentDraw.id]);
+
+            if (parseInt(recentOrders.rows[0].count) >= numbers.length) {
+                console.log(`[ANTI-DUPLICATE] Phone ${phone} already created ${recentOrders.rows[0].count} orders in last 60s. Blocking.`);
+                return res.status(429).json({
+                    error: 'Aguarde 1 minuto antes de fazer uma nova compra.'
+                });
+            }
         }
 
         // Create unique batch ID for grouping this purchase
@@ -70,7 +107,7 @@ router.post('/bulk', async (req, res) => {
 
         // Create all orders
         const orders = [];
-        const { query } = require('../database/db'); // Import query access
+        const { query: dbQuery } = require('../database/db'); // Renamed to avoid conflict
 
         for (const number of numbers) {
             const numValue = parseInt(number);
@@ -83,7 +120,6 @@ router.post('/bulk', async (req, res) => {
 
             // Locking logic: REMOVED as per user request. 
             // Multiple users can buy the same number.
-            // const check = ... (removed)
 
             const order = await OrderService.createOrder(numValue, uniqueBuyerRef, currentDraw.id, referrer_id);
             orders.push(order);
