@@ -182,6 +182,39 @@ class MercadoPagoProvider {
     }
 
     /**
+     * Search payments by external_reference (order_id)
+     * Used by reconciliation job to find missed confirmations
+     */
+    async searchPayments(externalReference) {
+        if (!this.client) {
+            return [];
+        }
+
+        try {
+            const response = await fetch(
+                `https://api.mercadopago.com/v1/payments/search?external_reference=${externalReference}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Search failed: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            return data.results || [];
+
+        } catch (error) {
+            console.error('[MercadoPago] Error searching payments:', error.message);
+            return [];
+        }
+    }
+
+    /**
      * Mock Pix generation (fallback)
      */
     _generateMockPix(orderId, amount) {
