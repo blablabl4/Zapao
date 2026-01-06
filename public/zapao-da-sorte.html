@@ -815,6 +815,23 @@
                         <i class="fab fa-whatsapp"></i> Entrar no Grupo
                     </a>
                 </div>
+
+                <!-- Affiliate Link Section -->
+                <div id="affiliateLinkContainer"
+                    style="margin: 20px 0; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border: 1px solid var(--gold); display: none;">
+                    <p style="margin-bottom: 10px; font-size: 0.95rem; color: var(--gold);">
+                        🚀 <strong style="color:#fff;">Ganhe Prêmios Indicando!</strong><br>
+                        Envie este link para seus amigos:
+                    </p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="affiliateLinkInput" readonly
+                            style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; padding: 8px; border-radius: 5px; font-size: 0.9em;">
+                        <button onclick="copyAffiliateLink()" class="btn btn-secondary"
+                            style="width: auto; padding: 8px 12px;">
+                            📋
+                        </button>
+                    </div>
+                </div>
                 <button class="btn btn-primary" onclick="buyMore()">🎰 Comprar Mais</button>
                 <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
             </div>
@@ -1294,6 +1311,18 @@
                         document.getElementById('stepPix').classList.add('hidden');
                         document.getElementById('stepSuccess').classList.remove('hidden');
 
+                        // Show Affiliate Link
+                        const buyerPhone = document.getElementById('inputPhone').value.replace(/\D/g, '');
+                        if (buyerPhone) {
+                            const link = `https://tvzapao.com.br/?ref=${buyerPhone}`;
+                            const affiliateContainer = document.getElementById('affiliateLinkContainer');
+                            const affiliateInput = document.getElementById('affiliateLinkInput');
+                            if (affiliateContainer && affiliateInput) {
+                                affiliateInput.value = link;
+                                affiliateContainer.style.display = 'block';
+                            }
+                        }
+
                         // Clear selection
                         selected = [];
                         document.querySelectorAll('.num-btn.selected').forEach(el => el.classList.remove('selected'));
@@ -1307,6 +1336,15 @@
 
         function buyMore() {
             closeModal();
+        }
+
+        function copyAffiliateLink() {
+            const input = document.getElementById('affiliateLinkInput');
+            if(input) {
+                input.select();
+                document.execCommand('copy');
+                alert('Link copiado! Envie para seus amigos.');
+            }
         }
 
         // ========== STATS & COUNTDOWN ==========
