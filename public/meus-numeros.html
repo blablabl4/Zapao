@@ -59,7 +59,7 @@
         /* ========== HEADER ========== */
         .header {
             text-align: center;
-            padding: 30px 0 40px;
+            padding: 30px 0 20px;
             position: relative;
             z-index: 1;
         }
@@ -71,41 +71,28 @@
             filter: drop-shadow(0 0 20px var(--gold-glow));
         }
 
-        .header h1 {
-            font-size: 1.8rem;
-            background: var(--gradient-gold);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 40px var(--gold-glow);
-            letter-spacing: 1px;
-        }
-
-        /* ========== LOOKUP SECTION ========== */
+        /* ========== LOOKUP SECTION - EXACT COPY FROM SALES PAGE ========== */
         .lookup-section {
+            background: linear-gradient(180deg, transparent, var(--bg-card-solid));
+            padding: 40px 20px;
+            border-top: 1px solid var(--border-color);
             position: relative;
             z-index: 1;
-            padding: 30px 20px;
-            text-align: center;
-            max-width: 500px;
-            margin: 0 auto;
         }
 
         .lookup-container {
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
         }
 
-        .lookup-container h3 {
+        .lookup-section h3 {
             color: var(--gold);
+            font-size: 1.4rem;
             margin-bottom: 10px;
-            font-size: 1.3rem;
         }
 
-        .lookup-container p {
+        .lookup-section p {
             color: var(--text-secondary);
             margin-bottom: 20px;
             font-size: 0.95rem;
@@ -114,46 +101,73 @@
         .lookup-form {
             display: flex;
             gap: 10px;
+            margin-bottom: 20px;
         }
 
         .lookup-form input {
             flex: 1;
-            padding: 14px;
-            border-radius: 10px;
+            padding: 14px 16px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
             font-size: 1rem;
-            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .lookup-form input:focus {
+            border-color: var(--gold);
         }
 
         .lookup-form button {
             padding: 14px 24px;
+            border-radius: 12px;
             border: none;
-            border-radius: 10px;
             background: var(--gradient-gold);
             color: #000;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .lookup-form button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px var(--gold-glow);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px var(--gold-glow);
         }
 
-        /* Result Section */
-        #lookupResult {
-            margin-top: 20px;
-            text-align: left;
+        @media (max-width: 600px) {
+            .lookup-form {
+                flex-direction: column;
+            }
+
+            .lookup-form button {
+                width: 100%;
+            }
         }
 
-        .result-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
+        .lookup-loading {
+            color: var(--gold);
+            padding: 15px;
+        }
+
+        .lookup-error {
+            color: #f87171;
+            padding: 15px;
+            background: rgba(248, 113, 113, 0.1);
             border-radius: 12px;
-            border-left: 4px solid var(--gold);
+        }
+
+        .lookup-empty {
+            color: var(--text-secondary);
+            padding: 15px;
+        }
+
+        .lookup-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 20px;
             animation: fadeSlideIn 0.4s ease;
         }
 
@@ -169,43 +183,32 @@
             }
         }
 
-        .result-card h3 {
-            margin: 0 0 15px 0;
-            color: var(--gold-light);
-            font-size: 1.1rem;
+        .lookup-title {
+            color: var(--green);
+            margin-bottom: 15px;
+            font-size: 1rem;
         }
 
-        .numbers-grid {
+        .lookup-numbers {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            justify-content: center;
             margin-bottom: 15px;
         }
 
-        .num-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 42px;
-            height: 42px;
+        .lookup-number {
             background: var(--gradient-gold);
             color: #000;
-            border-radius: 10px;
             font-weight: bold;
-            font-size: 1rem;
-            box-shadow: 0 2px 10px var(--gold-glow);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 1.1rem;
         }
 
-        .result-meta {
+        .lookup-count {
             color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-
-        .error-msg {
-            color: #ef4444;
-            text-align: center;
-            padding: 15px;
-            animation: fadeSlideIn 0.3s ease;
+            font-size: 0.9rem;
         }
 
         /* Back Link */
@@ -230,21 +233,18 @@
     <!-- Header -->
     <div class="header">
         <a href="/zapao-da-sorte"><img src="/images/logo.png" alt="Zapão"></a>
-        <h1>🔎 Meus Números</h1>
     </div>
 
-    <!-- Lookup Section -->
+    <!-- Lookup Section - EXACT SAME AS SALES PAGE FOOTER -->
     <section class="lookup-section">
         <div class="lookup-container">
-            <h3>Consultar meus números</h3>
-            <p>Digite seu telefone para ver seus números da sorte.</p>
-
+            <h3>🔎 Consultar meus números</h3>
+            <p>Digite seu telefone para ver os números que você comprou nesta rifa:</p>
             <div class="lookup-form">
                 <input type="tel" id="lookupPhone" placeholder="(11) 99999-9999" maxlength="15"
                     oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
                 <button onclick="lookupMyNumbers()">Consultar</button>
             </div>
-
             <div id="lookupResult"></div>
         </div>
 
@@ -261,34 +261,39 @@
                 return;
             }
 
-            resultDiv.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">Buscando...</p>';
+            resultDiv.innerHTML = '<div class="lookup-loading">🔍 Buscando...</div>';
 
             try {
-                const res = await fetch(`/api/orders/my-numbers/${phone}`);
-                const data = await res.json();
+                const response = await fetch(`/api/orders/my-numbers/${phone}`);
+                const data = await response.json();
 
-                if (!res.ok) throw new Error(data.error || 'Erro ao buscar');
-
-                if (data.count === 0) {
-                    resultDiv.innerHTML = '<p class="error-msg">Nenhum número encontrado para este telefone.</p>';
-                } else {
-                    const numberSpans = data.numbers.map(n =>
-                        `<span class="num-badge">${n.number.toString().padStart(2, '0')}</span>`
-                    ).join('');
-
-                    resultDiv.innerHTML = `
-                        <div class="result-card">
-                            <h3>🎫 Sorteio Atual</h3>
-                            <div class="numbers-grid">${numberSpans}</div>
-                            <div class="result-meta">
-                                Total: <strong>${data.count}</strong> número${data.count > 1 ? 's' : ''} confirmado${data.count > 1 ? 's' : ''}
-                            </div>
-                        </div>
-                    `;
+                if (!response.ok) {
+                    resultDiv.innerHTML = `<div class="lookup-error">${data.error || 'Erro ao buscar'}</div>`;
+                    return;
                 }
 
-            } catch (e) {
-                resultDiv.innerHTML = `<p class="error-msg">${e.message}</p>`;
+                if (data.count === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="lookup-empty">
+                            😕 Nenhum número encontrado para este telefone na rifa atual.
+                        </div>`;
+                    return;
+                }
+
+                // Show results - EXACT SAME FORMAT AS SALES PAGE
+                const numbersHtml = data.numbers.map(n =>
+                    `<span class="lookup-number">${n.number.toString().padStart(2, '0')}</span>`
+                ).join('');
+
+                resultDiv.innerHTML = `
+                    <div class="lookup-success">
+                        <div class="lookup-title">🎟️ Seus números na <strong>${data.draw_name}</strong>:</div>
+                        <div class="lookup-numbers">${numbersHtml}</div>
+                        <div class="lookup-count">Total: ${data.count} número(s) comprado(s)</div>
+                    </div>`;
+
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="lookup-error">Erro de conexão. Tente novamente.</div>';
             }
         }
     </script>
