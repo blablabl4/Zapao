@@ -191,8 +191,12 @@ router.post('/check-user', async (req, res) => {
         const { phone } = req.body;
         if (!phone) return res.status(400).json({ error: 'Telefone obrigatório' });
 
-        const cleanPhone = phone.replace(/\D/g, '');
+        const cleanPhone = phone.toString().trim().replace(/\D/g, '');
+        console.log(`[AdminAuth] Check User: Raw=${phone} Clean=${cleanPhone}`);
+
         const result = await query('SELECT id, name, password_hash, is_active FROM admin_users WHERE phone = $1', [cleanPhone]);
+
+        console.log(`[AdminAuth] Result: Found=${result.rows.length}`);
 
         if (result.rows.length === 0) {
             return res.json({ exists: false });
