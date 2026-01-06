@@ -8,136 +8,260 @@
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* ========== RESET & BASE ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
             --bg-dark: #0a0a0f;
             --bg-card: rgba(26, 26, 35, 0.9);
+            --bg-card-solid: #1a1a23;
             --text-primary: #ffffff;
             --text-secondary: #8a8a9a;
             --border-color: rgba(212, 175, 55, 0.3);
             --gold: #D4AF37;
+            --gold-light: #FFD700;
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            --green: #22c55e;
             --gradient-gold: linear-gradient(135deg, #FFD700, #D4AF37, #B8860B);
+            --gradient-dark: linear-gradient(180deg, #0a0a0f 0%, #1a1a23 50%, #0d0d12 100%);
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #0a0a0f;
+            background: var(--gradient-dark);
+            background-attachment: fixed;
             color: var(--text-primary);
-            margin: 0;
-            padding: 20px;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 20px;
+            padding-bottom: 80px;
+            position: relative;
         }
 
-        .container {
+        /* Background decorative elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 500px;
-            margin-top: 40px;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
             text-align: center;
+            padding: 30px 0 40px;
+            position: relative;
+            z-index: 1;
         }
 
-        .logo {
+        .header img {
             width: 80px;
-            margin-bottom: 20px;
+            height: 80px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px var(--gold-glow));
         }
 
-        .card {
+        .header h1 {
+            font-size: 1.8rem;
+            background: var(--gradient-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px var(--gold-glow);
+            letter-spacing: 1px;
+        }
+
+        /* ========== LOOKUP SECTION ========== */
+        .lookup-section {
+            position: relative;
+            z-index: 1;
+            padding: 30px 20px;
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .lookup-container {
             background: var(--bg-card);
-            padding: 24px;
+            padding: 30px;
             border-radius: 16px;
             border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
         }
 
-        h1 {
+        .lookup-container h3 {
             color: var(--gold);
             margin-bottom: 10px;
+            font-size: 1.3rem;
         }
 
-        p {
+        .lookup-container p {
             color: var(--text-secondary);
             margin-bottom: 20px;
+            font-size: 0.95rem;
         }
 
-        input {
-            width: 100%;
+        .lookup-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .lookup-form input {
+            flex: 1;
             padding: 14px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 1px solid var(--border-color);
             background: rgba(0, 0, 0, 0.5);
             color: #fff;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
+            font-size: 1rem;
             text-align: center;
         }
 
-        button {
-            width: 100%;
-            padding: 14px;
+        .lookup-form button {
+            padding: 14px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--gradient-gold);
             color: #000;
             font-weight: bold;
-            font-size: 1.1rem;
             cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .result-box {
+        .lookup-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--gold-glow);
+        }
+
+        /* Result Section */
+        #lookupResult {
             margin-top: 20px;
             text-align: left;
         }
 
-        .num-badge {
-            display: inline-block;
-            background: var(--gold);
-            color: #000;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-            margin: 3px;
+        .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--gold);
+            animation: fadeSlideIn 0.4s ease;
         }
 
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card h3 {
+            margin: 0 0 15px 0;
+            color: var(--gold-light);
+            font-size: 1.1rem;
+        }
+
+        .numbers-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .num-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            background: var(--gradient-gold);
+            color: #000;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 2px 10px var(--gold-glow);
+        }
+
+        .result-meta {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            text-align: center;
+            padding: 15px;
+            animation: fadeSlideIn 0.3s ease;
+        }
+
+        /* Back Link */
         .back-link {
             display: block;
+            text-align: center;
             margin-top: 30px;
             color: var(--text-secondary);
             text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--gold);
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
-        <img src="/images/logo.png" alt="Zapão" class="logo">
+    <!-- Header -->
+    <div class="header">
+        <a href="/zapao-da-sorte"><img src="/images/logo.png" alt="Zapão"></a>
+        <h1>🔎 Meus Números</h1>
+    </div>
 
-        <div class="card">
-            <h1>🔎 Meus Números</h1>
-            <p>Digite seu telefone para consultar seus números da sorte.</p>
+    <!-- Lookup Section -->
+    <section class="lookup-section">
+        <div class="lookup-container">
+            <h3>Consultar meus números</h3>
+            <p>Digite seu telefone para ver seus números da sorte.</p>
 
-            <input type="tel" id="phone" placeholder="(11) 99999-9999" maxlength="15"
-                oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
+            <div class="lookup-form">
+                <input type="tel" id="lookupPhone" placeholder="(11) 99999-9999" maxlength="15"
+                    oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
+                <button onclick="lookupMyNumbers()">Consultar</button>
+            </div>
 
-            <button onclick="checkNumbers()">Consultar</button>
-
-            <div id="result" class="result-box"></div>
+            <div id="lookupResult"></div>
         </div>
 
         <a href="/zapao-da-sorte" class="back-link">⬅ Voltar para o Sorteio</a>
-    </div>
+    </section>
 
     <script>
-        async function checkNumbers() {
-            const phone = document.getElementById('phone').value.replace(/\D/g, '');
-            const resultDiv = document.getElementById('result');
+        async function lookupMyNumbers() {
+            const phone = document.getElementById('lookupPhone').value.replace(/\D/g, '');
+            const resultDiv = document.getElementById('lookupResult');
 
             if (phone.length < 10) {
                 alert('Digite um telefone válido!');
                 return;
             }
 
-            resultDiv.innerHTML = '<p style="text-align:center">Buscando...</p>';
+            resultDiv.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">Buscando...</p>';
 
             try {
                 const res = await fetch(`/api/orders/my-numbers/${phone}`);
@@ -146,20 +270,25 @@
                 if (!res.ok) throw new Error(data.error || 'Erro ao buscar');
 
                 if (data.count === 0) {
-                    resultDiv.innerHTML = '<p style="color:#ef4444; text-align:center">Nenhum número encontrado para este telefone.</p>';
+                    resultDiv.innerHTML = '<p class="error-msg">Nenhum número encontrado para este telefone.</p>';
                 } else {
-                    const numberSpans = data.numbers.map(n => `<span class="num-badge">${n.number.toString().padStart(2, '0')}</span>`).join('');
+                    const numberSpans = data.numbers.map(n =>
+                        `<span class="num-badge">${n.number.toString().padStart(2, '0')}</span>`
+                    ).join('');
+
                     resultDiv.innerHTML = `
-                        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; border-left:3px solid var(--gold);">
-                            <h3 style="margin:0 0 10px 0; color:#fff;">Sorteio Atual</h3>
-                            <div style="margin-bottom:10px">${numberSpans}</div>
-                            <small style="color:#aaa">Total: ${data.count} números</small>
+                        <div class="result-card">
+                            <h3>🎫 Sorteio Atual</h3>
+                            <div class="numbers-grid">${numberSpans}</div>
+                            <div class="result-meta">
+                                Total: <strong>${data.count}</strong> número${data.count > 1 ? 's' : ''} confirmado${data.count > 1 ? 's' : ''}
+                            </div>
                         </div>
                     `;
                 }
 
             } catch (e) {
-                resultDiv.innerHTML = `<p style="color:#ef4444; text-align:center">${e.message}</p>`;
+                resultDiv.innerHTML = `<p class="error-msg">${e.message}</p>`;
             }
         }
     </script>

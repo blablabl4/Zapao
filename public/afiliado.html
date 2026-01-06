@@ -4,68 +4,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Afiliado Zapão - Ganhe Comissão</title>
+    <title>Afiliado Zapão - Ganhe por Indicação</title>
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* ========== RESET & BASE ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
             --bg-dark: #0a0a0f;
             --bg-card: rgba(26, 26, 35, 0.9);
+            --bg-card-solid: #1a1a23;
             --text-primary: #ffffff;
             --text-secondary: #8a8a9a;
             --border-color: rgba(212, 175, 55, 0.3);
             --gold: #D4AF37;
-            --gradient-gold: linear-gradient(135deg, #FFD700, #D4AF37, #B8860B);
+            --gold-light: #FFD700;
+            --gold-glow: rgba(212, 175, 55, 0.4);
             --green: #22c55e;
+            --gradient-gold: linear-gradient(135deg, #FFD700, #D4AF37, #B8860B);
+            --gradient-dark: linear-gradient(180deg, #0a0a0f 0%, #1a1a23 50%, #0d0d12 100%);
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #0a0a0f;
+            background: var(--gradient-dark);
+            background-attachment: fixed;
             color: var(--text-primary);
-            margin: 0;
-            padding: 20px;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 20px;
+            padding-bottom: 80px;
+            position: relative;
         }
 
-        .container {
+        /* Background decorative elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 500px;
-            margin-top: 20px;
-            text-align: center;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .logo {
+        /* ========== HEADER ========== */
+        .header {
+            text-align: center;
+            padding: 30px 0 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header img {
             width: 80px;
-            margin-bottom: 20px;
+            height: 80px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px var(--gold-glow));
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: var(--gradient-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px var(--gold-glow);
+            letter-spacing: 1px;
+        }
+
+        /* ========== MAIN SECTION ========== */
+        .main-section {
+            position: relative;
+            z-index: 1;
+            padding: 0 20px;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .card {
             background: var(--bg-card);
-            padding: 24px;
+            padding: 30px;
             border-radius: 16px;
             border: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
+            backdrop-filter: blur(10px);
+            text-align: center;
         }
 
-        /* Steps Logic */
+        .card p {
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        /* Steps */
         .step {
             display: none;
-            animation: fadeIn 0.4s ease;
+            animation: fadeSlideIn 0.4s ease;
         }
 
         .step.active {
             display: block;
         }
 
-        @keyframes fadeIn {
+        @keyframes fadeSlideIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(15px);
             }
 
             to {
@@ -74,101 +127,132 @@
             }
         }
 
-        h1 {
-            color: var(--gold);
-            margin-bottom: 10px;
-            font-size: 1.8rem;
-        }
-
-        h2 {
-            color: #fff;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
-
-        p {
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
+        /* Input Groups */
         .input-group {
             text-align: left;
             margin-bottom: 15px;
         }
 
-        label {
+        .input-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             color: var(--gold);
             font-size: 0.9rem;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         input {
             width: 100%;
             padding: 14px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 1px solid var(--border-color);
             background: rgba(0, 0, 0, 0.5);
             color: #fff;
-            font-size: 1.1rem;
-            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 10px var(--gold-glow);
         }
 
         button {
             width: 100%;
             padding: 14px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--gradient-gold);
             color: #000;
             font-weight: bold;
             font-size: 1.1rem;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--gold-glow);
         }
 
         button:active {
             transform: scale(0.98);
         }
 
-        .back-link {
-            display: block;
-            margin-top: 30px;
+        .btn-secondary {
+            background: transparent;
             color: var(--text-secondary);
-            text-decoration: none;
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            color: var(--text-primary);
+            border-color: var(--gold);
+            box-shadow: none;
         }
 
         /* Success State */
         .link-box {
             background: rgba(255, 255, 255, 0.1);
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 1px dashed var(--gold);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             word-break: break-all;
-            color: var(--gold);
+            color: var(--gold-light);
             font-weight: bold;
             font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .success-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Back Link */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--gold);
+        }
+
+        /* Loading */
+        .loading-text {
+            color: var(--text-secondary);
+            padding: 30px;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
-        <a href="/zapao-da-sorte"><img src="/images/logo.png" alt="Zapão" class="logo"></a>
+    <!-- Header -->
+    <div class="header">
+        <a href="/zapao-da-sorte"><img src="/images/logo.png" alt="Zapão"></a>
+        <h1>🎁 Prêmios por Indicação</h1>
+    </div>
 
+    <!-- Main Section -->
+    <section class="main-section">
         <div class="card">
 
             <!-- STEP 1: Phone Check -->
             <div id="step1" class="step active">
-                <h1>🎁 Prêmios por Indicação</h1>
                 <p>Indique amigos e concorra a prêmios exclusivos sem custo nenhum!</p>
 
                 <div class="input-group">
-                    <label>Seu WhatsApp</label>
+                    <label>Celular (WhatsApp) *</label>
                     <input type="tel" id="checkPhone" placeholder="(11) 99999-9999" maxlength="15"
                         oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
                 </div>
@@ -178,59 +262,54 @@
 
             <!-- STEP 2: Registration (If new) -->
             <div id="step2" class="step">
-                <h2>📝 Complete seu Cadastro</h2>
-                <p>Precisamos dos seus dados para pagar suas comissões.</p>
+                <p id="step2Msg">Precisamos dos seus dados para pagar suas comissões.</p>
 
                 <div class="input-group">
-                    <label>Nome Completo</label>
+                    <label>Nome completo *</label>
                     <input type="text" id="regName" placeholder="Seu nome">
                 </div>
 
                 <div class="input-group">
-                    <label>Chave Pix (Para receber)</label>
-                    <input type="text" id="regPix" placeholder="CPF, Email ou Telefone">
+                    <label>Chave Pix (para receber prêmio) *</label>
+                    <input type="text" id="regPix" placeholder="CPF, telefone, email ou chave aleatória">
                 </div>
 
                 <div class="input-group">
-                    <label>CEP</label>
+                    <label>CEP *</label>
                     <input type="tel" id="regCep" placeholder="00000-000" maxlength="9" oninput="formatCep(this)">
                 </div>
 
                 <button onclick="register()">Confirmar e Gerar Link</button>
-                <button onclick="backToStep1()"
-                    style="background: transparent; color: #8a8a9a; margin-top: 5px; box-shadow: none;">Voltar</button>
+                <button class="btn-secondary" onclick="backToStep1()">Voltar</button>
             </div>
 
             <!-- STEP 3: Success -->
             <div id="step3" class="step">
-                <h1 style="color:var(--green)">✅ Link Gerado!</h1>
+                <div class="success-icon">✅</div>
+                <h2 style="color:var(--green); margin-bottom:15px;">Link Gerado!</h2>
                 <p>Copie e envie para seus amigos. Boa sorte!</p>
 
                 <div class="link-box" id="finalLink">...</div>
 
                 <button onclick="copyLink()">📋 Copiar Link</button>
-                <div id="copyMsg" style="color:var(--green); margin-top:10px; display:none;">Copiado com sucesso!</div>
+                <div id="copyMsg"
+                    style="color:var(--green); margin-top:15px; display:none; animation: fadeSlideIn 0.3s ease;">
+                    Copiado com sucesso!
+                </div>
             </div>
 
             <!-- Loading -->
             <div id="loading" class="step">
-                <p>Processando...</p>
+                <p class="loading-text">Processando...</p>
             </div>
 
         </div>
 
         <a href="/zapao-da-sorte" class="back-link">⬅ Voltar para o Sorteio</a>
-    </div>
+    </section>
 
     <script>
         let currentPhone = '';
-
-        function formatPhone(input) {
-            let v = input.value.replace(/\D/g, '');
-            v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
-            v = v.replace(/(\d)(\d{4})$/, '$1-$2');
-            input.value = v;
-        }
 
         function formatCep(input) {
             let v = input.value.replace(/\D/g, '');
@@ -268,6 +347,7 @@
                         document.getElementById('regName').value = data.data.name || '';
                         document.getElementById('regPix').value = data.data.pix_key || '';
                         document.getElementById('regCep').value = data.data.cep || '';
+                        document.getElementById('step2Msg').textContent = '📝 Confirme seus dados para gerar o link:';
                         showStep('step2');
                     }
                 } else {
@@ -275,6 +355,7 @@
                     document.getElementById('regName').value = '';
                     document.getElementById('regPix').value = '';
                     document.getElementById('regCep').value = '';
+                    document.getElementById('step2Msg').textContent = '📝 Complete seu cadastro para gerar o link:';
                     showStep('step2');
                 }
 
@@ -293,8 +374,12 @@
             const pix = document.getElementById('regPix').value.trim();
             const cep = document.getElementById('regCep').value.trim();
 
-            if (!name || !pix || !cep) {
-                alert('Preencha todos os campos!');
+            if (!name || name.length < 3) {
+                alert('Digite seu nome completo!');
+                return;
+            }
+            if (!pix || pix.length < 5) {
+                alert('Digite uma chave Pix válida!');
                 return;
             }
 
