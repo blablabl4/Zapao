@@ -606,7 +606,6 @@ class DrawService {
      */
     async getWeightedDrawResult(drawId) {
         // 1. Get Ranking of Sold Numbers (Most sold to least sold)
-        // We group by number and count.
         const res = await query(`
             SELECT number, COUNT(*) as sales_count
             FROM orders
@@ -615,52 +614,56 @@ class DrawService {
             ORDER BY sales_count DESC, number ASC
         `, [drawId]);
 
-        const ranking = res.rows;
+        const salesMap = {};
+        res.rows.forEach(r => salesMap[parseInt(r.number)] = parseInt(r.sales_count));
 
-        if (ranking.length === 0) {
-            throw new Error('Nenhum número vendido para sortear.');
-        }
-
-        // 2. Assign Weights
-        // Normal Weight = 1.0 (100)
-        // Boosted Weight = 1.3 (130) -> 30% more chance
-
-        let candidates = ranking.map((item, index) => {
-            // Ranking is 1-based (index + 1)
-            const rank = index + 1;
-
-            // Check if ranked #65 to #75
-            // Note: If ranking.length < 65, this logic simply never applies (all normal weight)
-            const isBoosted = rank >= 65 && rank <= 75;
-
-            return {
-                number: parseInt(item.number),
-                weight: isBoosted ? 130 : 100
-            };
-        });
-
-        // 3. Create Weighted Pool
-        let totalWeight = 0;
-        const pool = [];
-
-        for (const candidate of candidates) {
-            totalWeight += candidate.weight;
-            pool.push({
-                number: candidate.number,
-                rangeEnd: totalWeight
+        // 2. Build complete list 1 to 75 (Including Unsold)
+        let allNumbers = [];
+        for (let i = 1; i <= 75; i++) {
+            allNumbers.push({
+                number: i,
+                sales_count: salesMap[i] || 0
             });
         }
 
-        // 4. Draw
-        // Random integer between 1 and totalWeight
-        const randomMetric = Math.floor(Math.random() * totalWeight) + 1;
+        // 3. Rank them (Most sold to least sold)
+        // Stable sort: Sales Desc, then Number Asc
+        allNumbers.sort((a, b) => {
+            if (b.sales_count !== a.sales_count) return b.sales_count - a.sales_count;
+            return a.number - b.number;
+        });
 
+        // 4. Assign Weights
+        // Normal Weight = 100
+        // Boosted Weight = 130 (+30%)
+        // Rule: Only SOLD numbers in Rank #65-#75 get boost. Unsold get 100.
+
+        let pool = [];
+        let totalWeight = 0;
+
+        allNumbers.forEach((item, index) => {
+            const rank = index + 1; // 1-based ranking
+            let weight = 100;
+
+            const isSold = item.sales_count > 0;
+            const inTargetRange = rank >= 65 && rank <= 75;
+
+            if (isSold && inTargetRange) {
+                weight = 130;
+            }
+
+            totalWeight += weight;
+            pool.push({
+                number: item.number,
+                rangeEnd: totalWeight
+            });
+        });
+
+        // 5. Draw
+        const randomMetric = Math.floor(Math.random() * totalWeight) + 1;
         const winner = pool.find(p => randomMetric <= p.rangeEnd);
 
-        if (!winner) {
-            // Fallback (should theoretically not happen)
-            return candidates[0].number;
-        }
+        if (!winner) return pool[0].number;
 
         return winner.number;
     }
