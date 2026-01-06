@@ -816,24 +816,24 @@
                     </a>
                 </div>
 
-                <!-- Affiliate Link Section -->
+                <!-- Affiliate Link Section (Indicação Premiada) -->
                 <div id="affiliateLinkContainer"
-                    style="margin: 20px 0; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border: 1px solid var(--gold); display: none;">
+                    style="margin: 20px 0; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border: 1px solid var(--gold);">
                     <p style="margin-bottom: 10px; font-size: 0.95rem; color: var(--gold);">
                         🚀 <strong style="color:#fff;">Ganhe Prêmios Indicando!</strong><br>
-                        Envie este link para seus amigos:
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Envie este link para seus
+                            amigos:</span>
                     </p>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="text" id="affiliateLinkInput" readonly
-                            style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; padding: 8px; border-radius: 5px; font-size: 0.9em;">
-                        <button onclick="copyAffiliateLink()" class="btn btn-secondary"
-                            style="width: auto; padding: 8px 12px;">
+                            style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 5px; font-size: 0.85em;">
+                        <button onclick="copyAffiliateLink()" class="btn"
+                            style="width: auto; padding: 10px 14px; background: var(--gradient-gold); color: #000; font-weight: bold; border: none;">
                             📋
                         </button>
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="buyMore()">🎰 Comprar Mais</button>
-                <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+                <button class="btn btn-secondary" onclick="closeModal()" style="width: 100%;">Fechar</button>
             </div>
         </div>
     </div>
@@ -857,7 +857,41 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadDrawsList();
             loadCampaignBranding();
+            trackAffiliateClick();
         });
+
+        // ========== AFFILIATE CLICK TRACKING ==========
+        async function trackAffiliateClick() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refParam = urlParams.get('ref');
+            if (!refParam) return;
+
+            try {
+                // Get current draw ID
+                const res = await fetch('/api/public/draw');
+                const data = await res.json();
+                const drawId = data.current_draw?.id;
+                if (!drawId) return;
+
+                // Store affiliate data in localStorage
+                const affiliateData = { code: refParam, drawId: drawId };
+                localStorage.setItem('affiliateData', JSON.stringify(affiliateData));
+
+                // Track the click (fire and forget)
+                fetch('/api/orders/affiliate-click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        referrer_id: refParam,
+                        draw_id: drawId
+                    })
+                }).catch(e => console.log('Tracking error', e));
+
+                console.log('Affiliate click tracked:', refParam);
+            } catch (e) {
+                console.error('Error tracking affiliate click:', e);
+            }
+        }
 
         // ========== ACCORDION LOGIC ==========
         async function loadDrawsList() {
@@ -1340,7 +1374,7 @@
 
         function copyAffiliateLink() {
             const input = document.getElementById('affiliateLinkInput');
-            if(input) {
+            if (input) {
                 input.select();
                 document.execCommand('copy');
                 alert('Link copiado! Envie para seus amigos.');
