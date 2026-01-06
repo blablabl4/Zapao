@@ -544,6 +544,18 @@
                 <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 15px;">
                     Sorteie um ganhador entre os padrinhos indicados.
                 </p>
+
+                <!-- Draw Selector -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 5px; display: block;">
+                        Selecione a Rifa:
+                    </label>
+                    <select id="affiliateDrawSelect"
+                        style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem;">
+                        <option value="">Carregando rifas...</option>
+                    </select>
+                </div>
+
                 <button onclick="runAffiliateDraw()" class="btn btn-success"
                     style="width: 100%; background: linear-gradient(60deg, #28a745, #218838);">
                     🎲 Sortear Ganhador Agora
@@ -842,10 +854,23 @@
         }
 
         async function runAffiliateDraw() {
-            if (!confirm('Tem certeza? Isso vai sortear UM ganhador entre os afiliados baseando-se nas chances acumuladas.')) return;
+            const select = document.getElementById('affiliateDrawSelect');
+            const drawId = select.value;
+
+            if (!drawId) {
+                alert('Selecione uma rifa primeiro!');
+                return;
+            }
+
+            const drawName = select.options[select.selectedIndex].text;
+            if (!confirm(`Tem certeza? Isso vai sortear UM ganhador entre os afiliados da rifa "${drawName}".`)) return;
 
             try {
-                const res = await fetch('/api/admin/affiliate-draw', { method: 'POST' });
+                const res = await fetch('/api/admin/affiliate-draw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ draw_id: parseInt(drawId) })
+                });
                 const data = await res.json();
 
                 if (data.error) throw new Error(data.error);
@@ -856,6 +881,7 @@
 
                 content.innerHTML = `
                     <div style="font-size: 1.2em; color: #2ecc71; margin-bottom: 5px;">🎉 Ganhador Definido!</div>
+                    <strong>Rifa:</strong> ${drawName}<br>
                     <strong>Código:</strong> ${data.result.winner_referrer_id}<br>
                     <strong>Chance:</strong> ${data.result.candidate_tickets} tickets (em ${data.result.total_tickets})
                 `;
@@ -872,6 +898,34 @@
                 alert('Erro ao sortear: ' + e.message);
             }
         }
+
+        // Load all draws into the affiliate draw dropdown
+        async function loadAffiliateDraws() {
+            try {
+                const res = await fetch('/api/draws');
+                const data = await res.json();
+
+                const select = document.getElementById('affiliateDrawSelect');
+                if (!select) return;
+
+                let html = '<option value="">-- Selecione uma Rifa --</option>';
+
+                // data is an array of draws, sort by ID descending (newest first)
+                const draws = data.sort((a, b) => b.id - a.id);
+
+                draws.forEach(draw => {
+                    const status = draw.status === 'CLOSED' ? '✅' : draw.status === 'ACTIVE' ? '🟢' : '⏸️';
+                    html += `<option value="${draw.id}">${status} #${draw.id} - ${draw.name || 'Rifa ' + draw.id}</option>`;
+                });
+
+                select.innerHTML = html;
+            } catch (e) {
+                console.error('Erro ao carregar rifas:', e);
+            }
+        }
+
+        // Load draws on page load
+        loadAffiliateDraws();
     </script>
 </body>
 

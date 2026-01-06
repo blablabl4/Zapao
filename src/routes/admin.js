@@ -299,15 +299,25 @@ router.get('/affiliate-stats', async (req, res) => {
 /**
  * POST /api/admin/affiliate-draw
  * Perform secondary draw for affiliates
+ * Accepts optional draw_id in body, defaults to current draw
  */
 router.post('/affiliate-draw', async (req, res) => {
     try {
-        const currentDraw = await DrawService.getCurrentDraw();
-        const result = await DrawService.performAffiliateDraw(currentDraw.id);
+        let drawId = req.body.draw_id;
+
+        if (!drawId) {
+            const currentDraw = await DrawService.getCurrentDraw();
+            if (!currentDraw) {
+                return res.status(400).json({ error: 'Nenhuma rifa ativa' });
+            }
+            drawId = currentDraw.id;
+        }
+
+        const result = await DrawService.performAffiliateDraw(drawId);
 
         res.json({
             success: true,
-            draw_id: currentDraw.id,
+            draw_id: drawId,
             result: result
         });
     } catch (error) {
