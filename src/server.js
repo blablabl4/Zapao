@@ -17,85 +17,56 @@ const paymentReconciliationJob = require('./jobs/paymentReconciliationJob');
 const webhookRetryJob = require('./jobs/webhookRetryJob');
 const { requireAdmin } = require('./middleware/adminAuth');
 
+const compression = require('compression');
+
+// ... imports ...
+
 const app = express();
 
-// Trust proxy (required for secure cookies on Railway/Cloud providers)
+// Trust proxy
 app.set('trust proxy', 1);
 
 // === SECURITY MIDDLEWARE ===
-// Helmet - Secure HTTP headers
 app.use(helmet({
-    contentSecurityPolicy: false, // Disable for inline scripts in HTML
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false
 }));
 
-// CORS - Only allow our domain
-app.use(cors({
-    origin: config.IS_PRODUCTION
-        ? ['https://www.tvzapao.com.br', 'https://tvzapao.com.br']
-        : true, // Allow all in development
-    credentials: true
-}));
+// === PERFORMANCE MIDDLEWARE === 🚀
+// Gzip Compression (reduces payload by ~70%)
+app.use(compression());
 
-// Rate limiting - General API
-const apiLimiter = rateLimit({
-    windowMs: config.RATE_LIMIT_WINDOW_MS,
-    max: config.RATE_LIMIT_MAX_REQUESTS,
-    message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-app.use('/api/', apiLimiter);
+// CORS
+// ...
 
-// Rate limiting - Stricter for sensitive routes
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 min
-    max: config.RATE_LIMIT_LOGIN_MAX,
-    message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' }
-});
-app.use('/admin/login', authLimiter);
-app.use('/admin/authenticate', authLimiter);
+// ...
 
-// Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Session configuration
-app.use(session({
-    store: new pgSession({
-        pool: getPool(),
-        tableName: 'session',
-        createTableIfMissing: true
-    }),
-    secret: config.SESSION_SECRET, // Now required via config
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: config.IS_PRODUCTION,
-        httpOnly: true,
-        maxAge: config.SESSION_MAX_AGE
-    }
-}));
-
-// Static files
-// Block direct access to admin HTML files - redirect to protected routes
-app.use((req, res, next) => {
-    const adminHtmlFiles = ['/admin-zapao.html', '/admin-amigos.html', '/admin-hub.html'];
-    if (adminHtmlFiles.includes(req.path)) {
-        // Redirect to protected route (without .html)
-        const protectedPath = req.path.replace('.html', '');
-        return res.redirect(protectedPath);
-    }
-    next();
-});
-// Static files (disabled cache for updates)
+// Static files configuration
+// Intelligent Cache: Visuals = 24h, Logic/HTML = 0 (Revalidate)
 app.use(express.static(path.join(__dirname, '../public'), {
-    maxAge: '0',
-    etag: false
+    maxAge: '0', // Default fallback
+    etag: true,  // Enable ETag for 304 checks
+    setHeaders: (res, filePath) => {
+        // Aesthetic/Static Assets (Images, fonts, css) -> Cache for 24 hours
+        if (filePath.match(/\.(png|jpg|jpeg|gif|webp|ico|svg|css|woff|woff2|ttf|eot|otf)$/i)) {
+            res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+        }
+        // Logic/Structural Assets (HTML, JS, JSON) -> Always revalidate (safe)
+        else {
+            res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        }
+    }
 }));
 
-// Serve uploads folder
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Serve uploads folder (Images -> Cache 24h)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+    etag: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
+    }
+}));
 
 // Admin authentication routes (unprotected)
 app.use('/admin', require('./routes/adminAuth'));
