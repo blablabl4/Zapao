@@ -1445,14 +1445,61 @@
         }
 
         // ========== PUBLIC AFFILIATE LOGIC ==========
-        function generatePublicLink() {
-            const phone = document.getElementById('affiliatePhone').value.replace(/\D/g, '');
+        // ========== PUBLIC AFFILIATE LOGIC ==========
+        async function generatePublicLink() {
+            const phoneInput = document.getElementById('affiliatePhone');
+            const phone = phoneInput.value.replace(/\D/g, '');
+            const btn = document.getElementById('btnGenerateLink');
+
             if (phone.length < 10) {
                 alert('Digite um telefone válido!');
                 return;
             }
-            // Redirect to dedicated page for smart check/registration
-            window.location.href = `/afiliado?phone=${phone}`;
+
+            // Disable button
+            btn.textContent = 'Verificando...';
+            btn.disabled = true;
+
+            try {
+                // Check if user exists
+                const res = await fetch(`/api/affiliates/check/${phone}`);
+                const data = await res.json();
+
+                btn.textContent = 'Gerar Link';
+                btn.disabled = false;
+
+                if (data.found) {
+                    // USER EXISTS: Show link inline
+                    const link = `${window.location.origin}/zapao-da-sorte?ref=${phone}`;
+                    document.getElementById('publicLinkInput').value = link;
+
+                    // Show result with animation
+                    const resultDiv = document.getElementById('publicAffiliateResult');
+                    resultDiv.style.display = 'block';
+                    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                } else {
+                    // NEW USER: Redirect to registration
+                    window.location.href = `/afiliado?phone=${phone}`;
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao verificar. Tente novamente.');
+                btn.textContent = 'Gerar Link';
+                btn.disabled = false;
+            }
+        }
+
+        function copyPublicLink() {
+            const input = document.getElementById('publicLinkInput');
+            input.select();
+            document.execCommand('copy');
+            // Visual feedback
+            const btn = event.target; // Get the button clicked
+            const originalText = btn.textContent;
+            btn.textContent = 'Copiado!';
+            setTimeout(() => btn.textContent = originalText, 2000);
         }
 
         // ========== WHATSAPP VISIBILITY ==========
@@ -1718,10 +1765,19 @@
             <div class="lookup-form">
                 <input type="tel" id="affiliatePhone" placeholder="Seu WhatsApp" maxlength="15"
                     oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
-                <button onclick="generatePublicLink()">Gerar Link</button>
+                <button id="btnGenerateLink" onclick="generatePublicLink()">Gerar Link</button>
             </div>
-            <div id="publicAffiliateResult" style="display:none; margin-top:15px;">
-                <!-- Result handled by redirect -->
+
+            <!-- Inline Result for existing users -->
+            <div id="publicAffiliateResult"
+                style="display:none; margin-top:15px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid var(--gold-glow);">
+                <p style="margin: 0 0 10px 0; color: #fff; font-size: 0.9rem;">✅ Seu link exclusivo:</p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="publicLinkInput" readonly
+                        style="flex: 1; padding:10px; background:#000; color:var(--gold); border:1px solid var(--gold); border-radius:8px; text-align:center;">
+                    <button onclick="copyPublicLink()"
+                        style="background:var(--green); color:#fff; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-weight: bold;">Copiar</button>
+                </div>
             </div>
         </div>
     </section>
