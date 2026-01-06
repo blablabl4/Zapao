@@ -1450,10 +1450,14 @@
 
         // ========== PUBLIC AFFILIATE LOGIC ==========
         // ========== PUBLIC AFFILIATE LOGIC ==========
+        let currentAffiliatePhone = '';
+
         async function generatePublicLink() {
             const phoneInput = document.getElementById('affiliatePhone');
             const phone = phoneInput.value.replace(/\D/g, '');
             const btn = document.getElementById('btnGenerateLink');
+            const formDiv = document.getElementById('footerRegForm');
+            const resultDiv = document.getElementById('publicAffiliateResult');
 
             if (phone.length < 10) {
                 alert('Digite um telefone válido!');
@@ -1464,6 +1468,10 @@
             btn.textContent = 'Verificando...';
             btn.disabled = true;
 
+            // Hide previous results/forms
+            if (formDiv) formDiv.style.display = 'none';
+            if (resultDiv) resultDiv.style.display = 'none';
+
             try {
                 // Check if user exists
                 const res = await fetch(`/api/affiliates/check/${phone}`);
@@ -1472,19 +1480,42 @@
                 btn.textContent = 'Gerar Link';
                 btn.disabled = false;
 
-                if (data.found) {
-                    // USER EXISTS: Show link inline
+                currentAffiliatePhone = phone;
+
+                if (data.found && data.source === 'affiliate') {
+                    // Already an affiliate - show link inline
                     const link = `${window.location.origin}/zapao-da-sorte?ref=${phone}`;
                     document.getElementById('publicLinkInput').value = link;
 
                     // Show result with animation
-                    const resultDiv = document.getElementById('publicAffiliateResult');
-                    resultDiv.style.display = 'block';
-                    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    if (resultDiv) {
+                        resultDiv.style.display = 'block';
+                        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+
+                } else if (data.found && data.source === 'order') {
+                    // Existing customer -> Pre-fill form inline
+                    document.getElementById('footerName').value = data.data.name || '';
+                    document.getElementById('footerPix').value = data.data.pix_key || '';
+                    document.getElementById('footerCep').value = data.data.cep || '';
+
+                    document.getElementById('footerRegMsg').textContent = '📝 Confirme seus dados para gerar o link:';
+                    if (formDiv) {
+                        formDiv.style.display = 'block';
+                        formDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
 
                 } else {
-                    // NEW USER: Redirect to registration
-                    window.location.href = `/afiliado?phone=${phone}`;
+                    // NEW USER -> Show empty form inline (NO REDIRECT!)
+                    document.getElementById('footerName').value = '';
+                    document.getElementById('footerPix').value = '';
+                    document.getElementById('footerCep').value = '';
+
+                    document.getElementById('footerRegMsg').textContent = '📝 Complete seu cadastro para gerar o link:';
+                    if (formDiv) {
+                        formDiv.style.display = 'block';
+                        formDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
                 }
 
             } catch (e) {
@@ -1492,6 +1523,58 @@
                 alert('Erro ao verificar. Tente novamente.');
                 btn.textContent = 'Gerar Link';
                 btn.disabled = false;
+            }
+        }
+
+        async function registerAffiliateFooter() {
+            const name = document.getElementById('footerName').value.trim();
+            const pix = document.getElementById('footerPix').value.trim();
+            const cep = document.getElementById('footerCep').value.trim();
+            const loading = document.getElementById('footerLoading');
+            const btn = document.getElementById('btnFooterRegister');
+
+            if (!name || name.length < 3) {
+                alert('Digite seu nome completo!');
+                return;
+            }
+            if (!pix || pix.length < 5) {
+                alert('Digite uma chave Pix válida!');
+                return;
+            }
+
+            btn.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                const res = await fetch('/api/affiliates/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentAffiliatePhone,
+                        name: name,
+                        pix_key: pix,
+                        cep: cep
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // Success! Show link
+                const link = `${window.location.origin}/zapao-da-sorte?ref=${currentAffiliatePhone}`;
+                document.getElementById('publicLinkInput').value = link;
+
+                // Hide form, show result
+                document.getElementById('footerRegForm').style.display = 'none';
+                document.getElementById('publicAffiliateResult').style.display = 'block';
+
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao registrar: ' + e.message);
+            } finally {
+                btn.style.display = 'block';
+                loading.style.display = 'none';
             }
         }
 
