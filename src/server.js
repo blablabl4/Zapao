@@ -37,9 +37,52 @@ app.use(helmet({
 app.use(compression());
 
 // CORS
-// ...
+app.use(cors({
+    origin: config.IS_PRODUCTION
+        ? ['https://www.tvzapao.com.br', 'https://tvzapao.com.br']
+        : true, // Allow all in development
+    credentials: true
+}));
 
-// ...
+// Rate limiting - General API
+const apiLimiter = rateLimit({
+    windowMs: config.RATE_LIMIT_WINDOW_MS,
+    max: config.RATE_LIMIT_MAX_REQUESTS,
+    message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+app.use('/api/', apiLimiter);
+
+// Rate limiting - Stricter for sensitive routes
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 min
+    max: config.RATE_LIMIT_LOGIN_MAX,
+    message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' }
+});
+app.use('/admin/login', authLimiter);
+app.use('/admin/authenticate', authLimiter);
+
+// Body parsers (Required for POST requests)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Session configuration
+app.use(session({
+    store: new pgSession({
+        pool: getPool(),
+        tableName: 'session',
+        createTableIfMissing: true
+    }),
+    secret: config.SESSION_SECRET, // Now required via config
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: config.IS_PRODUCTION,
+        httpOnly: true,
+        maxAge: config.SESSION_MAX_AGE
+    }
+}));
 
 // Static files configuration
 // Intelligent Cache: Visuals = 24h, Logic/HTML = 0 (Revalidate)
