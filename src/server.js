@@ -14,6 +14,7 @@ const drawExpirationJob = require('./jobs/drawExpirationJob');
 const paymentPollingJob = require('./jobs/paymentPollingJob');
 const ticketCleanupJob = require('./jobs/ticketCleanupJob');
 const paymentReconciliationJob = require('./jobs/paymentReconciliationJob');
+const webhookRetryJob = require('./jobs/webhookRetryJob');
 const { requireAdmin } = require('./middleware/adminAuth');
 
 const app = express();
@@ -277,6 +278,7 @@ async function startServer() {
         paymentPollingJob.start();
         ticketCleanupJob.start();
         paymentReconciliationJob.start();
+        webhookRetryJob.start();
 
         // Start WhatsApp Bot (Bot Phase 9) - PAUSED
         // const { startBot } = require('./bot');
@@ -347,6 +349,7 @@ async function startServer() {
             drawExpirationJob.stop();
             paymentPollingJob.stop();
             paymentReconciliationJob.stop();
+            webhookRetryJob.stop();
             ticketCleanupJob.stop();
 
             server.close(async () => {
@@ -363,6 +366,7 @@ async function startServer() {
             drawExpirationJob.stop();
             paymentPollingJob.stop();
             paymentReconciliationJob.stop();
+            webhookRetryJob.stop();
             ticketCleanupJob.stop();
 
             server.close(async () => {

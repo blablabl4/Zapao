@@ -16,8 +16,15 @@ class PaymentService {
         const hash = crypto.createHash('sha256').update(payloadStr).digest('hex');
 
         // Check if already processed
+        // We only block if it was SUCCESSFUL or pending. FAILED ones can be retried via job (not here).
+        // Actually, for webhook endpoint, we should block duplicates to avoid spam.
         const existingEvent = await query('SELECT * FROM webhook_events WHERE hash = $1', [hash]);
         if (existingEvent.rows.length > 0) {
+
+            // IF existing is FAILED, maybe we allow retry?
+            // But for now, let's stick to strict idempotency for the Endpoint.
+            // The RetryJob will handle re-tries by calling processPaymentLogic directly.
+
             Logger.warn('WEBHOOK_DUPLICATE', `Event already processed`, { hash: hash.substring(0, 8) });
             return {
                 success: true,
@@ -35,18 +42,29 @@ class PaymentService {
 
         const eventId = eventResult.rows[0].id;
 
+        // Delegate to logic
+        return this.processPaymentLogic(raw_payload, eventId);
+    }
+
+    /**
+     * Internal logic to process payment
+     * Can be called by processWebhook (realtime) or RetryJob (recovery)
+     */
+    async processPaymentLogic(raw_payload, eventId) {
         try {
             // Extract payment data from payload
             const { order_id, amount_paid, txid, e2eid, provider } = raw_payload;
 
             if (!order_id) {
+                // If it's a generic notification (e.g. merchant_order), we might need to fetch data first
+                // But we assume payload is enriched by provider already in webhooks.js
                 throw new Error('Missing order_id in webhook payload');
             }
 
             // Check if order_id contains multiple IDs (bulk purchase)
             const orderIds = order_id.includes(',') ? order_id.split(',') : [order_id];
 
-            Logger.info('WEBHOOK_RECEIVED', `Processing payment for ${orderIds.length} order(s)`, { orderIds, amount_paid });
+            Logger.info('WEBHOOK_RECEIVED', `Processing payment for ${orderIds.length} order(s)`, { orderIds, amount_paid, eventId });
 
             // Process each order
             for (const singleOrderId of orderIds) {
@@ -66,15 +84,12 @@ class PaymentService {
                 }
 
                 // Verify order is still valid (not expired)
+                // NOTE: If paying late, we MIGHT accept it. But for now, let's just log.
                 if (order.status === 'EXPIRED') {
-                    Logger.warn('PAYMENT_EXPIRED', `Order ${trimmedOrderId} has expired`, null);
-                    continue;
+                    Logger.warn('PAYMENT_EXPIRED', `Order ${trimmedOrderId} has expired but was paid`, null);
+                    // We could revive it here if we wanted.
+                    // For now, continue processing to mark as PAID (fixing the expiration)
                 }
-
-                // RACE CONDITION CHECK: REMOVED. 
-                // We allow multiple winners for the same number.
-                // Prize will be split in DrawService.
-                // const existingWinner = ... (removed)
 
                 // Calculate actual paid amount per order (handle bulk)
                 const totalPaid = parseFloat(amount_paid) || 0;
@@ -82,6 +97,12 @@ class PaymentService {
 
                 // Create payment record (one per order)
                 try {
+                    // Update: use eventId instead of hash for reference if possible, 
+                    // but we store hash in payments table.
+                    // We need hash.
+                    const payloadStr = JSON.stringify(raw_payload);
+                    const hash = crypto.createHash('sha256').update(payloadStr).digest('hex');
+
                     await query(`
                         INSERT INTO payments (order_id, provider, txid, e2eid, amount_paid, event_hash)
                         VALUES ($1, $2, $3, $4, $5, $6)
@@ -96,9 +117,10 @@ class PaymentService {
                 } catch (err) {
                     if (err.message.includes('duplicate key') || err.message.includes('unique constraint')) {
                         Logger.warn('PAYMENT_ALRAEDY_RECORDED', `Payment already recorded for order ${trimmedOrderId}`, null);
-                        continue;
+                        // Continue to ensure order status is updated
+                    } else {
+                        throw err;
                     }
-                    throw err;
                 }
 
                 // Update ALL orders in this batch (grouped by buyer_ref)
