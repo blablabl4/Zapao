@@ -1288,11 +1288,20 @@
             // Format: name|phone|pixKey|bairro|cidade|cep
             const buyer_ref = `${name}|${phone}|${pixKey}|${currentLocation.bairro}|${currentLocation.cidade}|${cleanCep}`;
 
+            // Get referrer_id from localStorage (set when user arrived via affiliate link)
+            let referrer_id = null;
+            try {
+                const affiliateData = JSON.parse(localStorage.getItem('affiliateData'));
+                if (affiliateData && affiliateData.code) {
+                    referrer_id = affiliateData.code;
+                }
+            } catch (e) { }
+
             try {
                 const res = await fetch('/api/orders/bulk', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ numbers, buyer_ref })
+                    body: JSON.stringify({ numbers, buyer_ref, referrer_id })
                 });
 
                 if (!res.ok) {
