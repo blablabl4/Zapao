@@ -51,14 +51,19 @@ router.get('/ranking', async (req, res) => {
 
         const stats = await DrawService.getAffiliateStats(currentDraw.id);
 
+        console.log('[Affiliate Ranking] Raw stats:', JSON.stringify(stats, null, 2));
+
         // Return only name and ticket count (no revenue for public)
+        // Use phone as fallback if name is missing
         const publicRanking = stats
-            .filter(s => s.padrinho_name && s.ticket_count > 0) // Only show affiliates with sales and names
+            .filter(s => s.ticket_count > 0) // Only show affiliates with sales
             .map((s, index) => ({
                 position: index + 1,
-                name: s.padrinho_name,
+                name: s.padrinho_name || s.padrinho_phone || 'Afiliado',
                 referrals: s.ticket_count
             }));
+
+        console.log('[Affiliate Ranking] Public ranking:', JSON.stringify(publicRanking, null, 2));
 
         res.json({ ranking: publicRanking });
     } catch (e) {
