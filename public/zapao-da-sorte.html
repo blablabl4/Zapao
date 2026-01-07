@@ -478,6 +478,74 @@
             display: none !important;
         }
 
+        /* ========== RULES ACCORDION ========== */
+        .rules-accordion {
+            margin-top: 15px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .rules-toggle {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            color: var(--gold);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .rules-toggle:hover {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold);
+        }
+
+        .rules-arrow {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .rules-arrow.rotate {
+            transform: rotate(180deg);
+        }
+
+        .rules-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .rules-content.show {
+            max-height: 300px;
+        }
+
+        .rules-text {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            text-align: left;
+        }
+
+        .rules-text p {
+            margin: 8px 0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .rules-text strong {
+            color: var(--gold-light);
+        }
+
         /* MOBILE OPTIMIZATION */
         /* MOBILE OPTIMIZATION */
         @media (max-width: 600px) {
@@ -712,6 +780,21 @@
         <h1 id="campaignTitleEl">🍀 Zapão da Sorte</h1>
         <div class="prize" id="prizeDisplay">R$ 100,00</div>
         <p class="subtitle">Escolha um número de 01 a 75 e concorra!</p>
+
+        <!-- Rules Accordion -->
+        <div class="rules-accordion">
+            <button class="rules-toggle" onclick="toggleRules()">
+                <span>📋 Saiba mais!</span>
+                <span class="rules-arrow" id="rulesArrow">▼</span>
+            </button>
+            <div class="rules-content" id="rulesContent">
+                <div class="rules-text">
+                    <p><strong>☑️ Acertou sozinho?</strong> Leva sozinho.</p>
+                    <p><strong>☑️ Mais de um ganhador?</strong> O valor é dividido.</p>
+                    <p><strong>☑️ Se ninguém acertar,</strong> a sorte fica pra próxima e o prêmio cresce.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- COUNTDOWN TIMER -->
@@ -1701,6 +1784,15 @@
             } catch (e) {
                 console.log('Stats not loaded');
             }
+        }
+
+        // Toggle Rules Accordion
+        function toggleRules() {
+            const content = document.getElementById('rulesContent');
+            const arrow = document.getElementById('rulesArrow');
+
+            content.classList.toggle('show');
+            arrow.classList.toggle('rotate');
         }
 
         function updateCountdown() {
