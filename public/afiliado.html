@@ -347,15 +347,7 @@
                 showStep('step2');
                 document.getElementById('step2Msg').textContent = '📝 Confirme seus dados para gerar o link:';
                 showStep('step2');
-            }
-                } else {
-            // New user: clear and show form
-            document.getElementById('regName').value = '';
-            document.getElementById('regPix').value = '';
-            document.getElementById('regCep').value = '';
-            document.getElementById('step2Msg').textContent = '📝 Complete seu cadastro para gerar o link:';
-            showStep('step2');
-        }
+
 
             } catch (e) {
             alert('Erro ao verificar. Tente novamente.');
