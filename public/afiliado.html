@@ -306,6 +306,39 @@
         </div>
 
         <a href="/zapao-da-sorte" class="back-link">⬅ Voltar para o Sorteio</a>
+
+        <!-- Ranking Section -->
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-color);">
+            <h2 style="text-align: center; color: var(--gold); margin-bottom: 10px; font-size: 1.3rem;">
+                🏆 Ranking de Indicações
+            </h2>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                Quem está indicando mais amigos?
+            </p>
+
+            <div
+                style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: rgba(212, 175, 55, 0.1); border-bottom: 1px solid var(--border-color);">
+                            <th
+                                style="text-align: left; padding: 12px 20px; color: var(--gold); font-weight: 600; font-size: 0.85rem;">
+                                Padrinho</th>
+                            <th
+                                style="text-align: center; padding: 12px 20px; color: var(--gold); font-weight: 600; font-size: 0.85rem;">
+                                Indicações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rankingBody">
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                Carregando...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </section>
 
     <script>
@@ -422,6 +455,45 @@
                 setTimeout(() => msg.style.display = 'none', 3000);
             });
         }
+
+        // Load and display affiliate ranking
+        async function loadRanking() {
+            try {
+                const res = await fetch('/api/affiliates/ranking');
+                const data = await res.json();
+
+                const tbody = document.getElementById('rankingBody');
+                if (!tbody) return;
+
+                if (!data.ranking || data.ranking.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:var(--text-secondary);">Nenhum afiliado ainda.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                data.ranking.forEach(item => {
+                    const medal = item.position === 1 ? '🥇' : item.position === 2 ? '🥈' : item.position === 3 ? '🥉' : `${item.position}º`;
+                    const highlight = item.position <= 3 ? 'font-weight: bold; color: var(--gold-light);' : '';
+
+                    html += `
+                        <tr>
+                            <td style="${highlight}">
+                                <span style="display: inline-block; width: 35px; text-align: center;">${medal}</span>
+                                ${item.name}
+                            </td>
+                            <td style="text-align: center; ${highlight}">${item.referrals}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            } catch (e) {
+                console.error('Erro ao carregar ranking:', e);
+            }
+        }
+
+        // Load ranking on page load
+        loadRanking();
     </script>
 </body>
 

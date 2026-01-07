@@ -39,4 +39,32 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// Public Ranking (No revenue, just names and counts for competition)
+router.get('/ranking', async (req, res) => {
+    try {
+        const DrawService = require('../services/DrawService');
+        const currentDraw = await DrawService.getCurrentDraw();
+
+        if (!currentDraw) {
+            return res.json({ ranking: [] });
+        }
+
+        const stats = await DrawService.getAffiliateStats(currentDraw.id);
+
+        // Return only name and ticket count (no revenue for public)
+        const publicRanking = stats
+            .filter(s => s.padrinho_name && s.ticket_count > 0) // Only show affiliates with sales and names
+            .map((s, index) => ({
+                position: index + 1,
+                name: s.padrinho_name,
+                referrals: s.ticket_count
+            }));
+
+        res.json({ ranking: publicRanking });
+    } catch (e) {
+        console.error('Affiliate ranking error:', e);
+        res.status(500).json({ error: 'Erro ao carregar ranking' });
+    }
+});
+
 module.exports = router;
