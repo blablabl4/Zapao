@@ -488,87 +488,95 @@ class DrawService {
      * @param {number} drawId
      */
     async getAffiliateStats(drawId) {
-        // Count paid tickets, revenue, and clicks per referrer
-        // Using CTEs to aggregate separately to avoid multiplication in joins
-        const result = await query(`
-            WITH sales_stats AS (
-                SELECT referrer_id, COUNT(*) as ticket_count, SUM(amount) as total_revenue
-                FROM orders 
-                WHERE draw_id = $1 
-                  AND status = 'PAID' 
-                  AND referrer_id IS NOT NULL 
-                  AND referrer_id != ''
-                GROUP BY referrer_id
-            ),
-            click_stats AS (
-                SELECT referrer_id, COUNT(*) as click_count
-                FROM affiliate_clicks
-                WHERE draw_id = $1
-                  AND referrer_id IS NOT NULL
-                  AND referrer_id != ''
-                GROUP BY referrer_id
-            )
-            SELECT 
-                COALESCE(s.referrer_id, c.referrer_id) as referrer_id,
-                COALESCE(s.ticket_count, 0) as ticket_count,
-                COALESCE(s.total_revenue, 0) as total_revenue,
-                COALESCE(c.click_count, 0) as access_count
-            FROM sales_stats s
-            FULL OUTER JOIN click_stats c ON s.referrer_id = c.referrer_id
-            ORDER BY ticket_count DESC, total_revenue DESC
-        `, [drawId]);
+        console.log(`[DrawService] getAffiliateStats for draw ${drawId}`);
+        try {
+            // Count paid tickets, revenue, and clicks per referrer
+            // Using CTEs to aggregate separately to avoid multiplication in joins
+            const result = await query(`
+                WITH sales_stats AS (
+                    SELECT referrer_id, COUNT(*) as ticket_count, SUM(amount) as total_revenue
+                    FROM orders 
+                    WHERE draw_id = $1 
+                      AND status = 'PAID' 
+                      AND referrer_id IS NOT NULL 
+                      AND referrer_id != ''
+                    GROUP BY referrer_id
+                ),
+                click_stats AS (
+                    SELECT referrer_id, COUNT(*) as click_count
+                    FROM affiliate_clicks
+                    WHERE draw_id = $1
+                      AND referrer_id IS NOT NULL
+                      AND referrer_id != ''
+                    GROUP BY referrer_id
+                )
+                SELECT 
+                    COALESCE(s.referrer_id, c.referrer_id) as referrer_id,
+                    COALESCE(s.ticket_count, 0) as ticket_count,
+                    COALESCE(s.total_revenue, 0) as total_revenue,
+                    COALESCE(c.click_count, 0) as access_count
+                FROM sales_stats s
+                FULL OUTER JOIN click_stats c ON s.referrer_id = c.referrer_id
+                ORDER BY ticket_count DESC, total_revenue DESC
+            `, [drawId]);
 
-        // Enrich with padrinho names by looking up orders where the referrer was the buyer
-        const enrichedResults = [];
-        for (const row of result.rows) {
-            let padrinhoName = '';
-            let padrinhoPhone = '';
+            console.log(`[DrawService] Stats query returned ${result.rows.length} rows`);
 
-            try {
-                // Decode referrer_id (base64 of PHONE-DRAWID)
-                const decoded = Buffer.from(row.referrer_id, 'base64').toString('utf-8');
-                if (decoded.includes('-')) {
-                    padrinhoPhone = decoded.split('-')[0];
+            // Enrich with padrinho names by looking up orders where the referrer was the buyer
+            const enrichedResults = [];
+            for (const row of result.rows) {
+                let padrinhoName = '';
+                let padrinhoPhone = '';
 
-                    // First try to find in affiliates table directly
-                    const affRes = await query(`
-                        SELECT name FROM affiliates 
-                        WHERE phone = $1
-                        LIMIT 1
-                    `, [padrinhoPhone]);
+                try {
+                    // Decode referrer_id (base64 of PHONE-DRAWID)
+                    const decoded = Buffer.from(row.referrer_id, 'base64').toString('utf-8');
+                    if (decoded.includes('-')) {
+                        padrinhoPhone = decoded.split('-')[0];
 
-                    if (affRes.rows.length > 0 && affRes.rows[0].name) {
-                        padrinhoName = affRes.rows[0].name;
-                    } else {
-                        // Fallback: Find orders where this phone appears in buyer_ref
-                        const orderRes = await query(`
-                            SELECT buyer_ref FROM orders 
-                            WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                        // First try to find in affiliates table directly
+                        const affRes = await query(`
+                            SELECT name FROM affiliates 
+                            WHERE phone = $1
                             LIMIT 1
-                        `, [`%${padrinhoPhone}%`]);
+                        `, [padrinhoPhone]);
 
-                        if (orderRes.rows.length > 0) {
-                            const parts = (orderRes.rows[0].buyer_ref || '').split('|');
-                            padrinhoName = parts[0] || '';
+                        if (affRes.rows.length > 0 && affRes.rows[0].name) {
+                            padrinhoName = affRes.rows[0].name;
+                        } else {
+                            // Fallback: Find orders where this phone appears in buyer_ref
+                            const orderRes = await query(`
+                                SELECT buyer_ref FROM orders 
+                                WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                                LIMIT 1
+                            `, [`%${padrinhoPhone}%`]);
+
+                            if (orderRes.rows.length > 0) {
+                                const parts = (orderRes.rows[0].buyer_ref || '').split('|');
+                                padrinhoName = parts[0] || '';
+                            }
                         }
                     }
+                } catch (e) {
+                    console.error('[DrawService] Error enriching row:', row.referrer_id, e.message);
+                    padrinhoPhone = row.referrer_id.substring(0, 11);
                 }
-            } catch (e) {
-                // If decode fails, use referrer_id as-is
-                padrinhoPhone = row.referrer_id.substring(0, 11);
+
+                enrichedResults.push({
+                    referrer_id: row.referrer_id,
+                    padrinho_name: padrinhoName,
+                    padrinho_phone: padrinhoPhone,
+                    ticket_count: parseInt(row.ticket_count),
+                    total_revenue: parseFloat(row.total_revenue || 0),
+                    access_count: parseInt(row.access_count || 0)
+                });
             }
 
-            enrichedResults.push({
-                referrer_id: row.referrer_id,
-                padrinho_name: padrinhoName,
-                padrinho_phone: padrinhoPhone,
-                ticket_count: parseInt(row.ticket_count),
-                total_revenue: parseFloat(row.total_revenue || 0),
-                access_count: parseInt(row.access_count || 0)
-            });
+            return enrichedResults;
+        } catch (error) {
+            console.error('[DrawService] getAffiliateStats Fatal Error:', error);
+            return []; // Return empty array on failure
         }
-
-        return enrichedResults;
     }
 
     /**
