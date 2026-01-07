@@ -1482,40 +1482,25 @@
 
                 currentAffiliatePhone = phone;
 
-                if (data.found && data.source === 'affiliate') {
-                    // Already an affiliate - show link inline
-                    const link = `${window.location.origin}/zapao-da-sorte?ref=${phone}`;
-                    document.getElementById('publicLinkInput').value = link;
-
-                    // Show result with animation
-                    if (resultDiv) {
-                        resultDiv.style.display = 'block';
-                        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-
-                } else if (data.found && data.source === 'order') {
-                    // Existing customer -> Pre-fill form inline
+                // ALWAYS show registration form (even for existing affiliates)
+                // Pre-fill data if found
+                if (data.found) {
                     document.getElementById('footerName').value = data.data.name || '';
                     document.getElementById('footerPix').value = data.data.pix_key || '';
                     document.getElementById('footerCep').value = data.data.cep || '';
-
                     document.getElementById('footerRegMsg').textContent = '📝 Confirme seus dados para gerar o link:';
-                    if (formDiv) {
-                        formDiv.style.display = 'block';
-                        formDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-
                 } else {
-                    // NEW USER -> Show empty form inline (NO REDIRECT!)
+                    // New user -> Show empty form inline
                     document.getElementById('footerName').value = '';
                     document.getElementById('footerPix').value = '';
                     document.getElementById('footerCep').value = '';
-
                     document.getElementById('footerRegMsg').textContent = '📝 Complete seu cadastro para gerar o link:';
-                    if (formDiv) {
-                        formDiv.style.display = 'block';
-                        formDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
+                }
+
+                // Show form
+                if (formDiv) {
+                    formDiv.style.display = 'block';
+                    formDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
 
             } catch (e) {

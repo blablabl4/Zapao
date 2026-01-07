@@ -360,31 +360,38 @@
                 const res = await fetch(`/api/affiliates/check/${cleanPhone}`);
                 const data = await res.json();
 
+                // ALWAYS show registration form (even for existing affiliates)
+                // Pre-fill data if found
                 if (data.found) {
-                    if (data.source === 'affiliate') {
-                        // Already full affiliate
-                        showLink(cleanPhone);
-                    } else {
-                        // Historical customer: pre-fill and confirm
-                        document.getElementById('regName').value = data.data.name || '';
-                        document.getElementById('regPix').value = data.data.pix_key || '';
-                        document.getElementById('regCep').value = data.data.cep || '';
-                        document.getElementById('step2Msg').textContent = '📝 Confirme seus dados para gerar o link:';
-                        showStep('step2');
-                    }
+                    document.getElementById('regName').value = data.data.name || '';
+                    document.getElementById('regPix').value = data.data.pix_key || '';
+                    document.getElementById('regCep').value = data.data.cep || '';
+                    document.getElementById('step2Msg').textContent = '📝 Confirme seus dados para gerar o link:';
                 } else {
-                    // New user: clear and show form
+                    // New user: show empty form
                     document.getElementById('regName').value = '';
                     document.getElementById('regPix').value = '';
                     document.getElementById('regCep').value = '';
                     document.getElementById('step2Msg').textContent = '📝 Complete seu cadastro para gerar o link:';
-                    showStep('step2');
                 }
 
-            } catch (e) {
-                alert('Erro ao verificar. Tente novamente.');
-                showStep('step1');
+                showStep('step2');
+                document.getElementById('step2Msg').textContent = '📝 Confirme seus dados para gerar o link:';
+                showStep('step2');
             }
+                } else {
+            // New user: clear and show form
+            document.getElementById('regName').value = '';
+            document.getElementById('regPix').value = '';
+            document.getElementById('regCep').value = '';
+            document.getElementById('step2Msg').textContent = '📝 Complete seu cadastro para gerar o link:';
+            showStep('step2');
+        }
+
+            } catch (e) {
+            alert('Erro ao verificar. Tente novamente.');
+            showStep('step1');
+        }
         }
 
         function backToStep1() {
