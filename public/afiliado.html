@@ -454,12 +454,24 @@
 
         // Load and display affiliate ranking
         async function loadRanking() {
-            try {
-                const res = await fetch('/api/affiliates/ranking');
-                const data = await res.json();
+            const tbody = document.getElementById('rankingBody');
+            if (!tbody) {
+                console.error('[Ranking] tbody element not found');
+                return;
+            }
 
-                const tbody = document.getElementById('rankingBody');
-                if (!tbody) return;
+            try {
+                console.log('[Ranking] Fetching /api/affiliates/ranking...');
+                const res = await fetch('/api/affiliates/ranking');
+
+                if (!res.ok) {
+                    console.error('[Ranking] HTTP error:', res.status, res.statusText);
+                    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:#f87171;">Erro ao carregar ranking.</td></tr>';
+                    return;
+                }
+
+                const data = await res.json();
+                console.log('[Ranking] Data received:', data);
 
                 if (!data.ranking || data.ranking.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:var(--text-secondary);">Nenhum afiliado ainda.</td></tr>';
@@ -483,8 +495,10 @@
                 });
 
                 tbody.innerHTML = html;
+                console.log('[Ranking] Loaded', data.ranking.length, 'affiliates');
             } catch (e) {
-                console.error('Erro ao carregar ranking:', e);
+                console.error('[Ranking] Error loading ranking:', e);
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:#f87171;">Erro ao carregar ranking.</td></tr>';
             }
         }
 
