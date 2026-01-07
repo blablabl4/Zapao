@@ -12,8 +12,11 @@ class AffiliateService {
 
         // 2. Check orders table (historical customers)
         // Get the most recent info
+        // 2. Check orders table (historical customers)
+        // Get the most recent info - Extract details from buyer_ref string
+        // Format: name|phone|pix|bairro|cidade|cep
         const orderRes = await query(`
-            SELECT buyer_name as name, buyer_pix_key as pix_key, buyer_ref
+            SELECT buyer_ref
             FROM orders 
             WHERE buyer_phone = $1 
             ORDER BY created_at DESC 
@@ -22,16 +25,25 @@ class AffiliateService {
 
         if (orderRes.rows.length > 0) {
             const data = orderRes.rows[0];
-            // Extract CEP from buyer_ref (name|phone|pix|bairro|cidade|cep)
+
+            let name = '';
+            let pix_key = '';
             let cep = '';
+
             if (data.buyer_ref) {
                 const parts = data.buyer_ref.split('|');
+                // Ensure we have enough parts and valid data
+                name = parts[0] || '';
+                // Phone is parts[1]
+                pix_key = parts[2] || '';
+                // Bairro parts[3], Cidade parts[4]
                 if (parts.length >= 6) cep = parts[5];
             }
+
             return {
                 found: true,
                 source: 'order',
-                data: { name: data.name, pix_key: data.pix_key, cep: cep }
+                data: { name: name, pix_key: pix_key, cep: cep }
             };
         }
 
