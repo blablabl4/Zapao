@@ -910,12 +910,12 @@
 
                 let html = '<option value="">-- Selecione uma Rifa --</option>';
 
-                // data is an array of draws, sort by ID descending (newest first)
-                const draws = data.sort((a, b) => b.id - a.id);
+                // data.draws is the array (API returns { draws: [...] })
+                const draws = (data.draws || []).sort((a, b) => b.id - a.id);
 
                 draws.forEach(draw => {
                     const status = draw.status === 'CLOSED' ? '✅' : draw.status === 'ACTIVE' ? '🟢' : '⏸️';
-                    html += `<option value="${draw.id}">${status} #${draw.id} - ${draw.name || 'Rifa ' + draw.id}</option>`;
+                    html += `<option value="${draw.id}">${status} #${draw.id} - ${draw.draw_name || 'Rifa ' + draw.id}</option>`;
                 });
 
                 select.innerHTML = html;
