@@ -71,25 +71,20 @@
             filter: drop-shadow(0 0 20px var(--gold-glow));
         }
 
-        /* ========== LOOKUP SECTION - EXACT COPY FROM SALES PAGE ========== */
+        /* ========== LOOKUP SECTION ========== */
         .lookup-section {
-            background: linear-gradient(180deg, transparent, var(--bg-card-solid));
-            padding: 40px 20px;
-            border-top: 1px solid var(--border-color);
             position: relative;
             z-index: 1;
-        }
-
-        .lookup-container {
+            padding: 30px 20px;
+            text-align: center;
             max-width: 500px;
             margin: 0 auto;
-            text-align: center;
         }
 
         .lookup-section h3 {
             color: var(--gold);
-            font-size: 1.4rem;
             margin-bottom: 10px;
+            font-size: 1.3rem;
         }
 
         .lookup-section p {
@@ -239,16 +234,14 @@
 
     <!-- Lookup Section - EXACT SAME AS SALES PAGE FOOTER -->
     <section class="lookup-section">
-        <div class="lookup-container">
-            <h3>🔎 Consultar meus números</h3>
-            <p>Digite seu telefone para ver os números que você comprou nesta rifa:</p>
-            <div class="lookup-form">
-                <input type="tel" id="lookupPhone" placeholder="(11) 99999-9999" maxlength="15"
-                    oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
-                <button onclick="lookupMyNumbers()">Consultar</button>
-            </div>
-            <div id="lookupResult"></div>
+        <h3>🔎 Consultar meus números</h3>
+        <p>Digite seu telefone para ver os números que você comprou nesta rifa:</p>
+        <div class="lookup-form">
+            <input type="tel" id="lookupPhone" placeholder="(11) 99999-9999" maxlength="15"
+                oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
+            <button onclick="lookupMyNumbers()">Consultar</button>
         </div>
+        <div id="lookupResult"></div>
 
         <a href="/zapao-da-sorte" class="back-link">⬅ Voltar para o Sorteio</a>
     </section>
