@@ -488,13 +488,13 @@
 
         .rules-toggle {
             width: 100%;
-            padding: 12px 16px;
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid rgba(212, 175, 55, 0.2);
             border-radius: 8px;
-            color: var(--gold);
-            font-size: 0.9rem;
-            font-weight: 600;
+            color: rgba(212, 175, 55, 0.8);
+            font-size: 0.85rem;
+            font-weight: 500;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -503,8 +503,9 @@
         }
 
         .rules-toggle:hover {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.08);
+            border-color: rgba(212, 175, 55, 0.4);
+            color: var(--gold);
         }
 
         .rules-arrow {
@@ -784,7 +785,7 @@
         <!-- Rules Accordion -->
         <div class="rules-accordion">
             <button class="rules-toggle" onclick="toggleRules()">
-                <span>📋 Saiba mais!</span>
+                <span>Como funciona?</span>
                 <span class="rules-arrow" id="rulesArrow">▼</span>
             </button>
             <div class="rules-content" id="rulesContent">
