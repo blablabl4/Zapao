@@ -294,8 +294,15 @@ app.use(errorHandler);    // Centralized error handler
 
 // Initialize and start server
 async function startServer() {
+    // Start HTTP server IMMEDIATELY to pass healthchecks
+    const server = app.listen(config.PORT, () => {
+        console.log(`\n🎰 TVZapão Server running on http://localhost:${config.PORT}`);
+        console.log(`📊 Admin panel: http://localhost:${config.PORT}/admin`);
+        console.log(`💚 Health check: http://localhost:${config.PORT}/health\n`);
+    });
+
     try {
-        // Initialize database
+        // Initialize database (Non-blocking for server start)
         await initializeDatabase();
 
         // Start background jobs
@@ -360,52 +367,45 @@ async function startServer() {
             }
         });
 
-        // Start HTTP server
-        const server = app.listen(config.PORT, () => {
-            console.log(`\n🎰 TVZapão Server running on http://localhost:${config.PORT}`);
-            console.log(`📊 Admin panel: http://localhost:${config.PORT}/admin`);
-            console.log(`💚 Health check: http://localhost:${config.PORT}/health\n`);
-        });
-
-        // Graceful shutdown
-        process.on('SIGTERM', async () => {
-            console.log('\n[Server] SIGTERM received, shutting down gracefully...');
-
-            expirationJob.stop();
-            drawExpirationJob.stop();
-            paymentPollingJob.stop();
-            paymentReconciliationJob.stop();
-            webhookRetryJob.stop();
-            ticketCleanupJob.stop();
-
-            server.close(async () => {
-                await closeDatabase();
-                console.log('[Server] Server closed');
-                process.exit(0);
-            });
-        });
-
-        process.on('SIGINT', async () => {
-            console.log('\n[Server] SIGINT received, shutting down gracefully...');
-
-            expirationJob.stop();
-            drawExpirationJob.stop();
-            paymentPollingJob.stop();
-            paymentReconciliationJob.stop();
-            webhookRetryJob.stop();
-            ticketCleanupJob.stop();
-
-            server.close(async () => {
-                await closeDatabase();
-                console.log('[Server] Server closed');
-                process.exit(0);
-            });
-        });
-
     } catch (error) {
-        console.error('[Server] Failed to start:', error.message);
-        process.exit(1);
+        console.error('[Server] Database initialization failed but server is running:', error.message);
+        // Do NOT exit process, allow server to run in degraded state
     }
+
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+        console.log('\n[Server] SIGTERM received, shutting down gracefully...');
+
+        expirationJob.stop();
+        drawExpirationJob.stop();
+        paymentPollingJob.stop();
+        paymentReconciliationJob.stop();
+        webhookRetryJob.stop();
+        ticketCleanupJob.stop();
+
+        server.close(async () => {
+            await closeDatabase();
+            console.log('[Server] Server closed');
+            process.exit(0);
+        });
+    });
+
+    process.on('SIGINT', async () => {
+        console.log('\n[Server] SIGINT received, shutting down gracefully...');
+
+        expirationJob.stop();
+        drawExpirationJob.stop();
+        paymentPollingJob.stop();
+        paymentReconciliationJob.stop();
+        webhookRetryJob.stop();
+        ticketCleanupJob.stop();
+
+        server.close(async () => {
+            await closeDatabase();
+            console.log('[Server] Server closed');
+            process.exit(0);
+        });
+    });
 }
 
 startServer();
