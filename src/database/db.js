@@ -10,9 +10,9 @@ function getPool() {
         pool = new Pool({
             connectionString: process.env.DATABASE_URL,
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-            max: 50, // INCREASED POOL SIZE FOR HIGH TRAFFIC
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 10000, // Increased timeout
+            max: 20, // Reduced from 50 to prevent connection exhaustion on Standard/Free tier
+            idleTimeoutMillis: 10000, // Close idle connections faster to free up slots
+            connectionTimeoutMillis: 30000, // Wait longer for a slot before timing out
         });
 
         pool.on('error', (err) => {
