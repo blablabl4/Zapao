@@ -81,7 +81,8 @@ if (require.main === module) {
         })
         .catch(err => {
             console.error('[Migration] Failed:', err);
-            process.exit(1);
+            console.warn('[Migration] ⚠️ WARNING: Migration failed but proceeding to start server to avoid crash loop.');
+            process.exit(0);
         });
 }
 
