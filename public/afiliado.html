@@ -88,18 +88,10 @@
             padding: 0 20px;
             max-width: 500px;
             margin: 0 auto;
-        }
-
-        .card {
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
             text-align: center;
         }
 
-        .card p {
+        .main-section p {
             color: var(--text-secondary);
             margin-bottom: 25px;
             line-height: 1.6;
@@ -245,64 +237,61 @@
 
     <!-- Main Section -->
     <section class="main-section">
-        <div class="card">
 
-            <!-- STEP 1: Phone Check -->
-            <div id="step1" class="step active">
-                <p>Indique amigos e concorra a prêmios exclusivos sem custo nenhum!</p>
+        <!-- STEP 1: Phone Check -->
+        <div id="step1" class="step active">
+            <p>Indique amigos e concorra a prêmios exclusivos sem custo nenhum!</p>
 
-                <div class="input-group">
-                    <label>Celular (WhatsApp) *</label>
-                    <input type="tel" id="checkPhone" placeholder="(11) 99999-9999" maxlength="15"
-                        oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
-                </div>
-
-                <button onclick="checkStatus()">Gerar meu Link</button>
+            <div class="input-group">
+                <label>Celular (WhatsApp) *</label>
+                <input type="tel" id="checkPhone" placeholder="(11) 99999-9999" maxlength="15"
+                    oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
             </div>
 
-            <!-- STEP 2: Registration (If new) -->
-            <div id="step2" class="step">
-                <p id="step2Msg">Precisamos dos seus dados para pagar suas comissões.</p>
+            <button onclick="checkStatus()">Gerar meu Link</button>
+        </div>
 
-                <div class="input-group">
-                    <label>Nome completo *</label>
-                    <input type="text" id="regName" placeholder="Seu nome">
-                </div>
+        <!-- STEP 2: Registration (If new) -->
+        <div id="step2" class="step">
+            <p id="step2Msg">Precisamos dos seus dados para pagar suas comissões.</p>
 
-                <div class="input-group">
-                    <label>Chave Pix (para receber prêmio) *</label>
-                    <input type="text" id="regPix" placeholder="CPF, telefone, email ou chave aleatória">
-                </div>
-
-                <div class="input-group">
-                    <label>CEP *</label>
-                    <input type="tel" id="regCep" placeholder="00000-000" maxlength="9" oninput="formatCep(this)">
-                </div>
-
-                <button onclick="register()">Confirmar e Gerar Link</button>
-                <button class="btn-secondary" onclick="backToStep1()">Voltar</button>
+            <div class="input-group">
+                <label>Nome completo *</label>
+                <input type="text" id="regName" placeholder="Seu nome">
             </div>
 
-            <!-- STEP 3: Success -->
-            <div id="step3" class="step">
-                <div class="success-icon">✅</div>
-                <h2 style="color:var(--green); margin-bottom:15px;">Link Gerado!</h2>
-                <p>Copie e envie para seus amigos. Boa sorte!</p>
-
-                <div class="link-box" id="finalLink">...</div>
-
-                <button onclick="copyLink()">📋 Copiar Link</button>
-                <div id="copyMsg"
-                    style="color:var(--green); margin-top:15px; display:none; animation: fadeSlideIn 0.3s ease;">
-                    Copiado com sucesso!
-                </div>
+            <div class="input-group">
+                <label>Chave Pix (para receber prêmio) *</label>
+                <input type="text" id="regPix" placeholder="CPF, telefone, email ou chave aleatória">
             </div>
 
-            <!-- Loading -->
-            <div id="loading" class="step">
-                <p class="loading-text">Processando...</p>
+            <div class="input-group">
+                <label>CEP *</label>
+                <input type="tel" id="regCep" placeholder="00000-000" maxlength="9" oninput="formatCep(this)">
             </div>
 
+            <button onclick="register()">Confirmar e Gerar Link</button>
+            <button class="btn-secondary" onclick="backToStep1()">Voltar</button>
+        </div>
+
+        <!-- STEP 3: Success -->
+        <div id="step3" class="step">
+            <div class="success-icon">✅</div>
+            <h2 style="color:var(--green); margin-bottom:15px;">Link Gerado!</h2>
+            <p>Copie e envie para seus amigos. Boa sorte!</p>
+
+            <div class="link-box" id="finalLink">...</div>
+
+            <button onclick="copyLink()">📋 Copiar Link</button>
+            <div id="copyMsg"
+                style="color:var(--green); margin-top:15px; display:none; animation: fadeSlideIn 0.3s ease;">
+                Copiado com sucesso!
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="step">
+            <p class="loading-text">Processando...</p>
         </div>
 
         <a href="/zapao-da-sorte" class="back-link">⬅ Voltar para o Sorteio</a>
