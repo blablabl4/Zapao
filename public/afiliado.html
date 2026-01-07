@@ -28,10 +28,20 @@
             --green: #22c55e;
             --gradient-gold: linear-gradient(135deg, #FFD700, #D4AF37, #B8860B);
             --gradient-dark: linear-gradient(180deg, #0a0a0f 0%, #1a1a23 50%, #0d0d12 100%);
+
+            /* Typography System matching styles.css */
+            --font-size-h1-mobile: 1.75rem;
+            --font-size-h1-desktop: 2.5rem;
+            --font-size-h2-mobile: 1.4rem;
+            --font-size-h2-desktop: 1.8rem;
+            --font-size-h3: 1.2rem;
+            --font-size-body: 1rem;
+            --font-size-small: 0.875rem;
         }
 
         body {
             font-family: 'Inter', sans-serif;
+            font-size: var(--font-size-body);
             background: var(--gradient-dark);
             background-attachment: fixed;
             color: var(--text-primary);
@@ -41,20 +51,7 @@
             position: relative;
         }
 
-        /* Background decorative elements */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(ellipse at 20% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
+        /* ... background ... */
 
         /* ========== HEADER ========== */
         .header {
@@ -72,13 +69,19 @@
         }
 
         .header h1 {
-            font-size: 1.8rem;
+            font-size: var(--font-size-h1-mobile);
             background: var(--gradient-gold);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             text-shadow: 0 0 40px var(--gold-glow);
             letter-spacing: 1px;
+        }
+
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: var(--font-size-h1-desktop);
+            }
         }
 
         /* ========== MAIN SECTION ========== */
@@ -350,9 +353,9 @@
 
 
             } catch (e) {
-            alert('Erro ao verificar. Tente novamente.');
-            showStep('step1');
-        }
+                alert('Erro ao verificar. Tente novamente.');
+                showStep('step1');
+            }
         }
 
         function backToStep1() {
