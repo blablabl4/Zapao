@@ -54,33 +54,14 @@ router.get('/ranking', async (req, res) => {
         console.log('[Affiliate Ranking] Raw stats:', JSON.stringify(stats, null, 2));
 
         // Return only name and ticket count (no revenue for public)
-        // Use phone as fallback if name is missing
+        // ONLY show affiliates with real names (already searched in affiliates + orders tables)
         const publicRanking = stats
-            .filter(s => s.ticket_count > 0) // Only show affiliates with sales
-            .map((s, index) => {
-                let displayName = s.padrinho_name;
-
-                // If no name, format phone nicely
-                if (!displayName && s.padrinho_phone) {
-                    const phone = s.padrinho_phone;
-                    // Format: (11) 99999-9999
-                    if (phone.length >= 10) {
-                        displayName = `(${phone.substring(0, 2)}) ${phone.substring(2, 7)}-${phone.substring(7)}`;
-                    } else {
-                        displayName = phone;
-                    }
-                }
-
-                if (!displayName) {
-                    displayName = 'Afiliado';
-                }
-
-                return {
-                    position: index + 1,
-                    name: displayName,
-                    referrals: s.ticket_count
-                };
-            });
+            .filter(s => s.padrinho_name && s.padrinho_name.trim() !== '' && s.ticket_count > 0)
+            .map((s, index) => ({
+                position: index + 1,
+                name: s.padrinho_name,
+                referrals: s.ticket_count
+            }));
 
         console.log('[Affiliate Ranking] Public ranking:', JSON.stringify(publicRanking, null, 2));
 
