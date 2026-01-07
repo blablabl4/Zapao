@@ -18,10 +18,10 @@ class AffiliateService {
         const orderRes = await query(`
             SELECT buyer_ref
             FROM orders 
-            WHERE buyer_phone = $1 
+            WHERE buyer_ref LIKE $1 
             ORDER BY created_at DESC 
             LIMIT 1
-        `, [phone]);
+        `, [`%|${phone}|%`]);
 
         if (orderRes.rows.length > 0) {
             const data = orderRes.rows[0];
