@@ -530,16 +530,27 @@ class DrawService {
                 if (decoded.includes('-')) {
                     padrinhoPhone = decoded.split('-')[0];
 
-                    // Find orders where this phone appears in buyer_ref
-                    const orderRes = await query(`
-                        SELECT buyer_ref FROM orders 
-                        WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                    // First try to find in affiliates table directly
+                    const affRes = await query(`
+                        SELECT name FROM affiliates 
+                        WHERE phone = $1
                         LIMIT 1
-                    `, [`%|${padrinhoPhone}|%`]);
+                    `, [padrinhoPhone]);
 
-                    if (orderRes.rows.length > 0) {
-                        const parts = (orderRes.rows[0].buyer_ref || '').split('|');
-                        padrinhoName = parts[0] || '';
+                    if (affRes.rows.length > 0 && affRes.rows[0].name) {
+                        padrinhoName = affRes.rows[0].name;
+                    } else {
+                        // Fallback: Find orders where this phone appears in buyer_ref
+                        const orderRes = await query(`
+                            SELECT buyer_ref FROM orders 
+                            WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                            LIMIT 1
+                        `, [`%${padrinhoPhone}%`]);
+
+                        if (orderRes.rows.length > 0) {
+                            const parts = (orderRes.rows[0].buyer_ref || '').split('|');
+                            padrinhoName = parts[0] || '';
+                        }
                     }
                 }
             } catch (e) {
