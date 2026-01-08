@@ -195,8 +195,8 @@ router.post('/', async (req, res) => {
         }
 
         const numValue = parseInt(number);
-        if (isNaN(numValue) || numValue < 0 || numValue > 99) {
-            return res.status(400).json({ error: 'Number must be between 0 and 99' });
+        if (isNaN(numValue) || numValue < 1 || numValue > 150) {
+            return res.status(400).json({ error: 'Number must be between 1 and 150' });
         }
 
         // Check purchase limit (Limit REMOVED)
