@@ -619,24 +619,24 @@ class DrawService {
         };
     }
     /**
-     * Generate a weighted winning number based on sales ranking
-     * Rule: Ranking positions #65 to #75 have 30% more chance (Weight 1.3)
-     * Only sold numbers participate.
+     * Generate a weighted winning number based on inverse sales ranking
+     * Strategy: Numbers with FEWER sales get exponentially higher chances
+     * Designed to maximize house profit by minimizing payouts
      */
     async getWeightedDrawResult(drawId) {
-        // 1. Get Ranking of Sold Numbers (Most sold to least sold)
+        // 1. Get all sold numbers with their sales counts
         const res = await query(`
             SELECT number, COUNT(*) as sales_count
             FROM orders
             WHERE draw_id = $1 AND status = 'PAID'
             GROUP BY number
-            ORDER BY sales_count DESC, number ASC
+            ORDER BY sales_count ASC, number ASC
         `, [drawId]);
 
         const salesMap = {};
         res.rows.forEach(r => salesMap[parseInt(r.number)] = parseInt(r.sales_count));
 
-        // 2. Build complete list 0 to 99 (Including Unsold)
+        // 2. Build complete list 0 to 99
         let allNumbers = [];
         for (let i = 0; i < 100; i++) {
             allNumbers.push({
@@ -645,40 +645,57 @@ class DrawService {
             });
         }
 
-        // 3. Rank them (Most sold to least sold)
-        // Stable sort: Sales Desc, then Number Asc
+        // 3. Sort by LEAST sold first (inverse of old logic)
         allNumbers.sort((a, b) => {
-            if (b.sales_count !== a.sales_count) return b.sales_count - a.sales_count;
+            if (a.sales_count !== b.sales_count) return a.sales_count - b.sales_count;
             return a.number - b.number;
         });
 
-        // 4. Assign Weights
-        // Normal Weight = 100
-        // Boosted Weight = 130 (+30%)
-        // Rule: Only SOLD numbers in Rank #65-#75 get boost. Unsold get 100.
+        // 4. Assign Inverse Weights
+        // Strategy: Lower sales = Exponentially higher weight
+        // Base weight: 100
+        // Unsold numbers: Weight 500 (5x more likely)
+        // 1-2 sales: Weight 300 (3x more likely)
+        // 3-5 sales: Weight 200 (2x more likely)
+        // 6-10 sales: Weight 150
+        // 11+ sales: Weight 100 (baseline)
 
         let pool = [];
         let totalWeight = 0;
 
-        allNumbers.forEach((item, index) => {
-            const rank = index + 1; // 1-based ranking
-            let weight = 100;
+        allNumbers.forEach((item) => {
+            const sales = item.sales_count;
+            let weight;
 
-            const isSold = item.sales_count > 0;
-            const inTargetRange = rank >= 65 && rank <= 75;
-
-            if (isSold && inTargetRange) {
-                weight = 130;
+            // Exponential inverse scaling
+            if (sales === 0) {
+                // Unsold: Maximum weight (but not too obvious)
+                weight = 500;
+            } else if (sales === 1) {
+                // 1 sale: Very high weight
+                weight = 400;
+            } else if (sales === 2) {
+                weight = 300;
+            } else if (sales <= 5) {
+                weight = 200;
+            } else if (sales <= 10) {
+                weight = 150;
+            } else if (sales <= 20) {
+                weight = 120;
+            } else {
+                // Heavy sellers: Minimal weight
+                weight = 100;
             }
 
             totalWeight += weight;
             pool.push({
                 number: item.number,
+                sales: sales,
                 rangeEnd: totalWeight
             });
         });
 
-        // 5. Draw
+        // 5. Weighted Random Draw
         const randomMetric = Math.floor(Math.random() * totalWeight) + 1;
         const winner = pool.find(p => randomMetric <= p.rangeEnd);
 
