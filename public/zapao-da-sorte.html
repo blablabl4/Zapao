@@ -377,10 +377,31 @@
         }
 
         .draw-card.open .draw-body {
-            max-height: 2000px;
-            /* Adjust based on content */
+            max-height: 500px;
+            /* Fixed height for scroll */
+            overflow-y: auto;
+            /* Enable vertical scroll */
             padding: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom Scrollbar for Draw Body */
+        .draw-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .draw-body::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .draw-body::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 4px;
+        }
+
+        .draw-body::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-light);
         }
 
         .draw-card i.fa-chevron-down {
