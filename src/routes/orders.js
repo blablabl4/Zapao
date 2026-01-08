@@ -113,14 +113,16 @@ router.post('/bulk', validateRequest(createOrderSchema), async (req, res) => {
 
         for (const number of numbers) {
             const numValue = parseInt(number);
-            // Validate range (0-99)
-            // Use currentDraw.total_numbers if available, fallback to 100
-            const maxNum = currentDraw.total_numbers || 100;
-            if (isNaN(numValue) || numValue < 0 || numValue >= maxNum) {
-                return res.status(400).json({ error: `Número inválido: ${number} (Range: 0-${maxNum - 1})` });
+            // Validate each number
+            // Validate range (1-150)
+            const maxNum = currentDraw.total_numbers || 150;
+            if (isNaN(numValue) || numValue < 1 || numValue > maxNum) {
+                return res.status(400).json({
+                    error: `Número inválido: ${number} (Range: 1-${maxNum})`
+                });
             }
 
-            // Locking logic: REMOVED as per user request. 
+            // Locking logic: REMOVED as per user request.
             // Multiple users can buy the same number.
 
             const order = await OrderService.createOrder(numValue, uniqueBuyerRef, currentDraw.id, referrer_id);

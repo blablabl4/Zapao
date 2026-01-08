@@ -40,11 +40,11 @@ async function checkDrawStatus() {
         `, [draw.id]);
 
         const sold = parseInt(countRes.rows[0].sold_count);
-        const total = draw.total_numbers || 100; // Default 100 if null
+        const totalNumbers = draw.total_numbers || 150; // Default 100 if null
 
-        console.log(`\n🎟️ Vendas: ${sold} / ${total}`);
+        console.log(`\n🎟️ Vendas: ${sold} / ${totalNumbers}`);
 
-        if (sold >= total) {
+        if (sold >= totalNumbers) {
             console.log("🚨 DIAGNÓSTICO: A rifa está realmente ESGOTADA (Todos os números vendidos).");
         } else if (draw.sales_locked) {
             console.log("🚨 DIAGNÓSTICO: A rifa NÃO está esgotada, mas 'sales_locked' está TRUE. (Foi fechada manualmente?)");

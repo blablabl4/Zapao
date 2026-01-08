@@ -32,7 +32,7 @@ class DrawService {
         draw.current_prize = parseFloat(draw.prize_base) + parseFloat(draw.reserve_amount);
         draw.sales_locked = Boolean(draw.sales_locked);
         // Ensure total_numbers is returned (defaults to 100 if null)
-        draw.total_numbers = draw.total_numbers || 100;
+        draw.total_numbers = draw.total_numbers || 150;
 
         return draw;
     }
@@ -636,9 +636,9 @@ class DrawService {
         const salesMap = {};
         res.rows.forEach(r => salesMap[parseInt(r.number)] = parseInt(r.sales_count));
 
-        // 2. Build complete list 0 to 99
+        // 2. Build complete list 1 to 150
         let allNumbers = [];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 1; i <= 150; i++) {
             allNumbers.push({
                 number: i,
                 sales_count: salesMap[i] || 0

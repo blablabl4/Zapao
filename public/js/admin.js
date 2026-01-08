@@ -557,7 +557,7 @@ async function updateDrawTime(date, time) {
 }
 
 // ========== SLOT MACHINE (VISUAL 3D ROULETTE) ==========
-const TOTAL_NUMBERS = 100;
+const TOTAL_NUMBERS = 150;
 let currentIndex = 0; // This is now index in SHUFFLED array
 let animationFrameId = null;
 let audioCtx = null;
@@ -565,7 +565,7 @@ let audioCtx = null;
 // SHUFFLED NUMBERS ARRAY (For Random Visual Order)
 // We generate this once so the order is consistent during a session, 
 // creating the illusion of a specific physical wheel layout.
-const SHUFFLED_NUMBERS = Array.from({ length: TOTAL_NUMBERS }, (_, i) => i)
+const SHUFFLED_NUMBERS = Array.from({ length: TOTAL_NUMBERS }, (_, i) => i + 1)
     .sort(() => Math.random() - 0.5);
 
 // Helper: Get adjacent numbers from shuffled array
@@ -797,8 +797,8 @@ async function spinSlots() {
             }
         } catch (e) {
             console.error('Secret Draw Failed, falling back to random:', e);
-            // Fallback: Generate purely local random number (0-99)
-            targetNumber = Math.floor(Math.random() * TOTAL_NUMBERS);
+            // Fallback: Generate purely local random number (1-150)
+            targetNumber = Math.floor(Math.random() * TOTAL_NUMBERS) + 1;
         }
 
         status.textContent = '';

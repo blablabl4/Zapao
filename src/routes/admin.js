@@ -45,8 +45,8 @@ router.post('/close-draw', async (req, res) => {
         }
 
         const numValue = parseInt(drawn_number);
-        if (isNaN(numValue) || numValue < 0 || numValue > 99) {
-            return res.status(400).json({ error: 'drawn_number must be between 0 and 99' });
+        if (isNaN(numValue) || numValue < 1 || numValue > 150) {
+            return res.status(400).json({ error: 'drawn_number must be between 1 and 150' });
         }
 
         const result = await DrawService.closeDraw(numValue);
