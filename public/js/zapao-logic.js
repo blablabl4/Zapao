@@ -1,8 +1,8 @@
-// zapao-logic.js - Specialized Logic for Zapão da Sorte (1-75)
+// zapao-logic.js - Specialized Logic for Zapão da Sorte (0-99)
 // Independent of app.js for visual rendering
 
 const ZAPAO_CONFIG = {
-    totalNumbers: 75,
+    totalNumbers: 100,
     price: 1.50,
     gridId: 'zapaoGrid',
     floatingBtnContainerId: 'floatingDivHost'
@@ -29,7 +29,7 @@ function renderZapaoGrid() {
 
     grid.innerHTML = ''; // Clear anything existing
 
-    for (let i = 1; i <= ZAPAO_CONFIG.totalNumbers; i++) {
+    for (let i = 0; i < ZAPAO_CONFIG.totalNumbers; i++) {
         const numStr = i.toString().padStart(2, '0');
         const btn = document.createElement('div');
 

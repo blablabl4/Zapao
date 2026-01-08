@@ -113,11 +113,11 @@ router.post('/bulk', validateRequest(createOrderSchema), async (req, res) => {
 
         for (const number of numbers) {
             const numValue = parseInt(number);
-            // Validate range
-            // Use currentDraw.total_numbers if available, fallback to 75
-            const maxNum = currentDraw.total_numbers || 75;
-            if (isNaN(numValue) || numValue < 1 || numValue > maxNum) {
-                return res.status(400).json({ error: `Número inválido: ${number} (Max: ${maxNum})` });
+            // Validate range (0-99)
+            // Use currentDraw.total_numbers if available, fallback to 100
+            const maxNum = currentDraw.total_numbers || 100;
+            if (isNaN(numValue) || numValue < 0 || numValue >= maxNum) {
+                return res.status(400).json({ error: `Número inválido: ${number} (Range: 0-${maxNum - 1})` });
             }
 
             // Locking logic: REMOVED as per user request. 

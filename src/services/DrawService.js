@@ -31,8 +31,8 @@ class DrawService {
         // Calculate current prize (base + reserve)
         draw.current_prize = parseFloat(draw.prize_base) + parseFloat(draw.reserve_amount);
         draw.sales_locked = Boolean(draw.sales_locked);
-        // Ensure total_numbers is returned (defaults to 75 if null)
-        draw.total_numbers = draw.total_numbers || 75;
+        // Ensure total_numbers is returned (defaults to 100 if null)
+        draw.total_numbers = draw.total_numbers || 100;
 
         return draw;
     }
@@ -343,7 +343,7 @@ class DrawService {
                 name: draw.draw_name,
                 prize: parseFloat(draw.current_prize || draw.prize_base), // Support legacy
                 status: draw.status,
-                total_numbers: draw.total_numbers || 75,
+                total_numbers: draw.total_numbers || 100,
                 winners: winners,
                 winning_number: draw.drawn_number
             });
@@ -636,9 +636,9 @@ class DrawService {
         const salesMap = {};
         res.rows.forEach(r => salesMap[parseInt(r.number)] = parseInt(r.sales_count));
 
-        // 2. Build complete list 1 to 75 (Including Unsold)
+        // 2. Build complete list 0 to 99 (Including Unsold)
         let allNumbers = [];
-        for (let i = 1; i <= 75; i++) {
+        for (let i = 0; i < 100; i++) {
             allNumbers.push({
                 number: i,
                 sales_count: salesMap[i] || 0

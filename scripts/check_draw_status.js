@@ -40,7 +40,7 @@ async function checkDrawStatus() {
         `, [draw.id]);
 
         const sold = parseInt(countRes.rows[0].sold_count);
-        const total = draw.total_numbers || 75; // Default 75 if null
+        const total = draw.total_numbers || 100; // Default 100 if null
 
         console.log(`\n🎟️ Vendas: ${sold} / ${total}`);
 
