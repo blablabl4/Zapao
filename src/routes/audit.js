@@ -95,6 +95,7 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             SELECT 
                 referrer_id, 
                 COUNT(*) as ticket_count, 
+                COUNT(DISTINCT order_id) as transaction_count,
                 SUM(amount) as total_revenue,
                 COUNT(DISTINCT buyer_ref) as unique_clients
             FROM orders 
@@ -115,6 +116,7 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
         SELECT 
             COALESCE(s.referrer_id, c.referrer_id) as referrer_id,
             COALESCE(s.ticket_count, 0) as ticket_count,
+            COALESCE(s.transaction_count, 0) as transaction_count,
             COALESCE(s.total_revenue, 0) as total_revenue,
             COALESCE(s.unique_clients, 0) as unique_clients,
             COALESCE(c.click_count, 0) as access_count
@@ -183,17 +185,18 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             padrinhoName = `Afiliado ${padrinhoPhone.slice(-4) || '???'}`;
         }
 
-        // Calculate conversion: acessos / vendas (tickets)
-        // Shows how many accesses per sale
+        // Calculate conversion: acessos / transações (cada compra completa)
+        // Shows how many accesses per transaction (order)
         const tickets = parseInt(row.ticket_count) || 0;
+        const transactions = parseInt(row.transaction_count) || 0;
         const accesses = parseInt(row.access_count) || 0;
         let conversionRate = '-';
 
-        if (tickets > 0 && accesses > 0) {
-            // Acessos por venda
-            const accessesPerSale = (accesses / tickets).toFixed(1);
-            conversionRate = `${accessesPerSale}:1`;
-        } else if (tickets > 0 && accesses === 0) {
+        if (transactions > 0 && accesses > 0) {
+            // Acessos por transação
+            const accessesPerTransaction = (accesses / transactions).toFixed(1);
+            conversionRate = `${accessesPerTransaction}:1`;
+        } else if (transactions > 0 && accesses === 0) {
             conversionRate = 'Direto';
         }
 
