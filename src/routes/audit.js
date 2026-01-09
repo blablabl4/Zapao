@@ -123,84 +123,106 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
         ORDER BY ticket_count DESC, total_revenue DESC
     `, [drawId]);
 
-    // Enrich with affiliate names - IMPROVED: Never show "Não identificado"
+    // Enrich with affiliate names - IMPROVED lookup
     const enrichedResults = [];
     for (const row of result.rows) {
         let padrinhoName = '';
         let padrinhoPhone = '';
 
         try {
+            // Decode referrer_id (base64 of PHONE-DRAWID)
             const decoded = Buffer.from(row.referrer_id, 'base64').toString('utf-8');
+            console.log(`[Audit] Decoded referrer_id: ${decoded}`);
+
             if (decoded.includes('-')) {
                 padrinhoPhone = decoded.split('-')[0];
+                console.log(`[Audit] Extracted phone: ${padrinhoPhone}`);
 
                 // 1. Try affiliates table first
                 const affRes = await query(`
-                    SELECT name, pix_key FROM affiliates 
-                    WHERE phone = $1
+                    SELECT name FROM affiliates 
+                    WHERE phone = $1 OR phone LIKE $2
                     LIMIT 1
-                `, [padrinhoPhone]);
+                `, [padrinhoPhone, `%${padrinhoPhone.slice(-8)}%`]);
 
                 if (affRes.rows.length > 0 && affRes.rows[0].name) {
                     padrinhoName = affRes.rows[0].name;
+                    console.log(`[Audit] Found in affiliates: ${padrinhoName}`);
                 }
 
-                // 2. If not found, search ALL orders where this phone is buyer (any draw)
+                // 2. If not found, search ALL orders where this phone is buyer
                 if (!padrinhoName) {
                     const orderRes = await query(`
                         SELECT buyer_ref FROM orders 
-                        WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                        WHERE (buyer_ref LIKE $1 OR buyer_ref LIKE $2)
+                        AND status = 'PAID'
                         ORDER BY created_at DESC
                         LIMIT 1
-                    `, [`%${padrinhoPhone}%`]);
+                    `, [`%|${padrinhoPhone}|%`, `%${padrinhoPhone.slice(-8)}%`]);
 
-                    if (orderRes.rows.length > 0) {
-                        const parts = (orderRes.rows[0].buyer_ref || '').split('|');
+                    if (orderRes.rows.length > 0 && orderRes.rows[0].buyer_ref) {
+                        const parts = orderRes.rows[0].buyer_ref.split('|');
                         padrinhoName = parts[0] || '';
+                        console.log(`[Audit] Found in orders: ${padrinhoName}`);
                     }
                 }
 
-                // 3. If still not found, try partial phone match
-                if (!padrinhoName && padrinhoPhone.length >= 8) {
-                    const partialRes = await query(`
-                        SELECT buyer_ref FROM orders 
-                        WHERE buyer_ref LIKE $1 AND status = 'PAID'
-                        ORDER BY created_at DESC
-                        LIMIT 1
-                    `, [`%${padrinhoPhone.slice(-8)}%`]);
-
-                    if (partialRes.rows.length > 0) {
-                        const parts = (partialRes.rows[0].buyer_ref || '').split('|');
-                        padrinhoName = parts[0] || '';
-                    }
+                // 3. Last resort: format phone nicely
+                if (!padrinhoName && padrinhoPhone) {
+                    padrinhoName = `Afiliado ${padrinhoPhone.slice(-4)}`;
                 }
-
-                // 4. Last resort: use masked phone as name
-                if (!padrinhoName) {
-                    padrinhoName = `Tel: ${padrinhoPhone.slice(0, 2)}****${padrinhoPhone.slice(-4)}`;
-                }
+            } else {
+                // referrer_id is not base64 encoded, use directly
+                padrinhoPhone = decoded || row.referrer_id;
+                padrinhoName = `Afiliado ${padrinhoPhone.slice(-4)}`;
             }
         } catch (e) {
-            padrinhoPhone = row.referrer_id.substring(0, 11);
-            padrinhoName = `ID: ${padrinhoPhone.slice(0, 6)}...`;
+            console.error(`[Audit] Error decoding: ${e.message}`);
+            // Fallback: use referrer_id directly
+            padrinhoPhone = row.referrer_id ? row.referrer_id.substring(0, 11) : '';
+            padrinhoName = `Afiliado ${padrinhoPhone.slice(-4) || '???'}`;
+        }
+
+        // Calculate conversion: acessos / vendas (tickets)
+        // Shows how many accesses per sale
+        const tickets = parseInt(row.ticket_count) || 0;
+        const accesses = parseInt(row.access_count) || 0;
+        let conversionRate = '-';
+
+        if (tickets > 0 && accesses > 0) {
+            // Acessos por venda
+            const accessesPerSale = (accesses / tickets).toFixed(1);
+            conversionRate = `${accessesPerSale}:1`;
+        } else if (tickets > 0 && accesses === 0) {
+            conversionRate = 'Direto';
         }
 
         enrichedResults.push({
             referrer_id: row.referrer_id,
-            name: padrinhoName, // Always has value now due to improved lookup
-            phone: padrinhoPhone,
-            ticket_count: parseInt(row.ticket_count),
-            unique_clients: parseInt(row.unique_clients),
+            name: padrinhoName || 'Sem nome',
+            phone: padrinhoPhone ? formatPhone(padrinhoPhone) : '-',
+            ticket_count: tickets,
+            unique_clients: parseInt(row.unique_clients) || 0,
             total_revenue: parseFloat(row.total_revenue || 0),
-            access_count: parseInt(row.access_count || 0),
-            // Conversion = unique clients / accesses (capped at 100%)
-            conversion_rate: parseInt(row.access_count) > 0
-                ? Math.min(((parseInt(row.unique_clients) / parseInt(row.access_count)) * 100), 100).toFixed(1) + '%'
-                : (parseInt(row.unique_clients) > 0 ? '100%' : '-')
+            access_count: accesses,
+            conversion_rate: conversionRate
         });
     }
 
     return enrichedResults;
+}
+
+// Format phone number
+function formatPhone(phone) {
+    if (!phone || phone.length < 10) return phone || '-';
+    // Remove non-digits
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length === 11) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    } else if (digits.length === 10) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+    return phone;
 }
 
 module.exports = router;
