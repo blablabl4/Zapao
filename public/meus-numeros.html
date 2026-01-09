@@ -298,6 +298,78 @@
             }
         }
     </script>
+
+    <!-- IDSR Footer -->
+    <footer class="idsr-footer">
+        <div class="idsr-footer-content">
+            <span class="idsr-footer-text">© 2026 IDSR. Todos os direitos reservados.</span>
+            <span class="idsr-separator">|</span>
+            <a href="https://idsr.com.br" target="_blank" rel="noopener noreferrer" class="idsr-link">
+                Produzido e gerenciado por <strong>IDSR</strong>
+            </a>
+        </div>
+    </footer>
+
+    <style>
+    .idsr-footer {
+        width: 100%;
+        padding: 15px 20px;
+        background: rgba(0, 0, 0, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        margin-top: 40px;
+        text-align: center;
+    }
+
+    .idsr-footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.75rem;
+        color: #666;
+    }
+
+    .idsr-footer-text {
+        opacity: 0.7;
+    }
+
+    .idsr-separator {
+        opacity: 0.3;
+    }
+
+    .idsr-link {
+        color: #666;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        opacity: 0.8;
+    }
+
+    .idsr-link:hover {
+        color: #000;
+        opacity: 1;
+    }
+
+    .idsr-link strong {
+        font-weight: 600;
+        color: #d4af37;
+    }
+
+    @media (max-width: 600px) {
+        .idsr-footer-content {
+            font-size: 0.7rem;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .idsr-separator {
+            display: none;
+        }
+    }
+    </style>
+
 </body>
 
 </html>
