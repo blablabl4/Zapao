@@ -224,7 +224,7 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
     return enrichedResults;
 }
 
-// Format phone number safely
+// Format phone number - FULL display, no masking
 function formatPhone(phone) {
     if (!phone) return '-';
 
@@ -235,8 +235,9 @@ function formatPhone(phone) {
         return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
     } else if (digits.length === 10) {
         return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-    } else if (digits.length >= 8) {
-        return `***${digits.slice(-4)}`;
+    } else if (digits.length > 0) {
+        // Show whatever we have, no masking
+        return digits;
     }
 
     return '-';
