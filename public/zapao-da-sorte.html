@@ -376,7 +376,18 @@
             background: rgba(0, 0, 0, 0.2);
         }
 
-        .draw-card.open .draw-body {
+        /* ACTIVE raffle: No scroll, expand completely */
+        .draw-card.open .draw-body.active-draw {
+            max-height: none;
+            /* No limit - show all content */
+            overflow: visible;
+            /* No scroll */
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* CLOSED raffle: With scroll, limited height */
+        .draw-card.open .draw-body.closed-draw {
             max-height: 500px;
             /* Fixed height for scroll */
             overflow-y: auto;
@@ -764,7 +775,7 @@
                     <i class="fas fa-chevron-down"></i>
                 </div>
             </div>
-            <div class="draw-body" id="draw-body-{id}">
+            <div class="draw-body active-draw" id="draw-body-{id}">
                 <!-- Progress bar and Stats text removed as per user request -->
 
 
@@ -789,7 +800,7 @@
                     <i class="fas fa-chevron-down"></i>
                 </div>
             </div>
-            <div class="draw-body" id="draw-body-{id}">
+            <div class="draw-body closed-draw" id="draw-body-{id}">
                 <div class="winners-list">
                     <!-- Winners injected here -->
                 </div>
