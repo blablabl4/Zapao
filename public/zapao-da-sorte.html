@@ -1059,8 +1059,11 @@
                 drawsData = data.draws;
                 listEl.innerHTML = ''; // Clear loading
 
-                if (!drawsData || drawsData.length === 0) {
-                    // Hide countdown when no raffle
+                // Check if there are any ACTIVE draws
+                const activeDraws = drawsData ? drawsData.filter(d => d.status === 'ACTIVE') : [];
+
+                if (!activeDraws || activeDraws.length === 0) {
+                    // No ACTIVE raffle - show message and WhatsApp button
                     const countdownContainer = document.getElementById('countdownContainer');
                     if (countdownContainer) {
                         countdownContainer.innerHTML = `
@@ -1081,7 +1084,9 @@
                             </div>
                         `;
                     }
+                }
 
+                if (!drawsData || drawsData.length === 0) {
                     listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">Nenhuma rifa disponível no momento.</div>';
                     return;
                 }
