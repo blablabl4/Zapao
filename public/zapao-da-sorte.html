@@ -1063,7 +1063,15 @@
                 const activeDraws = drawsData ? drawsData.filter(d => d.status === 'ACTIVE') : [];
 
                 if (!activeDraws || activeDraws.length === 0) {
-                    // No ACTIVE raffle - show message and WhatsApp button
+                    // No ACTIVE raffle - hide prize and subtitle, show message and WhatsApp button
+
+                    // Hide prize and subtitle
+                    const prizeDisplay = document.getElementById('prizeDisplay');
+                    const subtitle = document.querySelector('.subtitle');
+                    if (prizeDisplay) prizeDisplay.style.display = 'none';
+                    if (subtitle) subtitle.style.display = 'none';
+
+                    // Show WhatsApp button in countdown area
                     const countdownContainer = document.getElementById('countdownContainer');
                     if (countdownContainer) {
                         countdownContainer.innerHTML = `
