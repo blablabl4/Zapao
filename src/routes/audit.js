@@ -125,7 +125,7 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
         ORDER BY ticket_count DESC, total_revenue DESC
     `, [drawId]);
 
-    // Enrich with affiliate names - IMPROVED lookup
+    // Enrich with affiliate names
     const enrichedResults = [];
     for (const row of result.rows) {
         let padrinhoName = '';
@@ -133,78 +133,87 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
 
         try {
             // Decode referrer_id (base64 of PHONE-DRAWID)
-            const decoded = Buffer.from(row.referrer_id, 'base64').toString('utf-8');
-            console.log(`[Audit] Decoded referrer_id: ${decoded}`);
+            let decoded = '';
+            try {
+                decoded = Buffer.from(row.referrer_id, 'base64').toString('utf-8');
+            } catch (decodeErr) {
+                // Not valid base64, use as-is
+                decoded = row.referrer_id;
+            }
 
-            if (decoded.includes('-')) {
+            // Extract phone number
+            if (decoded && decoded.includes('-')) {
                 padrinhoPhone = decoded.split('-')[0];
-                console.log(`[Audit] Extracted phone: ${padrinhoPhone}`);
+            } else {
+                // Try to extract just digits
+                padrinhoPhone = decoded.replace(/\D/g, '');
+            }
 
+            // Validate phone - should be 10-11 digits
+            if (padrinhoPhone && /^\d{10,11}$/.test(padrinhoPhone)) {
                 // 1. Try affiliates table first
                 const affRes = await query(`
                     SELECT name FROM affiliates 
-                    WHERE phone = $1 OR phone LIKE $2
+                    WHERE phone = $1
                     LIMIT 1
-                `, [padrinhoPhone, `%${padrinhoPhone.slice(-8)}%`]);
+                `, [padrinhoPhone]);
 
                 if (affRes.rows.length > 0 && affRes.rows[0].name) {
                     padrinhoName = affRes.rows[0].name;
-                    console.log(`[Audit] Found in affiliates: ${padrinhoName}`);
                 }
 
-                // 2. If not found, search ALL orders where this phone is buyer
+                // 2. If not found, search orders where this phone is buyer
                 if (!padrinhoName) {
                     const orderRes = await query(`
                         SELECT buyer_ref FROM orders 
-                        WHERE (buyer_ref LIKE $1 OR buyer_ref LIKE $2)
+                        WHERE buyer_ref LIKE $1
                         AND status = 'PAID'
                         ORDER BY created_at DESC
                         LIMIT 1
-                    `, [`%|${padrinhoPhone}|%`, `%${padrinhoPhone.slice(-8)}%`]);
+                    `, [`%${padrinhoPhone}%`]);
 
                     if (orderRes.rows.length > 0 && orderRes.rows[0].buyer_ref) {
                         const parts = orderRes.rows[0].buyer_ref.split('|');
-                        padrinhoName = parts[0] || '';
-                        console.log(`[Audit] Found in orders: ${padrinhoName}`);
+                        if (parts[0] && parts[0].length > 1) {
+                            padrinhoName = parts[0];
+                        }
                     }
                 }
-
-                // 3. Last resort: format phone nicely
-                if (!padrinhoName && padrinhoPhone) {
-                    padrinhoName = `Afiliado ${padrinhoPhone.slice(-4)}`;
-                }
-            } else {
-                // referrer_id is not base64 encoded, use directly
-                padrinhoPhone = decoded || row.referrer_id;
-                padrinhoName = `Afiliado ${padrinhoPhone.slice(-4)}`;
             }
+
+            // Fallback: use formatted phone or last 4 digits
+            if (!padrinhoName) {
+                if (padrinhoPhone && padrinhoPhone.length >= 4) {
+                    padrinhoName = `Afiliado ***${padrinhoPhone.slice(-4)}`;
+                } else {
+                    padrinhoName = `Afiliado #${row.referrer_id.slice(0, 6)}`;
+                }
+            }
+
         } catch (e) {
-            console.error(`[Audit] Error decoding: ${e.message}`);
-            // Fallback: use referrer_id directly
-            padrinhoPhone = row.referrer_id ? row.referrer_id.substring(0, 11) : '';
-            padrinhoName = `Afiliado ${padrinhoPhone.slice(-4) || '???'}`;
+            console.error(`[Audit] Error processing referrer: ${e.message}`);
+            padrinhoName = `Afiliado #${(row.referrer_id || '').slice(0, 6)}`;
+            padrinhoPhone = '';
         }
 
-        // Calculate conversion: acessos / transações (cada compra completa)
-        // Shows how many accesses per transaction (order)
-        const tickets = parseInt(row.ticket_count) || 0;
+        // Calculate conversion: (transações / acessos) * 100 = percentual
         const transactions = parseInt(row.transaction_count) || 0;
         const accesses = parseInt(row.access_count) || 0;
         let conversionRate = '-';
 
-        if (transactions > 0 && accesses > 0) {
-            // Acessos por transação
-            const accessesPerTransaction = (accesses / transactions).toFixed(1);
-            conversionRate = `${accessesPerTransaction}:1`;
+        if (accesses > 0 && transactions > 0) {
+            // Percentual de conversão
+            const percentage = ((transactions / accesses) * 100).toFixed(1);
+            conversionRate = `${percentage}%`;
         } else if (transactions > 0 && accesses === 0) {
-            conversionRate = 'Direto';
+            conversionRate = '100%'; // Venda direta
         }
 
         enrichedResults.push({
             referrer_id: row.referrer_id,
-            name: padrinhoName || 'Sem nome',
-            phone: padrinhoPhone ? formatPhone(padrinhoPhone) : '-',
-            ticket_count: tickets,
+            name: padrinhoName,
+            phone: formatPhone(padrinhoPhone),
+            ticket_count: parseInt(row.ticket_count) || 0,
             unique_clients: parseInt(row.unique_clients) || 0,
             total_revenue: parseFloat(row.total_revenue || 0),
             access_count: accesses,
@@ -215,17 +224,22 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
     return enrichedResults;
 }
 
-// Format phone number
+// Format phone number safely
 function formatPhone(phone) {
-    if (!phone || phone.length < 10) return phone || '-';
+    if (!phone) return '-';
+
     // Remove non-digits
     const digits = phone.replace(/\D/g, '');
+
     if (digits.length === 11) {
         return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
     } else if (digits.length === 10) {
         return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    } else if (digits.length >= 8) {
+        return `***${digits.slice(-4)}`;
     }
-    return phone;
+
+    return '-';
 }
 
 module.exports = router;
