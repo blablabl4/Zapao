@@ -720,15 +720,17 @@
                     <table class="payments-table">
                         <thead>
                             <tr>
-                                <th>Padrinho</th>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th style="text-align: center;">Tickets</th>
+                                <th style="text-align: center;">Clientes Únicos</th>
                                 <th style="text-align: center;">Acessos</th>
-                                <th style="text-align: center;">Vendas</th>
                                 <th style="text-align: right;">Receita</th>
                             </tr>
                         </thead>
                         <tbody id="affiliatesTableBody">
                             <tr>
-                                <td colspan="4"
+                                <td colspan="6"
                                     style="text-align: center; padding: 20px; color: var(--text-secondary);">
                                     Carregando dados...
                                 </td>
@@ -829,34 +831,32 @@
         // Affiliate Draw Logic
         async function checkAffiliateStats() {
             try {
-                const res = await fetch('/api/admin/affiliate-stats');
+                // Use audit API for better data
+                const res = await fetch('/api/audit/affiliates');
                 const data = await res.json();
 
                 if (data.error) throw new Error(data.error);
 
                 const tbody = document.getElementById('affiliatesTableBody');
-                if (!tbody) return; // Tab might be hidden or missing?
+                if (!tbody) return;
 
-                if (data.candidates.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum participante ainda.</td></tr>`;
+                const affiliates = data.affiliates || [];
+                if (affiliates.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">Nenhum afiliado ainda.</td></tr>`;
                     return;
                 }
 
                 let html = '';
-                data.candidates.forEach(c => {
-                    // Use new backend fields for name and phone
-                    const name = c.padrinho_name || 'Desconhecido';
-                    const phone = c.padrinho_phone || c.referrer_id.substring(0, 11);
-                    const revenue = parseFloat(c.total_revenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                affiliates.forEach(aff => {
+                    const revenue = parseFloat(aff.total_revenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
                     html += `
                         <tr>
-                            <td>
-                                <div style="font-weight:bold; color:var(--gold);">${name}</div>
-                                <div style="font-size:0.75em; color:var(--text-secondary);">${phone}</div>
-                            </td>
-                            <td style="text-align:center; color: var(--blue);">${c.access_count || 0}</td>
-                            <td style="text-align:center;">${c.ticket_count}</td>
+                            <td style="font-weight:bold; color:var(--gold);">${aff.name}</td>
+                            <td style="color:var(--text-secondary);">${aff.phone}</td>
+                            <td style="text-align:center;">${aff.ticket_count}</td>
+                            <td style="text-align:center; color:#4ade80;">${aff.unique_clients}</td>
+                            <td style="text-align:center; color: var(--blue);">${aff.access_count}</td>
                             <td style="text-align:right; color:#4ade80; font-weight: 600;">${revenue}</td>
                         </tr>
                     `;
@@ -956,63 +956,63 @@
     </footer>
 
     <style>
-    .idsr-footer {
-        width: 100%;
-        padding: 15px 20px;
-        background: rgba(0, 0, 0, 0.05);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        margin-top: 40px;
-        text-align: center;
-    }
+        .idsr-footer {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.05);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+            text-align: center;
+        }
 
-    .idsr-footer-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 0.75rem;
-        color: #666;
-    }
-
-    .idsr-footer-text {
-        opacity: 0.7;
-    }
-
-    .idsr-separator {
-        opacity: 0.3;
-    }
-
-    .idsr-link {
-        color: #666;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        opacity: 0.8;
-    }
-
-    .idsr-link:hover {
-        color: #000;
-        opacity: 1;
-    }
-
-    .idsr-link strong {
-        font-weight: 600;
-        color: #d4af37;
-    }
-
-    @media (max-width: 600px) {
         .idsr-footer-content {
-            font-size: 0.7rem;
-            flex-direction: column;
-            gap: 4px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #666;
         }
-        
+
+        .idsr-footer-text {
+            opacity: 0.7;
+        }
+
         .idsr-separator {
-            display: none;
+            opacity: 0.3;
         }
-    }
+
+        .idsr-link {
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            opacity: 0.8;
+        }
+
+        .idsr-link:hover {
+            color: #000;
+            opacity: 1;
+        }
+
+        .idsr-link strong {
+            font-weight: 600;
+            color: #d4af37;
+        }
+
+        @media (max-width: 600px) {
+            .idsr-footer-content {
+                font-size: 0.7rem;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .idsr-separator {
+                display: none;
+            }
+        }
     </style>
 
 </body>

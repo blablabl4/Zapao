@@ -9,7 +9,7 @@
 // Configuration
 const SHARE_CONFIG = {
     text: 'https://www.tvzapao.com.br/share.html',
-    groupLink: 'https://chat.whatsapp.com/IXz69vK0NPF8uFKt07TCYn',
+    groupLink: 'https://chat.whatsapp.com/KVfNKMR7W1lGMtMSWtN5W3',
     fallbackDelay: 3000
 };
 
