@@ -28,15 +28,15 @@ class OrderService {
 
     /**
      * Create a new order
-     * @param {number} number - Number between 0-99
+     * @param {number} number - Number between 1-150
      * @param {string} buyer_ref - Buyer reference: "name|phone|birthdate|gender"
      * @param {number} draw_id - Current draw ID
      * @returns {object} Created order
      */
     async createOrder(number, buyer_ref = null, draw_id = null, referrer_id = null) {
         // Validate number
-        if (!Number.isInteger(number) || number < 0 || number > 99) {
-            throw new Error('Number must be between 0 and 99');
+        if (!Number.isInteger(number) || number < 1 || number > 150) {
+            throw new Error('Number must be between 1 and 150');
         }
 
         // Fixed amount: R$ 1.50 for all numbers

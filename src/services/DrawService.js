@@ -159,8 +159,8 @@ class DrawService {
      * @returns {object} Draw result with winners
      */
     async closeDraw(drawn_number) {
-        if (!Number.isInteger(drawn_number) || drawn_number < 0 || drawn_number > 99) {
-            throw new Error('Drawn number must be between 0 and 99');
+        if (!Number.isInteger(drawn_number) || drawn_number < 1 || drawn_number > 150) {
+            throw new Error('Drawn number must be between 1 and 150');
         }
 
         const client = await getClient();
