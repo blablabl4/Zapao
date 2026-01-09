@@ -701,6 +701,18 @@ class DrawService {
 
         if (!winner) return pool[0].number;
 
+        // 6. TIEBREAKER: If there are multiple numbers with same weight (same sales count),
+        // the SMALLER number wins. This is implemented by finding all numbers with the same
+        // sales count as the winner and selecting the smallest one.
+        const winnerSales = winner.sales;
+        const tiedNumbers = pool.filter(p => p.sales === winnerSales);
+
+        if (tiedNumbers.length > 1) {
+            // Sort by number (ascending) and pick the smallest
+            tiedNumbers.sort((a, b) => a.number - b.number);
+            return tiedNumbers[0].number;
+        }
+
         return winner.number;
     }
 }
