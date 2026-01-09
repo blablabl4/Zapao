@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoria de Afiliados - TVZapão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #151515;
+            --gold: #d4af37;
+            --gold-dark: #b8942e;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+            --success: #4ade80;
+            --warning: #fbbf24;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            color: var(--gold);
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .draw-selector {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .draw-selector label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .draw-selector select {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            min-width: 200px;
+        }
+
+        .draw-info {
+            margin-left: auto;
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+        }
+
+        .draw-info span {
+            color: var(--text-secondary);
+        }
+
+        .draw-info strong {
+            color: var(--gold);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            font-size: 1.1rem;
+            color: var(--gold);
+        }
+
+        .refresh-btn {
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--gold-dark);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .rank {
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .name {
+            font-weight: 500;
+        }
+
+        .phone {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .number {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .number.highlight {
+            color: var(--success);
+        }
+
+        .revenue {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+
+        /* Medal colors */
+        .rank-1 {
+            color: #ffd700;
+        }
+
+        .rank-2 {
+            color: #c0c0c0;
+        }
+
+        .rank-3 {
+            color: #cd7f32;
+        }
+
+        /* IDSR Footer */
+        .idsr-footer {
+            margin-top: 40px;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+        }
+
+        .idsr-footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .idsr-footer a:hover {
+            color: var(--gold);
+        }
+
+        .idsr-footer strong {
+            color: var(--gold);
+        }
+
+        @media (max-width: 768px) {
+            .draw-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .draw-info {
+                margin-left: 0;
+                justify-content: center;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 700px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Auditoria de Afiliados</h1>
+            <p>Relatório de desempenho com clientes únicos</p>
+        </header>
+
+        <div class="draw-selector">
+            <label>Selecionar Rifa:</label>
+            <select id="drawSelect" onchange="loadDrawData()">
+                <option value="">Carregando...</option>
+            </select>
+            <div class="draw-info">
+                <span>Status: <strong id="drawStatus">-</strong></span>
+                <span>Atualizado: <strong id="lastUpdate">-</strong></span>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="value" id="totalAffiliates">-</div>
+                <div class="label">Afiliados</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="totalTickets">-</div>
+                <div class="label">Tickets</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="totalClients">-</div>
+                <div class="label">Clientes Únicos</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="totalRevenue">-</div>
+                <div class="label">Receita</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>🏆 Ranking de Afiliados</h2>
+                <button class="refresh-btn" onclick="loadDrawData()">⟳ Atualizar</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Tickets</th>
+                        <th>Clientes Únicos</th>
+                        <th>Receita</th>
+                        <th>Acessos</th>
+                        <th>Conversão</th>
+                    </tr>
+                </thead>
+                <tbody id="affiliateTable">
+                    <tr>
+                        <td colspan="8" class="loading">Carregando dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="idsr-footer">
+            © 2026 IDSR. Todos os direitos reservados. |
+            <a href="https://idsr.com.br" target="_blank">Produzido e gerenciado por <strong>IDSR</strong></a>
+        </footer>
+    </div>
+
+    <script>
+        let currentDrawId = null;
+
+        // Load draw history on page load
+        async function loadDrawHistory() {
+            try {
+                const res = await fetch('/api/audit/history');
+                const data = await res.json();
+
+                const select = document.getElementById('drawSelect');
+                select.innerHTML = '';
+
+                data.draws.forEach((draw, idx) => {
+                    const option = document.createElement('option');
+                    option.value = draw.id;
+                    option.textContent = `${draw.name} (${draw.status})`;
+                    if (idx === 0) option.selected = true;
+                    select.appendChild(option);
+                });
+
+                // Load first draw data
+                if (data.draws.length > 0) {
+                    currentDrawId = data.draws[0].id;
+                    loadDrawData();
+                }
+            } catch (e) {
+                console.error('Error loading history:', e);
+            }
+        }
+
+        // Load affiliate data for selected draw
+        async function loadDrawData() {
+            const select = document.getElementById('drawSelect');
+            const drawId = select.value || currentDrawId;
+
+            if (!drawId) return;
+
+            try {
+                const res = await fetch(`/api/audit/affiliates?draw_id=${drawId}`);
+                const data = await res.json();
+
+                // Update status
+                document.getElementById('drawStatus').textContent = data.draw_status;
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR');
+
+                // Update stats
+                const affiliates = data.affiliates || [];
+                const totalTickets = affiliates.reduce((sum, a) => sum + a.ticket_count, 0);
+                const totalClients = affiliates.reduce((sum, a) => sum + a.unique_clients, 0);
+                const totalRevenue = affiliates.reduce((sum, a) => sum + a.total_revenue, 0);
+
+                document.getElementById('totalAffiliates').textContent = affiliates.length;
+                document.getElementById('totalTickets').textContent = totalTickets;
+                document.getElementById('totalClients').textContent = totalClients;
+                document.getElementById('totalRevenue').textContent = `R$ ${totalRevenue.toFixed(2)}`;
+
+                // Render table
+                renderTable(affiliates);
+
+            } catch (e) {
+                console.error('Error loading data:', e);
+                document.getElementById('affiliateTable').innerHTML =
+                    '<tr><td colspan="8" class="empty-state"><p>Erro ao carregar dados</p></td></tr>';
+            }
+        }
+
+        function renderTable(affiliates) {
+            const tbody = document.getElementById('affiliateTable');
+
+            if (!affiliates || affiliates.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = affiliates.map((aff, idx) => {
+                const rank = idx + 1;
+                let rankClass = '';
+                if (rank === 1) rankClass = 'rank-1';
+                else if (rank === 2) rankClass = 'rank-2';
+                else if (rank === 3) rankClass = 'rank-3';
+
+                return `
+                    <tr>
+                        <td class="rank ${rankClass}">${rank}º</td>
+                        <td class="name">${aff.name}</td>
+                        <td class="phone">${formatPhone(aff.phone)}</td>
+                        <td class="number">${aff.ticket_count}</td>
+                        <td class="number highlight">${aff.unique_clients}</td>
+                        <td class="revenue">R$ ${aff.total_revenue.toFixed(2)}</td>
+                        <td class="number">${aff.access_count}</td>
+                        <td>${aff.conversion_rate}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatPhone(phone) {
+            if (!phone || phone.length < 10) return phone || '-';
+            // Format: (XX) XXXXX-XXXX
+            return `(${phone.slice(0, 2)}) ${phone.slice(2, 7)}-${phone.slice(7)}`;
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (document.getElementById('drawSelect').value) {
+                loadDrawData();
+            }
+        }, 30000);
+
+        // Initialize
+        loadDrawHistory();
+    </script>
+</body>
+
+</html>

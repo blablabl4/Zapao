@@ -221,6 +221,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/webhooks', require('./routes/webhooks'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/affiliates', require('./routes/affiliates')); // New Affiliate Route
+app.use('/api/audit', require('./routes/audit')); // Public Audit Route (no auth)
 
 // Admin Zapão API Routes (stats, payments, winners, draw management)
 app.use('/api/admin', requireAdmin, require('./routes/admin'));
