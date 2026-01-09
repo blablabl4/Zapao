@@ -193,9 +193,10 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             unique_clients: parseInt(row.unique_clients),
             total_revenue: parseFloat(row.total_revenue || 0),
             access_count: parseInt(row.access_count || 0),
-            conversion_rate: row.access_count > 0
-                ? ((parseInt(row.ticket_count) / parseInt(row.access_count)) * 100).toFixed(1) + '%'
-                : 'N/A'
+            // Conversion = unique clients / accesses (capped at 100%)
+            conversion_rate: parseInt(row.access_count) > 0
+                ? Math.min(((parseInt(row.unique_clients) / parseInt(row.access_count)) * 100), 100).toFixed(1) + '%'
+                : (parseInt(row.unique_clients) > 0 ? '100%' : '-')
         });
     }
 
