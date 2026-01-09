@@ -132,22 +132,9 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
         let padrinhoPhone = '';
 
         try {
-            // Decode referrer_id (base64 of PHONE-DRAWID)
-            let decoded = '';
-            try {
-                decoded = Buffer.from(row.referrer_id, 'base64').toString('utf-8');
-            } catch (decodeErr) {
-                // Not valid base64, use as-is
-                decoded = row.referrer_id;
-            }
-
-            // Extract phone number
-            if (decoded && decoded.includes('-')) {
-                padrinhoPhone = decoded.split('-')[0];
-            } else {
-                // Try to extract just digits
-                padrinhoPhone = decoded.replace(/\D/g, '');
-            }
+            // referrer_id is the phone number directly (NOT base64)
+            // Extract digits only
+            padrinhoPhone = (row.referrer_id || '').replace(/\D/g, '');
 
             // Validate phone - should be 10-11 digits
             if (padrinhoPhone && /^\d{10,11}$/.test(padrinhoPhone)) {
@@ -181,10 +168,10 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
                 }
             }
 
-            // Fallback: use formatted phone or last 4 digits
+            // Fallback: show the phone if no name found
             if (!padrinhoName) {
-                if (padrinhoPhone && padrinhoPhone.length >= 4) {
-                    padrinhoName = `Afiliado ***${padrinhoPhone.slice(-4)}`;
+                if (padrinhoPhone && padrinhoPhone.length >= 10) {
+                    padrinhoName = `Afiliado ${padrinhoPhone.slice(-4)}`;
                 } else {
                     padrinhoName = `Afiliado #${row.referrer_id.slice(0, 6)}`;
                 }
@@ -193,7 +180,7 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
         } catch (e) {
             console.error(`[Audit] Error processing referrer: ${e.message}`);
             padrinhoName = `Afiliado #${(row.referrer_id || '').slice(0, 6)}`;
-            padrinhoPhone = '';
+            padrinhoPhone = row.referrer_id || '';
         }
 
         // Calculate conversion: (transações / acessos) * 100 = percentual
