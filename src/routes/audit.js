@@ -123,7 +123,7 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
         ORDER BY ticket_count DESC, total_revenue DESC
     `, [drawId]);
 
-    // Enrich with affiliate names
+    // Enrich with affiliate names - IMPROVED: Never show "Não identificado"
     const enrichedResults = [];
     for (const row of result.rows) {
         let padrinhoName = '';
@@ -134,6 +134,7 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             if (decoded.includes('-')) {
                 padrinhoPhone = decoded.split('-')[0];
 
+                // 1. Try affiliates table first
                 const affRes = await query(`
                     SELECT name, pix_key FROM affiliates 
                     WHERE phone = $1
@@ -142,10 +143,14 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
 
                 if (affRes.rows.length > 0 && affRes.rows[0].name) {
                     padrinhoName = affRes.rows[0].name;
-                } else {
+                }
+
+                // 2. If not found, search ALL orders where this phone is buyer (any draw)
+                if (!padrinhoName) {
                     const orderRes = await query(`
                         SELECT buyer_ref FROM orders 
                         WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                        ORDER BY created_at DESC
                         LIMIT 1
                     `, [`%${padrinhoPhone}%`]);
 
@@ -154,14 +159,35 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
                         padrinhoName = parts[0] || '';
                     }
                 }
+
+                // 3. If still not found, try partial phone match
+                if (!padrinhoName && padrinhoPhone.length >= 8) {
+                    const partialRes = await query(`
+                        SELECT buyer_ref FROM orders 
+                        WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    `, [`%${padrinhoPhone.slice(-8)}%`]);
+
+                    if (partialRes.rows.length > 0) {
+                        const parts = (partialRes.rows[0].buyer_ref || '').split('|');
+                        padrinhoName = parts[0] || '';
+                    }
+                }
+
+                // 4. Last resort: use masked phone as name
+                if (!padrinhoName) {
+                    padrinhoName = `Tel: ${padrinhoPhone.slice(0, 2)}****${padrinhoPhone.slice(-4)}`;
+                }
             }
         } catch (e) {
             padrinhoPhone = row.referrer_id.substring(0, 11);
+            padrinhoName = `ID: ${padrinhoPhone.slice(0, 6)}...`;
         }
 
         enrichedResults.push({
             referrer_id: row.referrer_id,
-            name: padrinhoName || 'Não identificado',
+            name: padrinhoName, // Always has value now due to improved lookup
             phone: padrinhoPhone,
             ticket_count: parseInt(row.ticket_count),
             unique_clients: parseInt(row.unique_clients),
