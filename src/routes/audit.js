@@ -211,19 +211,31 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
     return enrichedResults;
 }
 
-// Format phone number - FULL display, no masking
+// Format phone number - Brazilian format
 function formatPhone(phone) {
     if (!phone) return '-';
 
     // Remove non-digits
-    const digits = phone.replace(/\D/g, '');
+    const digits = String(phone).replace(/\D/g, '');
 
+    // Brazilian mobile: 11 digits = (XX) XXXXX-XXXX
     if (digits.length === 11) {
-        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-    } else if (digits.length === 10) {
-        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-    } else if (digits.length > 0) {
-        // Show whatever we have, no masking
+        const ddd = digits.slice(0, 2);
+        const part1 = digits.slice(2, 7);
+        const part2 = digits.slice(7, 11);
+        return `(${ddd}) ${part1}-${part2}`;
+    }
+
+    // Brazilian landline: 10 digits = (XX) XXXX-XXXX
+    if (digits.length === 10) {
+        const ddd = digits.slice(0, 2);
+        const part1 = digits.slice(2, 6);
+        const part2 = digits.slice(6, 10);
+        return `(${ddd}) ${part1}-${part2}`;
+    }
+
+    // Fallback: show as-is
+    if (digits.length > 0) {
         return digits;
     }
 
