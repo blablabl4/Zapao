@@ -599,6 +599,9 @@
             <button class="nav-tab" onclick="switchTab('affiliates')" id="tab-affiliates">
                 🏆 Afiliados
             </button>
+            <button class="nav-tab" onclick="switchTab('analytics')" id="tab-analytics">
+                📊 Distribuição
+            </button>
 
             <!-- Add more tabs here if needed later like 'Configuração', etc to match the image style -->
         </div>
@@ -731,6 +734,43 @@
                         <tbody id="affiliatesTableBody">
                             <tr>
                                 <td colspan="6"
+                                    style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                    Carregando dados...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE SECTION: ANALYTICS - Purchase Distribution -->
+        <div id="view-analytics" style="display: none;">
+            <div class="section-card full-width">
+                <h2>📊 Distribuição de Compras por Quantidade</h2>
+                <div class="summary-bar">
+                    <button class="btn btn-secondary" onclick="loadPurchaseDistribution()"
+                        style="width: auto; padding: 8px 16px;">
+                        🔄 Atualizar
+                    </button>
+                    <span style="color: var(--text-secondary); margin-left:10px;">
+                        Quantos clientes compraram 1, 2-5, 6-10 tickets, etc.
+                    </span>
+                </div>
+
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table class="payments-table">
+                        <thead>
+                            <tr>
+                                <th>Qtd. Tickets</th>
+                                <th style="text-align: center;">Clientes</th>
+                                <th style="text-align: center;">Total Tickets</th>
+                                <th style="text-align: right;">% Clientes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="distributionTableBody">
+                            <tr>
+                                <td colspan="4"
                                     style="text-align: center; padding: 20px; color: var(--text-secondary);">
                                     Carregando dados...
                                 </td>

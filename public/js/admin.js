@@ -34,6 +34,8 @@ function switchTab(tabName) {
     if (financeView) financeView.style.display = 'none';
     const affiliateView = document.getElementById('view-affiliates');
     if (affiliateView) affiliateView.style.display = 'none';
+    const analyticsView = document.getElementById('view-analytics');
+    if (analyticsView) analyticsView.style.display = 'none';
 
     // Activate
     const tabBtn = document.getElementById(`tab-${tabName}`);
@@ -49,10 +51,59 @@ function switchTab(tabName) {
     } else if (tabName === 'financial') {
         loadFinancials();
     } else if (tabName === 'affiliates') {
-        // Auto load status when opening tab
         if (typeof checkAffiliateStats === 'function') {
             checkAffiliateStats();
         }
+    } else if (tabName === 'analytics') {
+        loadPurchaseDistribution();
+    }
+}
+
+async function loadPurchaseDistribution() {
+    const tbody = document.getElementById('distributionTableBody');
+    if (!tbody) return;
+
+    try {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Carregando...</td></tr>';
+
+        const res = await fetch('/api/admin/purchase-distribution');
+        const data = await res.json();
+
+        if (!data.distribution || data.distribution.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum dado disponível</td></tr>';
+            return;
+        }
+
+        const totalCustomers = data.totals.customers || 1;
+
+        let html = '';
+        data.distribution.forEach(row => {
+            const pct = ((parseInt(row.customer_count) / totalCustomers) * 100).toFixed(1);
+            html += `
+                <tr>
+                    <td style="font-weight:bold; color:var(--gold);">${row.range} tickets</td>
+                    <td style="text-align:center;">${row.customer_count}</td>
+                    <td style="text-align:center; color:#4ade80;">${row.total_tickets}</td>
+                    <td style="text-align:right; color:var(--text-secondary);">${pct}%</td>
+                </tr>
+            `;
+        });
+
+        // Add totals row
+        html += `
+            <tr style="border-top: 2px solid var(--border-color); font-weight: bold;">
+                <td>TOTAL</td>
+                <td style="text-align:center;">${data.totals.customers}</td>
+                <td style="text-align:center; color:#4ade80;">${data.totals.tickets}</td>
+                <td style="text-align:right;">100%</td>
+            </tr>
+        `;
+
+        tbody.innerHTML = html;
+
+    } catch (e) {
+        console.error('Error loading distribution:', e);
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color: red;">Erro ao carregar</td></tr>';
     }
 }
 

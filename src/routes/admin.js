@@ -618,4 +618,75 @@ router.get('/fix-financials', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/admin/purchase-distribution
+ * Get distribution of purchases by quantity per customer
+ */
+router.get('/purchase-distribution', async (req, res) => {
+    try {
+        const { query } = require('../database/db');
+
+        // Get current active draw
+        const drawRes = await query(`SELECT id FROM draws WHERE status = 'ACTIVE' LIMIT 1`);
+        if (drawRes.rows.length === 0) {
+            return res.json({ distribution: [], totals: {} });
+        }
+        const drawId = drawRes.rows[0].id;
+
+        // Get purchase count per unique customer (by phone)
+        const result = await query(`
+            WITH customer_purchases AS (
+                SELECT 
+                    SUBSTRING(buyer_ref FROM '[0-9]{10,11}') as phone,
+                    COUNT(*) as ticket_count
+                FROM orders 
+                WHERE draw_id = $1 AND status = 'PAID'
+                GROUP BY SUBSTRING(buyer_ref FROM '[0-9]{10,11}')
+            ),
+            distribution AS (
+                SELECT 
+                    CASE 
+                        WHEN ticket_count = 1 THEN '1'
+                        WHEN ticket_count BETWEEN 2 AND 5 THEN '2-5'
+                        WHEN ticket_count BETWEEN 6 AND 10 THEN '6-10'
+                        WHEN ticket_count BETWEEN 11 AND 20 THEN '11-20'
+                        WHEN ticket_count BETWEEN 21 AND 50 THEN '21-50'
+                        ELSE '51+'
+                    END as range,
+                    COUNT(*) as customer_count,
+                    SUM(ticket_count) as total_tickets
+                FROM customer_purchases
+                GROUP BY 1
+            )
+            SELECT * FROM distribution
+            ORDER BY 
+                CASE range 
+                    WHEN '1' THEN 1
+                    WHEN '2-5' THEN 2
+                    WHEN '6-10' THEN 3
+                    WHEN '11-20' THEN 4
+                    WHEN '21-50' THEN 5
+                    ELSE 6
+                END
+        `, [drawId]);
+
+        // Calculate totals
+        const totalCustomers = result.rows.reduce((sum, r) => sum + parseInt(r.customer_count), 0);
+        const totalTickets = result.rows.reduce((sum, r) => sum + parseInt(r.total_tickets), 0);
+
+        res.json({
+            distribution: result.rows,
+            totals: {
+                customers: totalCustomers,
+                tickets: totalTickets
+            },
+            draw_id: drawId
+        });
+
+    } catch (error) {
+        console.error('[Admin] Purchase distribution error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
