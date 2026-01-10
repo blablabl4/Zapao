@@ -1015,21 +1015,35 @@
         });
 
         // ========== AFFILIATE CLICK TRACKING ==========
+        // Global variable as fallback (survives page load but not tab close)
+        window.__affiliateRef = null;
+
         async function trackAffiliateClick() {
             const urlParams = new URLSearchParams(window.location.search);
             const refParam = urlParams.get('ref');
             if (!refParam) return;
 
-            // 1. Save immediately to LocalStorage (Critical for Sales Attribution)
+            // Save to multiple storages for maximum resilience
+            // (Some iOS browsers block localStorage in private mode)
+            window.__affiliateRef = refParam;
+
+            // 1. Save to localStorage (persistent across sessions)
             try {
-                // Preserve existing data if any, update code
                 const existing = localStorage.getItem('affiliateData');
                 let data = existing ? JSON.parse(existing) : {};
                 data.code = refParam;
                 localStorage.setItem('affiliateData', JSON.stringify(data));
-                console.log('Affiliate code saved:', refParam);
+                console.log('[Affiliate] Saved to localStorage:', refParam);
             } catch (e) {
-                console.error('Error saving affiliate data:', e);
+                console.warn('[Affiliate] localStorage blocked:', e.message);
+            }
+
+            // 2. Save to sessionStorage (fallback for private browsing)
+            try {
+                sessionStorage.setItem('affiliateRef', refParam);
+                console.log('[Affiliate] Saved to sessionStorage:', refParam);
+            } catch (e) {
+                console.warn('[Affiliate] sessionStorage blocked:', e.message);
             }
 
             // 2. Track the click on server (Analytics)
@@ -1519,14 +1533,36 @@
             // Format: name|phone|pixKey|bairro|cidade|cep
             const buyer_ref = `${name}|${phone}|${pixKey}|${currentLocation.bairro}|${currentLocation.cidade}|${cleanCep}`;
 
-            // Get referrer_id from localStorage (set when user arrived via affiliate link)
+            // Get referrer_id with MULTIPLE FALLBACKS for device compatibility
             let referrer_id = null;
+
+            // 1. Try localStorage first (persistent)
             try {
                 const affiliateData = JSON.parse(localStorage.getItem('affiliateData'));
                 if (affiliateData && affiliateData.code) {
                     referrer_id = affiliateData.code;
                 }
             } catch (e) { }
+
+            // 2. Fallback: sessionStorage (works in private browsing on some devices)
+            if (!referrer_id) {
+                try {
+                    referrer_id = sessionStorage.getItem('affiliateRef');
+                } catch (e) { }
+            }
+
+            // 3. Fallback: URL param (if still on same page)
+            if (!referrer_id) {
+                const urlRef = new URLSearchParams(window.location.search).get('ref');
+                if (urlRef) referrer_id = urlRef;
+            }
+
+            // 4. Fallback: global variable (set during this session)
+            if (!referrer_id && window.__affiliateRef) {
+                referrer_id = window.__affiliateRef;
+            }
+
+            console.log('[Purchase] Using referrer_id:', referrer_id || 'none');
 
             try {
                 const res = await fetch('/api/orders/bulk', {
