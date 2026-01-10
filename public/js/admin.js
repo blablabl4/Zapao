@@ -1000,7 +1000,23 @@ async function spinSlots() {
                 // Wrap in scrollable container if multiple winners
                 if (winningOrders.length > 1) {
                     displayText = `
-                        <div style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                        <style>
+                            .winner-scroll-container::-webkit-scrollbar {
+                                width: 8px;
+                            }
+                            .winner-scroll-container::-webkit-scrollbar-track {
+                                background: rgba(0, 0, 0, 0.3);
+                                border-radius: 10px;
+                            }
+                            .winner-scroll-container::-webkit-scrollbar-thumb {
+                                background: linear-gradient(135deg, #d4af37, #b8860b);
+                                border-radius: 10px;
+                            }
+                            .winner-scroll-container::-webkit-scrollbar-thumb:hover {
+                                background: linear-gradient(135deg, #ffd700, #d4af37);
+                            }
+                        </style>
+                        <div class="winner-scroll-container" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
                             ${winnerText}
                         </div>
                     `;
