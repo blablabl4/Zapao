@@ -510,7 +510,33 @@
             }
 
             table {
-                min-width: 700px;
+                min-width: 600px;
+                font-size: 0.8rem;
+            }
+
+            th,
+            td {
+                padding: 8px 6px;
+                font-size: 0.75rem;
+            }
+
+            .rank {
+                font-size: 0.9rem;
+            }
+
+            .name {
+                max-width: 120px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .phone {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -574,7 +600,6 @@
                             <th>Telefone</th>
                             <th>Tickets</th>
                             <th>Clientes Únicos</th>
-                            <th>Receita</th>
                             <th>Comissão Líquida</th>
                             <th>Acessos</th>
                             <th>Conversão</th>
@@ -582,7 +607,7 @@
                     </thead>
                     <tbody id="affiliateTable">
                         <tr>
-                            <td colspan="9" class="loading">Carregando dados...</td>
+                            <td colspan="8" class="loading">Carregando dados...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -712,7 +737,7 @@
             const tbody = document.getElementById('affiliateTable');
 
             if (!affiliates || affiliates.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
                 return;
             }
 
@@ -735,7 +760,6 @@
                         <td class="phone">${aff.phone}</td>
                         <td class="number">${aff.ticket_count}</td>
                         <td class="number highlight">${aff.unique_clients}</td>
-                        <td class="revenue">R$ ${aff.total_revenue.toFixed(2)}</td>
                         <td class="revenue">R$ ${aff.total_commission.toFixed(2)}</td>
                         <td class="number">${aff.access_count}</td>
                         <td>${aff.conversion_rate}</td>
@@ -752,7 +776,6 @@
                                 <td class="phone">-</td>
                                 <td class="number">${sub.ticket_count}</td>
                                 <td class="number highlight">${sub.unique_clients}</td>
-                                <td class="revenue">R$ ${sub.total_revenue.toFixed(2)}</td>
                                 <td class="revenue">R$ ${sub.sub_commission.toFixed(2)} (25%)</td>
                                 <td class="number">-</td>
                                 <td>-</td>
