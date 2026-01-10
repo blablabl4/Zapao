@@ -203,13 +203,26 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
         const netCommissionRate = commissionRate - platformFee; // 49.01%
         const netCommission = totalRevenue * netCommissionRate;
 
+
         // Get sub-affiliates for this parent
         const subsResult = await query(`
-            SELECT sub_code FROM sub_affiliates WHERE parent_phone = $1
+            SELECT sub_code, sub_name, created_at FROM sub_affiliates WHERE parent_phone = $1
         `, [padrinhoPhone]);
 
-        const subCodes = subsResult.rows.map(s => s.sub_code);
         let subAffiliates = [];
+        let allSubLinks = [];
+
+        // Get all sub-links (even those without sales)
+        for (const subRow of subsResult.rows) {
+            allSubLinks.push({
+                sub_name: subRow.sub_name,
+                sub_code: subRow.sub_code,
+                link: `https://www.tvzapao.com.br/zapao-da-sorte?ref=${subRow.sub_code}`,
+                created_at: subRow.created_at
+            });
+        }
+
+        const subCodes = subsResult.rows.map(s => s.sub_code);
 
         if (subCodes.length > 0) {
             // Get sales stats for each sub-affiliate
@@ -226,18 +239,17 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
                 GROUP BY referrer_id
             `, [drawId, subCodes]);
 
-            // Get sub names
+            // Build sub-affiliates with sales data
             for (const subRow of subStats.rows) {
-                const subInfo = await query(`
-                    SELECT sub_name FROM sub_affiliates WHERE sub_code = $1
-                `, [subRow.referrer_id]);
+                const subInfo = subsResult.rows.find(s => s.sub_code === subRow.referrer_id);
 
                 const subRevenue = parseFloat(subRow.total_revenue || 0);
                 const subCommission = subRevenue * 0.25; // 25% for sub
                 const parentCommission = subRevenue * 0.25; // 25% for parent
 
                 subAffiliates.push({
-                    name: subInfo.rows[0]?.sub_name || subRow.referrer_id,
+                    name: subInfo?.sub_name || subRow.referrer_id,
+                    sub_code: subRow.referrer_id,
                     ticket_count: parseInt(subRow.ticket_count) || 0,
                     unique_clients: parseInt(subRow.unique_clients) || 0,
                     total_revenue: subRevenue,
@@ -262,7 +274,9 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             total_commission: netCommission + parentCommissionFromSubs,
             access_count: accesses,
             conversion_rate: conversionRate,
-            sub_affiliates: subAffiliates
+            sub_affiliates: subAffiliates,
+            all_sub_links: allSubLinks,
+            sub_links_count: allSubLinks.length
         });
     }
 

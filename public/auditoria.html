@@ -599,13 +599,14 @@
                             <th>Nome</th>
                             <th>Clientes Únicos</th>
                             <th>Comissão Líquida</th>
+                            <th>Sub-Links</th>
                             <th>Acessos</th>
                             <th>Conversão</th>
                         </tr>
                     </thead>
                     <tbody id="affiliateTable">
                         <tr>
-                            <td colspan="6" class="loading">Carregando dados...</td>
+                            <td colspan="7" class="loading">Carregando dados...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -735,7 +736,7 @@
             const tbody = document.getElementById('affiliateTable');
 
             if (!affiliates || affiliates.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
                 return;
             }
 
@@ -747,30 +748,66 @@
                 else if (rank === 2) rankClass = 'rank-2';
                 else if (rank === 3) rankClass = 'rank-3';
 
+
                 const hasSubs = aff.sub_affiliates && aff.sub_affiliates.length > 0;
-                const expandIcon = hasSubs ? '<span class="expand-icon">▶</span>' : '';
-                const rowClass = hasSubs ? 'parent-row' : '';
+                const hasLinks = aff.all_sub_links && aff.all_sub_links.length > 0;
+                const hasContent = hasSubs || hasLinks;
+                const expandIcon = hasContent ? '<span class="expand-icon">▶</span>' : '';
+                const rowClass = hasContent ? 'parent-row' : '';
 
                 html += `
-                    <tr class="${rowClass}" data-rank="${rank}" onclick="${hasSubs ? `toggleSubs(${rank})` : ''}">
+                    <tr class="${rowClass}" data-rank="${rank}" onclick="${hasContent ? `toggleSubs(${rank})` : ''}">
                         <td class="rank ${rankClass}">${rank}º</td>
                         <td class="name">${expandIcon}${aff.name}</td>
                         <td class="number highlight">${aff.unique_clients}</td>
                         <td class="revenue">R$ ${aff.total_commission.toFixed(2)}</td>
+                        <td class="number">${aff.sub_links_count || 0}</td>
                         <td class="number">${aff.access_count}</td>
                         <td>${aff.conversion_rate}</td>
                     </tr>
                 `;
 
-                // Sub-affiliate rows
+                // Show sub-links first (if any)
+                if (hasLinks) {
+                    html += `
+                        <tr class="sub-row sub-links-header" data-parent="${rank}">
+                            <td colspan="7" style="background: rgba(212, 175, 55, 0.05); padding: 10px 20px; font-weight: 600; color: var(--gold);">
+                                📋 Sub-Links Criados (${aff.all_sub_links.length})
+                            </td>
+                        </tr>
+                    `;
+
+                    aff.all_sub_links.forEach(link => {
+                        html += `
+                            <tr class="sub-row" data-parent="${rank}">
+                                <td></td>
+                                <td class="name" colspan="2">🔗 ${link.sub_name}</td>
+                                <td colspan="4" style="font-size: 0.75rem; color: var(--text-secondary);">
+                                    <a href="${link.link}" target="_blank" style="color: var(--gold);">${link.link}</a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Then show sub-affiliates with sales (if any)
                 if (hasSubs) {
+                    html += `
+                        <tr class="sub-row sub-sales-header" data-parent="${rank}">
+                            <td colspan="7" style="background: rgba(74, 222, 128, 0.05); padding: 10px 20px; font-weight: 600; color: var(--success);">
+                                💰 Sub-Afiliados com Vendas (${aff.sub_affiliates.length})
+                            </td>
+                        </tr>
+                    `;
+
                     aff.sub_affiliates.forEach(sub => {
                         html += `
                             <tr class="sub-row" data-parent="${rank}">
                                 <td></td>
-                                <td class="name">└ ${sub.name} (Sub)</td>
+                                <td class="name">└ ${sub.name}</td>
                                 <td class="number highlight">${sub.unique_clients}</td>
                                 <td class="revenue">R$ ${sub.sub_commission.toFixed(2)} (25%)</td>
+                                <td class="number">-</td>
                                 <td class="number">-</td>
                                 <td>-</td>
                             </tr>
