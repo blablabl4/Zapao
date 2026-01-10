@@ -196,15 +196,73 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             conversionRate = '100%'; // Venda direta
         }
 
+        // Calculate commissions
+        const totalRevenue = parseFloat(row.total_revenue || 0);
+        const commissionRate = 0.50; // 50%
+        const platformFee = 0.0099; // 0.99%
+        const netCommissionRate = commissionRate - platformFee; // 49.01%
+        const netCommission = totalRevenue * netCommissionRate;
+
+        // Get sub-affiliates for this parent
+        const subsResult = await query(`
+            SELECT sub_code FROM sub_affiliates WHERE parent_phone = $1
+        `, [padrinhoPhone]);
+
+        const subCodes = subsResult.rows.map(s => s.sub_code);
+        let subAffiliates = [];
+
+        if (subCodes.length > 0) {
+            // Get sales stats for each sub-affiliate
+            const subStats = await query(`
+                SELECT 
+                    referrer_id,
+                    COUNT(*) as ticket_count,
+                    SUM(amount) as total_revenue,
+                    COUNT(DISTINCT buyer_ref) as unique_clients
+                FROM orders
+                WHERE draw_id = $1
+                  AND status = 'PAID'
+                  AND referrer_id = ANY($2)
+                GROUP BY referrer_id
+            `, [drawId, subCodes]);
+
+            // Get sub names
+            for (const subRow of subStats.rows) {
+                const subInfo = await query(`
+                    SELECT sub_name FROM sub_affiliates WHERE sub_code = $1
+                `, [subRow.referrer_id]);
+
+                const subRevenue = parseFloat(subRow.total_revenue || 0);
+                const subCommission = subRevenue * 0.25; // 25% for sub
+                const parentCommission = subRevenue * 0.25; // 25% for parent
+
+                subAffiliates.push({
+                    name: subInfo.rows[0]?.sub_name || subRow.referrer_id,
+                    ticket_count: parseInt(subRow.ticket_count) || 0,
+                    unique_clients: parseInt(subRow.unique_clients) || 0,
+                    total_revenue: subRevenue,
+                    sub_commission: subCommission,
+                    parent_commission: parentCommission
+                });
+            }
+        }
+
+        // Calculate total parent commission from subs
+        const parentCommissionFromSubs = subAffiliates.reduce((sum, sub) => sum + sub.parent_commission, 0);
+
         enrichedResults.push({
             referrer_id: row.referrer_id,
             name: padrinhoName,
             phone: formatPhone(padrinhoPhone),
             ticket_count: parseInt(row.ticket_count) || 0,
             unique_clients: parseInt(row.unique_clients) || 0,
-            total_revenue: parseFloat(row.total_revenue || 0),
+            total_revenue: totalRevenue,
+            net_commission: netCommission,
+            parent_commission_from_subs: parentCommissionFromSubs,
+            total_commission: netCommission + parentCommissionFromSubs,
             access_count: accesses,
-            conversion_rate: conversionRate
+            conversion_rate: conversionRate,
+            sub_affiliates: subAffiliates
         });
     }
 
