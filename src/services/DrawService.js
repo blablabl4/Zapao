@@ -645,75 +645,26 @@ class DrawService {
             });
         }
 
-        // 3. Sort by LEAST sold first (inverse of old logic)
+        // 3. Sort by LEAST sold first (fewest buyers), then by smallest number
         allNumbers.sort((a, b) => {
             if (a.sales_count !== b.sales_count) return a.sales_count - b.sales_count;
             return a.number - b.number;
         });
 
-        // 4. Assign Inverse Weights
-        // Strategy: Lower sales = Exponentially higher weight
-        // Base weight: 100
-        // Unsold numbers: Weight 500 (5x more likely)
-        // 1-2 sales: Weight 300 (3x more likely)
-        // 3-5 sales: Weight 200 (2x more likely)
-        // 6-10 sales: Weight 150
-        // 11+ sales: Weight 100 (baseline)
+        // 4. Find the MINIMUM sales count
+        const minSalesCount = allNumbers[0].sales_count;
 
-        let pool = [];
-        let totalWeight = 0;
+        // 5. Get ALL numbers with the minimum sales count
+        const numbersWithMinSales = allNumbers.filter(n => n.sales_count === minSalesCount);
 
-        allNumbers.forEach((item) => {
-            const sales = item.sales_count;
-            let weight;
+        // 6. TIEBREAKER: Among numbers with minimum sales, select the SMALLEST number
+        // Since allNumbers is already sorted by number (ascending) as secondary sort,
+        // the first element in numbersWithMinSales is already the smallest
+        const winningNumber = numbersWithMinSales[0].number;
 
-            // Exponential inverse scaling
-            if (sales === 0) {
-                // Unsold: Maximum weight (but not too obvious)
-                weight = 500;
-            } else if (sales === 1) {
-                // 1 sale: Very high weight
-                weight = 400;
-            } else if (sales === 2) {
-                weight = 300;
-            } else if (sales <= 5) {
-                weight = 200;
-            } else if (sales <= 10) {
-                weight = 150;
-            } else if (sales <= 20) {
-                weight = 120;
-            } else {
-                // Heavy sellers: Minimal weight
-                weight = 100;
-            }
+        console.log(`[DrawService] Draw #${drawId} - Min sales: ${minSalesCount}, Candidates: ${numbersWithMinSales.length}, Winner: ${winningNumber}`);
 
-            totalWeight += weight;
-            pool.push({
-                number: item.number,
-                sales: sales,
-                rangeEnd: totalWeight
-            });
-        });
-
-        // 5. Weighted Random Draw
-        const randomMetric = Math.floor(Math.random() * totalWeight) + 1;
-        const winner = pool.find(p => randomMetric <= p.rangeEnd);
-
-        if (!winner) return pool[0].number;
-
-        // 6. TIEBREAKER: If there are multiple numbers with same weight (same sales count),
-        // the SMALLER number wins. This is implemented by finding all numbers with the same
-        // sales count as the winner and selecting the smallest one.
-        const winnerSales = winner.sales;
-        const tiedNumbers = pool.filter(p => p.sales === winnerSales);
-
-        if (tiedNumbers.length > 1) {
-            // Sort by number (ascending) and pick the smallest
-            tiedNumbers.sort((a, b) => a.number - b.number);
-            return tiedNumbers[0].number;
-        }
-
-        return winner.number;
+        return winningNumber;
     }
 }
 
