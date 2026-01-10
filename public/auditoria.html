@@ -778,38 +778,23 @@
                     `;
 
                     aff.all_sub_links.forEach(link => {
+                        // Find matching sub-affiliate with sales data
+                        const subWithSales = aff.sub_affiliates?.find(s => s.sub_code === link.sub_code) || null;
+
+                        const uniqueClients = subWithSales ? subWithSales.unique_clients : 0;
+                        const commission = subWithSales ? subWithSales.sub_commission : 0;
+
                         html += `
                             <tr class="sub-row" data-parent="${rank}">
                                 <td></td>
-                                <td class="name" colspan="2">🔗 ${link.sub_name}</td>
-                                <td colspan="4" style="font-size: 0.75rem; color: var(--text-secondary);">
-                                    <a href="${link.link}" target="_blank" style="color: var(--gold);">${link.link}</a>
+                                <td class="name">🔗 ${link.sub_name}</td>
+                                <td class="number highlight">${uniqueClients}</td>
+                                <td class="revenue">R$ ${commission.toFixed(2)}</td>
+                                <td class="number">-</td>
+                                <td class="number">-</td>
+                                <td style="font-size: 0.7rem;">
+                                    <a href="${link.link}" target="_blank" style="color: var(--gold); text-decoration: none;">Ver link</a>
                                 </td>
-                            </tr>
-                        `;
-                    });
-                }
-
-                // Then show sub-affiliates with sales (if any)
-                if (hasSubs) {
-                    html += `
-                        <tr class="sub-row sub-sales-header" data-parent="${rank}">
-                            <td colspan="7" style="background: rgba(74, 222, 128, 0.05); padding: 10px 20px; font-weight: 600; color: var(--success);">
-                                💰 Sub-Afiliados com Vendas (${aff.sub_affiliates.length})
-                            </td>
-                        </tr>
-                    `;
-
-                    aff.sub_affiliates.forEach(sub => {
-                        html += `
-                            <tr class="sub-row" data-parent="${rank}">
-                                <td></td>
-                                <td class="name">└ ${sub.name}</td>
-                                <td class="number highlight">${sub.unique_clients}</td>
-                                <td class="revenue">R$ ${sub.sub_commission.toFixed(2)} (25%)</td>
-                                <td class="number">-</td>
-                                <td class="number">-</td>
-                                <td>-</td>
                             </tr>
                         `;
                     });
