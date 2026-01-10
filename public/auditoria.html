@@ -597,8 +597,6 @@
                         <tr>
                             <th>#</th>
                             <th>Nome</th>
-                            <th>Telefone</th>
-                            <th>Tickets</th>
                             <th>Clientes Únicos</th>
                             <th>Comissão Líquida</th>
                             <th>Acessos</th>
@@ -607,7 +605,7 @@
                     </thead>
                     <tbody id="affiliateTable">
                         <tr>
-                            <td colspan="8" class="loading">Carregando dados...</td>
+                            <td colspan="6" class="loading">Carregando dados...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -737,7 +735,7 @@
             const tbody = document.getElementById('affiliateTable');
 
             if (!affiliates || affiliates.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
                 return;
             }
 
@@ -757,8 +755,6 @@
                     <tr class="${rowClass}" data-rank="${rank}" onclick="${hasSubs ? `toggleSubs(${rank})` : ''}">
                         <td class="rank ${rankClass}">${rank}º</td>
                         <td class="name">${expandIcon}${aff.name}</td>
-                        <td class="phone">${aff.phone}</td>
-                        <td class="number">${aff.ticket_count}</td>
                         <td class="number highlight">${aff.unique_clients}</td>
                         <td class="revenue">R$ ${aff.total_commission.toFixed(2)}</td>
                         <td class="number">${aff.access_count}</td>
@@ -773,8 +769,6 @@
                             <tr class="sub-row" data-parent="${rank}">
                                 <td></td>
                                 <td class="name">└ ${sub.name} (Sub)</td>
-                                <td class="phone">-</td>
-                                <td class="number">${sub.ticket_count}</td>
                                 <td class="number highlight">${sub.unique_clients}</td>
                                 <td class="revenue">R$ ${sub.sub_commission.toFixed(2)} (25%)</td>
                                 <td class="number">-</td>
