@@ -33,6 +33,31 @@ router.get('/winners-history', async (req, res) => {
 });
 
 /**
+ * GET /api/admin/check-winner
+ * Check what number would win with current sales
+ */
+router.get('/check-winner', async (req, res) => {
+    try {
+        const currentDraw = await DrawService.getCurrentDraw();
+        if (!currentDraw) {
+            return res.json({ error: 'Nenhuma rifa ativa' });
+        }
+
+        const winningNumber = await DrawService.getWeightedDrawResult(currentDraw.id);
+
+        res.json({
+            draw_id: currentDraw.id,
+            draw_name: currentDraw.draw_name,
+            winning_number: winningNumber,
+            status: currentDraw.status
+        });
+    } catch (error) {
+        console.error('Error checking winner:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * POST /api/admin/close-draw
  * Close current draw and declare winner
  */
