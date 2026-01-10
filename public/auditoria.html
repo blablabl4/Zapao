@@ -57,6 +57,44 @@
             font-size: 0.9rem;
         }
 
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--gold);
+        }
+
+        .tab-btn.active {
+            background: var(--gold);
+            color: #000;
+            border-color: var(--gold);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .draw-selector {
             background: var(--bg-card);
             padding: 20px;
@@ -249,6 +287,151 @@
             color: #cd7f32;
         }
 
+        /* Sub-affiliate form */
+        .sub-form-container {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .sub-form-container h2 {
+            color: var(--gold);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .generate-btn:hover {
+            background: var(--gold-dark);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .link-result {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .link-result.show {
+            display: block;
+        }
+
+        .link-result p {
+            color: var(--success);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .link-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .link-box input {
+            flex: 1;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn {
+            background: var(--success);
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .my-subs {
+            margin-top: 30px;
+        }
+
+        .my-subs h3 {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .sub-item {
+            background: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .sub-item .sub-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .sub-item .sub-stats {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .sub-item .sub-link {
+            color: var(--gold);
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
         /* IDSR Footer */
         .idsr-footer {
             margin-top: 40px;
@@ -273,6 +456,10 @@
         }
 
         @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+
             .draw-selector {
                 flex-direction: column;
                 align-items: stretch;
@@ -301,60 +488,106 @@
             <p>Relatório de desempenho com clientes únicos</p>
         </header>
 
-        <div class="draw-selector">
-            <label>Selecionar Rifa:</label>
-            <select id="drawSelect" onchange="loadDrawData()">
-                <option value="">Carregando...</option>
-            </select>
-            <div class="draw-info">
-                <span>Status: <strong id="drawStatus">-</strong></span>
-                <span>Atualizado: <strong id="lastUpdate">-</strong></span>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('ranking')">🏆 Ranking de Afiliados</button>
+            <button class="tab-btn" onclick="switchTab('sublink')">🔗 Criar Sub-Link</button>
+        </div>
+
+        <!-- Tab 1: Ranking -->
+        <div id="tab-ranking" class="tab-content active">
+            <div class="draw-selector">
+                <label>Selecionar Rifa:</label>
+                <select id="drawSelect" onchange="loadDrawData()">
+                    <option value="">Carregando...</option>
+                </select>
+                <div class="draw-info">
+                    <span>Status: <strong id="drawStatus">-</strong></span>
+                    <span>Atualizado: <strong id="lastUpdate">-</strong></span>
+                </div>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="value" id="totalAffiliates">-</div>
+                    <div class="label">Afiliados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="totalTickets">-</div>
+                    <div class="label">Tickets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="totalClients">-</div>
+                    <div class="label">Clientes Únicos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="totalRevenue">-</div>
+                    <div class="label">Receita</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>🏆 Ranking de Afiliados</h2>
+                    <button class="refresh-btn" onclick="loadDrawData()">⟳ Atualizar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Tickets</th>
+                            <th>Clientes Únicos</th>
+                            <th>Receita</th>
+                            <th>Acessos</th>
+                            <th>Conversão</th>
+                        </tr>
+                    </thead>
+                    <tbody id="affiliateTable">
+                        <tr>
+                            <td colspan="8" class="loading">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
-                <div class="value" id="totalAffiliates">-</div>
-                <div class="label">Afiliados</div>
-            </div>
-            <div class="stat-card">
-                <div class="value" id="totalTickets">-</div>
-                <div class="label">Tickets</div>
-            </div>
-            <div class="stat-card">
-                <div class="value" id="totalClients">-</div>
-                <div class="label">Clientes Únicos</div>
-            </div>
-            <div class="stat-card">
-                <div class="value" id="totalRevenue">-</div>
-                <div class="label">Receita</div>
-            </div>
-        </div>
+        <!-- Tab 2: Sub-Link -->
+        <div id="tab-sublink" class="tab-content">
+            <div class="sub-form-container">
+                <h2>🔗 Criar Sub-Link de Afiliado</h2>
+                <p style="color: var(--text-secondary); text-align: center; margin-bottom: 25px;">
+                    Crie links personalizados para seus indicados
+                </p>
 
-        <div class="table-container">
-            <div class="table-header">
-                <h2>🏆 Ranking de Afiliados</h2>
-                <button class="refresh-btn" onclick="loadDrawData()">⟳ Atualizar</button>
+                <div class="form-group">
+                    <label>Seu Telefone (Afiliado)</label>
+                    <input type="tel" id="parentPhone" placeholder="11999998888" maxlength="11">
+                </div>
+
+                <div class="form-group">
+                    <label>Nome do Sub-Afiliado</label>
+                    <input type="text" id="subName" placeholder="Ex: João da Padaria">
+                </div>
+
+                <button class="generate-btn" onclick="createSubLink()">Gerar Link</button>
+
+                <div class="link-result" id="linkResult">
+                    <p>✅ Link criado com sucesso!</p>
+                    <div class="link-box">
+                        <input type="text" id="generatedLink" readonly>
+                        <button class="copy-btn" onclick="copyLink()">Copiar</button>
+                    </div>
+                </div>
+
+                <div class="my-subs" id="mySubs">
+                    <h3>📋 Meus Sub-Afiliados</h3>
+                    <div id="subsList">
+                        <p style="color: var(--text-secondary);">Digite seu telefone para ver seus sub-afiliados</p>
+                    </div>
+                </div>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Tickets</th>
-                        <th>Clientes Únicos</th>
-                        <th>Receita</th>
-                        <th>Acessos</th>
-                        <th>Conversão</th>
-                    </tr>
-                </thead>
-                <tbody id="affiliateTable">
-                    <tr>
-                        <td colspan="8" class="loading">Carregando dados...</td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
 
         <footer class="idsr-footer">
@@ -365,6 +598,20 @@
 
     <script>
         let currentDrawId = null;
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'ranking') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tab-ranking').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tab-sublink').classList.add('active');
+            }
+        }
 
         // Load draw history on page load
         async function loadDrawHistory() {
@@ -383,7 +630,6 @@
                     select.appendChild(option);
                 });
 
-                // Load first draw data
                 if (data.draws.length > 0) {
                     currentDrawId = data.draws[0].id;
                     loadDrawData();
@@ -404,11 +650,9 @@
                 const res = await fetch(`/api/audit/affiliates?draw_id=${drawId}`);
                 const data = await res.json();
 
-                // Update status
                 document.getElementById('drawStatus').textContent = data.draw_status;
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR');
 
-                // Update stats
                 const affiliates = data.affiliates || [];
                 const totalTickets = affiliates.reduce((sum, a) => sum + a.ticket_count, 0);
                 const totalClients = affiliates.reduce((sum, a) => sum + a.unique_clients, 0);
@@ -419,7 +663,6 @@
                 document.getElementById('totalClients').textContent = totalClients;
                 document.getElementById('totalRevenue').textContent = `R$ ${totalRevenue.toFixed(2)}`;
 
-                // Render table
                 renderTable(affiliates);
 
             } catch (e) {
@@ -459,11 +702,87 @@
             }).join('');
         }
 
-        function formatPhone(phone) {
-            if (!phone || phone.length < 10) return phone || '-';
-            // Format: (XX) XXXXX-XXXX
-            return `(${phone.slice(0, 2)}) ${phone.slice(2, 7)}-${phone.slice(7)}`;
+        // Create sub-affiliate link
+        async function createSubLink() {
+            const parentPhone = document.getElementById('parentPhone').value.replace(/\D/g, '');
+            const subName = document.getElementById('subName').value.trim();
+
+            if (!parentPhone || parentPhone.length < 10) {
+                alert('Digite um telefone válido');
+                return;
+            }
+
+            if (!subName) {
+                alert('Digite o nome do sub-afiliado');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/audit/sub-affiliate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parent_phone: parentPhone, sub_name: subName })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('generatedLink').value = data.sub_affiliate.link;
+                    document.getElementById('linkResult').classList.add('show');
+                    document.getElementById('subName').value = '';
+                    loadMySubs(parentPhone);
+                } else {
+                    alert(data.error || 'Erro ao criar link');
+                }
+            } catch (e) {
+                console.error('Error creating sub-link:', e);
+                alert('Erro ao criar link. Tente novamente.');
+            }
         }
+
+        // Copy link to clipboard
+        function copyLink() {
+            const input = document.getElementById('generatedLink');
+            input.select();
+            document.execCommand('copy');
+            alert('Link copiado!');
+        }
+
+        // Load my sub-affiliates
+        async function loadMySubs(phone) {
+            if (!phone || phone.length < 10) {
+                document.getElementById('subsList').innerHTML = '<p style="color: var(--text-secondary);">Digite seu telefone para ver seus sub-afiliados</p>';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/audit/sub-affiliates?parent_phone=${phone}`);
+                const data = await res.json();
+
+                if (data.sub_affiliates && data.sub_affiliates.length > 0) {
+                    document.getElementById('subsList').innerHTML = data.sub_affiliates.map(sub => `
+                        <div class="sub-item">
+                            <div>
+                                <div class="sub-name">${sub.sub_name}</div>
+                                <div class="sub-link">${sub.link}</div>
+                            </div>
+                            <div class="sub-stats">
+                                ${sub.ticket_count} tickets | R$ ${sub.revenue.toFixed(2)}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('subsList').innerHTML = '<p style="color: var(--text-secondary);">Nenhum sub-afiliado criado ainda</p>';
+                }
+            } catch (e) {
+                console.error('Error loading subs:', e);
+            }
+        }
+
+        // Auto-load subs when phone is entered
+        document.getElementById('parentPhone').addEventListener('blur', function () {
+            loadMySubs(this.value.replace(/\D/g, ''));
+        });
 
         // Auto-refresh every 30 seconds
         setInterval(() => {

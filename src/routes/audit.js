@@ -242,4 +242,112 @@ function formatPhone(phone) {
     return '-';
 }
 
+/**
+ * POST /api/audit/sub-affiliate
+ * Create a sub-affiliate link for an existing affiliate
+ */
+router.post('/sub-affiliate', async (req, res) => {
+    try {
+        const { parent_phone, sub_name } = req.body;
+
+        if (!parent_phone || !sub_name) {
+            return res.status(400).json({ error: 'parent_phone e sub_name são obrigatórios' });
+        }
+
+        // Clean phone number
+        const cleanPhone = parent_phone.replace(/\D/g, '');
+
+        // Generate unique sub_code from name
+        const baseCode = sub_name
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remove accents
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .substring(0, 20);
+
+        const randomSuffix = Math.random().toString(36).substring(2, 6);
+        const sub_code = `${baseCode}-${randomSuffix}`;
+
+        // Insert sub-affiliate
+        await query(`
+            INSERT INTO sub_affiliates (parent_phone, sub_name, sub_code)
+            VALUES ($1, $2, $3)
+        `, [cleanPhone, sub_name, sub_code]);
+
+        // Generate full link
+        const link = `https://www.tvzapao.com.br/zapao-da-sorte?ref=${sub_code}`;
+
+        res.json({
+            success: true,
+            sub_affiliate: {
+                sub_name,
+                sub_code,
+                link,
+                parent_phone: cleanPhone
+            }
+        });
+    } catch (error) {
+        console.error('[Audit API] Sub-affiliate creation error:', error.message);
+        if (error.code === '23505') { // Unique violation
+            return res.status(409).json({ error: 'Código de sub-afiliado já existe. Tente outro nome.' });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/audit/sub-affiliates
+ * List sub-affiliates for a parent affiliate with their stats
+ */
+router.get('/sub-affiliates', async (req, res) => {
+    try {
+        const { parent_phone, draw_id } = req.query;
+
+        if (!parent_phone) {
+            return res.status(400).json({ error: 'parent_phone é obrigatório' });
+        }
+
+        const cleanPhone = parent_phone.replace(/\D/g, '');
+
+        // Get all sub-affiliates for this parent
+        const subsResult = await query(`
+            SELECT id, sub_name, sub_code, created_at
+            FROM sub_affiliates
+            WHERE parent_phone = $1
+            ORDER BY created_at DESC
+        `, [cleanPhone]);
+
+        // Get stats for each sub-affiliate
+        const subsWithStats = await Promise.all(subsResult.rows.map(async (sub) => {
+            // Count orders where referrer_id matches sub_code
+            const statsQuery = draw_id
+                ? `SELECT COUNT(*) as ticket_count, COALESCE(SUM(amount), 0) as revenue
+                   FROM orders WHERE referrer_id = $1 AND draw_id = $2 AND status = 'PAID'`
+                : `SELECT COUNT(*) as ticket_count, COALESCE(SUM(amount), 0) as revenue
+                   FROM orders WHERE referrer_id = $1 AND status = 'PAID'`;
+
+            const statsParams = draw_id ? [sub.sub_code, draw_id] : [sub.sub_code];
+            const statsRes = await query(statsQuery, statsParams);
+
+            return {
+                ...sub,
+                link: `https://www.tvzapao.com.br/zapao-da-sorte?ref=${sub.sub_code}`,
+                ticket_count: parseInt(statsRes.rows[0]?.ticket_count || 0),
+                revenue: parseFloat(statsRes.rows[0]?.revenue || 0)
+            };
+        }));
+
+        res.json({
+            parent_phone: cleanPhone,
+            total_subs: subsWithStats.length,
+            sub_affiliates: subsWithStats
+        });
+    } catch (error) {
+        console.error('[Audit API] Sub-affiliates list error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

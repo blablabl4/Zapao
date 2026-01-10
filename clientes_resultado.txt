@@ -1,0 +1,28 @@
+﻿[DB] PostgreSQL pool initialized
+Ultima Rifa: Rifa Aniversario Zap├úo (75 numeros)
+
+CLIENTES QUE COMPRARAM TODOS OS NUMEROS:
+
+1. Alex Da Silva Nascimento | 11985375722
+2. Amanda Aparecida Melo De Ara├║jo | 11962633298
+3. Anselmo muniz | 11960307673
+4. Claudio Henrique da Silva Junior | 11977538735
+5. Eliane Moraes da Silva Correia | 11991015983
+6. Francielzo aparecido de Souza Querino pereira | 11966145920
+7. Iara Lemos Soares | 11949131382
+8. Janaina Jose da Silva Sousa | 11981700608
+9. Jean Gleydson Barbosa | 11981288822
+10. Jeferson Luiz Rodrigues | 11971574207
+11. Jefferson Pereira | 11985352395
+12. Joelma Pereira Barros | 11949056454
+13. Leidivan pinheiro de almeida | 11941865458
+14. NATALIA DE OLIVEIRA DA PENHA | 11989452084
+15. PAULO HENRIQUE DE SOUSA SANTOS | 11999794797
+16. PEDRO ANTONIO DO NASCIMENTO | 11981673022
+17. Paola | 11951758904
+18. RENATO SOARES COSTA | 19999265934
+19. Sivoney Silva dos Santos | 11977561899
+20. WELLINGTON DOS SANTOS SOUZA SOUZA | 11961629215
+21. ├ëder Galdino dos Santos | 11951405866
+
+Total: 21 clientes
