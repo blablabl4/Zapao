@@ -620,7 +620,7 @@ router.get('/fix-financials', async (req, res) => {
 
 /**
  * GET /api/admin/purchase-distribution
- * Get distribution of purchases by quantity per customer
+ * Get distribution of purchases by EXACT quantity per customer
  */
 router.get('/purchase-distribution', async (req, res) => {
     try {
@@ -633,7 +633,10 @@ router.get('/purchase-distribution', async (req, res) => {
         }
         const drawId = drawRes.rows[0].id;
 
-        // Get purchase count per unique customer (by phone)
+        // Get ticket price (default 1.50)
+        const ticketPrice = 1.50;
+
+        // Get EXACT purchase count per unique customer (by phone)
         const result = await query(`
             WITH customer_purchases AS (
                 SELECT 
@@ -642,43 +645,41 @@ router.get('/purchase-distribution', async (req, res) => {
                 FROM orders 
                 WHERE draw_id = $1 AND status = 'PAID'
                 GROUP BY SUBSTRING(buyer_ref FROM '[0-9]{10,11}')
-            ),
-            distribution AS (
-                SELECT 
-                    CASE 
-                        WHEN ticket_count = 1 THEN '1'
-                        WHEN ticket_count BETWEEN 2 AND 5 THEN '2-5'
-                        WHEN ticket_count BETWEEN 6 AND 10 THEN '6-10'
-                        WHEN ticket_count BETWEEN 11 AND 20 THEN '11-20'
-                        WHEN ticket_count BETWEEN 21 AND 50 THEN '21-50'
-                        ELSE '51+'
-                    END as range,
-                    COUNT(*) as customer_count,
-                    SUM(ticket_count) as total_tickets
-                FROM customer_purchases
-                GROUP BY 1
             )
-            SELECT * FROM distribution
-            ORDER BY 
-                CASE range 
-                    WHEN '1' THEN 1
-                    WHEN '2-5' THEN 2
-                    WHEN '6-10' THEN 3
-                    WHEN '11-20' THEN 4
-                    WHEN '21-50' THEN 5
-                    ELSE 6
-                END
+            SELECT 
+                ticket_count,
+                COUNT(*) as customer_count,
+                SUM(ticket_count) as total_tickets
+            FROM customer_purchases
+            GROUP BY ticket_count
+            ORDER BY ticket_count ASC
         `, [drawId]);
 
         // Calculate totals
         const totalCustomers = result.rows.reduce((sum, r) => sum + parseInt(r.customer_count), 0);
         const totalTickets = result.rows.reduce((sum, r) => sum + parseInt(r.total_tickets), 0);
+        const totalRevenue = totalTickets * ticketPrice;
+
+        // Add percentages to each row
+        const distribution = result.rows.map(row => {
+            const rowTickets = parseInt(row.total_tickets);
+            const rowRevenue = rowTickets * ticketPrice;
+            return {
+                ticket_count: parseInt(row.ticket_count),
+                customer_count: parseInt(row.customer_count),
+                total_tickets: rowTickets,
+                revenue: rowRevenue,
+                customer_pct: totalCustomers > 0 ? ((parseInt(row.customer_count) / totalCustomers) * 100).toFixed(1) : 0,
+                revenue_pct: totalRevenue > 0 ? ((rowRevenue / totalRevenue) * 100).toFixed(1) : 0
+            };
+        });
 
         res.json({
-            distribution: result.rows,
+            distribution,
             totals: {
                 customers: totalCustomers,
-                tickets: totalTickets
+                tickets: totalTickets,
+                revenue: totalRevenue
             },
             draw_id: drawId
         });

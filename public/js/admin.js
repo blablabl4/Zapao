@@ -64,38 +64,41 @@ async function loadPurchaseDistribution() {
     if (!tbody) return;
 
     try {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Carregando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Carregando...</td></tr>';
 
         const res = await fetch('/api/admin/purchase-distribution');
         const data = await res.json();
 
         if (!data.distribution || data.distribution.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum dado disponível</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Nenhum dado disponível</td></tr>';
             return;
         }
 
-        const totalCustomers = data.totals.customers || 1;
-
         let html = '';
         data.distribution.forEach(row => {
-            const pct = ((parseInt(row.customer_count) / totalCustomers) * 100).toFixed(1);
+            const revenueFormatted = row.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             html += `
                 <tr>
-                    <td style="font-weight:bold; color:var(--gold);">${row.range} tickets</td>
+                    <td style="font-weight:bold; color:var(--gold);">${row.ticket_count} ticket${row.ticket_count > 1 ? 's' : ''}</td>
                     <td style="text-align:center;">${row.customer_count}</td>
+                    <td style="text-align:center; color:var(--text-secondary);">${row.customer_pct}%</td>
                     <td style="text-align:center; color:#4ade80;">${row.total_tickets}</td>
-                    <td style="text-align:right; color:var(--text-secondary);">${pct}%</td>
+                    <td style="text-align:right;">${revenueFormatted}</td>
+                    <td style="text-align:right; color:var(--gold); font-weight:600;">${row.revenue_pct}%</td>
                 </tr>
             `;
         });
 
         // Add totals row
+        const totalRevenueFormatted = data.totals.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         html += `
-            <tr style="border-top: 2px solid var(--border-color); font-weight: bold;">
+            <tr style="border-top: 2px solid var(--border-color); font-weight: bold; background: rgba(212, 175, 55, 0.1);">
                 <td>TOTAL</td>
                 <td style="text-align:center;">${data.totals.customers}</td>
+                <td style="text-align:center;">100%</td>
                 <td style="text-align:center; color:#4ade80;">${data.totals.tickets}</td>
-                <td style="text-align:right;">100%</td>
+                <td style="text-align:right;">${totalRevenueFormatted}</td>
+                <td style="text-align:right; color:var(--gold);">100%</td>
             </tr>
         `;
 
@@ -103,7 +106,7 @@ async function loadPurchaseDistribution() {
 
     } catch (e) {
         console.error('Error loading distribution:', e);
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color: red;">Erro ao carregar</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color: red;">Erro ao carregar</td></tr>';
     }
 }
 
