@@ -997,7 +997,16 @@ async function spinSlots() {
                     `;
                 }).join('');
 
-                displayText = winnerText;
+                // Wrap in scrollable container if multiple winners
+                if (winningOrders.length > 1) {
+                    displayText = `
+                        <div style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                            ${winnerText}
+                        </div>
+                    `;
+                } else {
+                    displayText = winnerText;
+                }
                 status.style.color = '#4ade80';
             } else {
                 // USER REQUEST: colocou "rodada sem ganhador"
