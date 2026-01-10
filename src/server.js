@@ -283,6 +283,30 @@ app.get('/api/public/draw', async (req, res) => {
     }
 });
 
+// Public endpoint to check current winning number  
+app.get('/api/public/check-winner', async (req, res) => {
+    try {
+        const DrawService = require('./services/DrawService');
+        const currentDraw = await DrawService.getCurrentDraw();
+
+        if (!currentDraw) {
+            return res.json({ error: 'Nenhuma rifa ativa' });
+        }
+
+        const winningNumber = await DrawService.getWeightedDrawResult(currentDraw.id);
+
+        res.json({
+            draw_id: currentDraw.id,
+            draw_name: currentDraw.draw_name,
+            winning_number: winningNumber,
+            status: currentDraw.status
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Erro ao calcular número ganhador' });
+    }
+});
+
 app.use('/api/admin', requireAdmin, require('./routes/admin')); // Zapão admin routes
 
 // Health check endpoints (/health, /health/detailed, /health/ready, /health/live)
