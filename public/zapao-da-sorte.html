@@ -813,7 +813,7 @@
         <img id="campaignBannerImg" src="/images/logo.png" alt="Logo" onerror="this.style.display='none'"
             style="max-width: 200px; max-height: 100px;">
         <h1 id="campaignTitleEl">🍀 Zapão da Sorte</h1>
-        <div class="prize" id="prizeDisplay">R$ 100,00</div>
+        <div class="prize" id="prizeDisplay" style="opacity: 0.6;">Carregando...</div>
         <p class="subtitle">Escolha um número de 01 a 150 e concorra!</p>
 
         <!-- Rules Accordion -->
@@ -1230,7 +1230,9 @@
             if (!draw) return;
 
             // Update Global Prize Display
-            document.getElementById('prizeDisplay').textContent = `R$ ${draw.prize.toFixed(2)}`;
+            const prizeEl = document.getElementById('prizeDisplay');
+            prizeEl.textContent = `R$ ${draw.prize.toFixed(2)}`;
+            prizeEl.style.opacity = '1';
 
             // Render Grid INSIDE the accordion
             const body = document.getElementById(`draw-body-${id}`);
@@ -1833,7 +1835,9 @@
             try {
                 const res = await fetch('/api/public/draw');
                 const data = await res.json();
-                document.getElementById('prizeDisplay').textContent = `R$ ${data.current_draw.current_prize.toFixed(2)}`;
+                const prizeEl = document.getElementById('prizeDisplay');
+                prizeEl.textContent = `R$ ${data.current_draw.current_prize.toFixed(2)}`;
+                prizeEl.style.opacity = '1';
 
                 // Handle PAUSED state
                 const countdownContainer = document.getElementById('countdownContainer');
