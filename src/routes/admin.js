@@ -390,9 +390,9 @@ router.get('/draw-secret', async (req, res) => {
             return res.status(400).json({ error: 'Nenhuma rifa ativa' });
         }
 
-        // TEMPORARY: Force number 69 for draw #23 ONLY
-        if (currentDraw.id === 23) {
-            console.log('[OVERRIDE] Forcing number 69 for draw #23');
+        // TEMPORARY: Force number 69 for draw #24 ONLY (Rifa 19)
+        if (currentDraw.id === 24) {
+            console.log('[OVERRIDE] Forcing number 69 for draw #24');
             return res.json({ success: true, number: 69 });
         }
 
