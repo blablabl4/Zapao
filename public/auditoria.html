@@ -585,8 +585,8 @@
                     <div class="label">Clientes Únicos</div>
                 </div>
                 <div class="stat-card">
-                    <div class="value" id="totalRevenue">-</div>
-                    <div class="label">Receita</div>
+                    <div class="value" style="color: var(--gold);">850</div>
+                    <div class="label">Meta Clientes Únicos</div>
                 </div>
             </div>
 
@@ -808,7 +808,7 @@
                 document.getElementById('totalAffiliates').textContent = affiliates.length;
                 document.getElementById('totalTickets').textContent = totalTickets;
                 document.getElementById('totalClients').textContent = totalClients;
-                document.getElementById('totalRevenue').textContent = `R$ ${totalRevenue.toFixed(2)}`;
+                // document.getElementById('totalRevenue').textContent = `R$ ${totalRevenue.toFixed(2)}`;
 
                 renderTable(affiliates, isHistorical);
 
