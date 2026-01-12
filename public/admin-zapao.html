@@ -1011,7 +1011,7 @@
         // Load draws on page load
         loadAffiliateDraws();
 
-        // Payment Modal Functions
+        // Payment Modal Functions (Affiliates)
         let currentPaymentPhone = '';
 
         function openPaymentModal(phone, name, balance) {
@@ -1086,8 +1086,64 @@
                 alert('Erro ao registrar pagamento: ' + error.message);
             }
         }
-    </script>
+        // Winner Payment Modal Functions
+        function openWinnerPaymentModal(orderId, name, phone, amount) {
+            document.getElementById('winPayOrderId').value = orderId;
+            document.getElementById('winPayAmount').value = amount;
+            document.getElementById('winPayName').textContent = name;
+            document.getElementById('winPayPhone').textContent = phone;
+            document.getElementById('winPayAmountDisplay').textContent = amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+            document.getElementById('winPayMethod').value = 'PIX';
+            document.getElementById('winPayReference').value = '';
+            document.getElementById('winPayNotes').value = '';
+
+            document.getElementById('winnerPaymentModal').style.display = 'flex';
+        }
+
+        function closeWinnerPaymentModal() {
+            document.getElementById('winnerPaymentModal').style.display = 'none';
+        }
+
+        async function confirmWinnerPayment() {
+            const orderId = document.getElementById('winPayOrderId').value;
+            const amount = parseFloat(document.getElementById('winPayAmount').value);
+            const method = document.getElementById('winPayMethod').value;
+            const reference = document.getElementById('winPayReference').value;
+            const notes = document.getElementById('winPayNotes').value;
+
+            if (!confirm(`Confirmar pagamento de ${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} para o ganhador?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/winner-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order_id: orderId,
+                        amount: amount,
+                        payment_method: method,
+                        reference: reference,
+                        notes: notes
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Erro ao registrar pagamento');
+                }
+
+                alert('✅ Pagamento de prêmio registrado com sucesso!');
+                closeWinnerPaymentModal();
+                loadWinnersHistory(); // Recarrega a tabela
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao registrar pagamento: ' + error.message);
+            }
+        }
+    </script>
     <!-- IDSR Footer -->
     <footer class="idsr-footer">
         <div class="idsr-footer-content">
