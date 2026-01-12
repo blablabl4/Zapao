@@ -728,11 +728,13 @@
                                 <th style="text-align: center;">Clientes Únicos</th>
                                 <th style="text-align: center;">Acessos</th>
                                 <th style="text-align: right;">Receita</th>
+                                <th style="text-align: right;">Saldo Disponível</th>
+                                <th style="text-align: center;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="affiliatesTableBody">
                             <tr>
-                                <td colspan="6"
+                                <td colspan="8"
                                     style="text-align: center; padding: 20px; color: var(--text-secondary);">
                                     Carregando dados...
                                 </td>
@@ -883,13 +885,25 @@
 
                 const affiliates = data.affiliates || [];
                 if (affiliates.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">Nenhum afiliado ainda.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;">Nenhum afiliado ainda.</td></tr>`;
                     return;
                 }
 
                 let html = '';
                 affiliates.forEach(aff => {
                     const revenue = parseFloat(aff.total_revenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const balance = parseFloat(aff.balance || 0);
+                    const balanceFormatted = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const canWithdraw = aff.can_withdraw || false;
+
+                    // Badge de status do saldo
+                    const balanceClass = canWithdraw ? 'badge-success' : 'badge-blocked';
+                    const balanceIcon = canWithdraw ? '✅' : '🔒';
+
+                    // Botão de pagar (só aparece se pode sacar)
+                    const payButton = canWithdraw
+                        ? `<button class="btn btn-sm btn-gold" onclick="openPaymentModal('${aff.phone}', '${aff.name}', ${balance})" style="padding: 4px 12px; font-size: 0.85rem;">💰 Pagar</button>`
+                        : `<span style="color: var(--text-secondary); font-size: 0.75rem;">Saldo < R$ 500</span>`;
 
                     html += `
                         <tr>
@@ -899,6 +913,12 @@
                             <td style="text-align:center; color:#4ade80;">${aff.unique_clients}</td>
                             <td style="text-align:center; color: var(--blue);">${aff.access_count}</td>
                             <td style="text-align:right; color:#4ade80; font-weight: 600;">${revenue}</td>
+                            <td style="text-align:right;">
+                                <span class="${balanceClass}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">
+                                    ${balanceIcon} ${balanceFormatted}
+                                </span>
+                            </td>
+                            <td style="text-align:center;">${payButton}</td>
                         </tr>
                     `;
                 });
