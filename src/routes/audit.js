@@ -703,11 +703,19 @@ router.post('/payments', async (req, res) => {
         const totalPaid = parseFloat(paidResult.rows[0].total_paid || 0);
         const balance = affiliate.total_commission - totalPaid;
 
-        // Balance check
-        if (paymentAmount > balance) {
-            return res.status(400).json({
-                error: `Saldo insuficiente. Disponível: R$ ${balance.toFixed(2)}`
-            });
+        // Balance check (add epsilon tolerance for floating point precision)
+        // Also allow override if explicitly requested
+        const EPSILON = 0.05; // 5 cents tolerance
+        if (paymentAmount > balance + EPSILON) {
+            if (!override_validation) {
+                return res.status(400).json({
+                    error: `Saldo insuficiente. Disponível: R$ ${balance.toFixed(2)}`,
+                    can_override: true,
+                    balance: balance
+                });
+            }
+            // Log warning if overriding balance
+            console.warn(`[Payment Override] Admin paying R$ ${paymentAmount} exceeding balance of R$ ${balance} for ${affiliate_phone}`);
         }
 
         // Register payment
