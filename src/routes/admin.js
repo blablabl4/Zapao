@@ -144,17 +144,6 @@ router.post('/winner-payment', async (req, res) => {
     }
 });
 
-res.json({
-    success: true,
-    sales_locked: draw.sales_locked,
-    lock_time: draw.lock_time
-});
-
-    } catch (error) {
-    console.error('[Admin API] Error toggling sales:', error.message);
-    res.status(500).json({ error: error.message });
-}
-});
 
 /**
  * POST /api/admin/toggle-pause
