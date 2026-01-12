@@ -683,20 +683,23 @@
                 const data = await res.json();
 
                 const select = document.getElementById('drawSelect');
-                select.innerHTML = '';
 
-                data.draws.forEach((draw, idx) => {
+                // Add "Todas as Rifas" option first (keep it!)
+                select.innerHTML = `
+                    <option value="all" selected>📈 Todas as Rifas (Histórico Acumulado)</option>
+                    <option value="" disabled>───────────────</option>
+                `;
+
+                // Then add specific draws
+                data.draws.forEach((draw) => {
                     const option = document.createElement('option');
                     option.value = draw.id;
                     option.textContent = `${draw.name} (${draw.status})`;
-                    if (idx === 0) option.selected = true;
                     select.appendChild(option);
                 });
 
-                if (data.draws.length > 0) {
-                    currentDrawId = data.draws[0].id;
-                    loadDrawData();
-                }
+                // Load historical data (all draws) by default
+                loadDrawData();
             } catch (e) {
                 console.error('Error loading history:', e);
             }
