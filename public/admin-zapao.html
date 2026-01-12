@@ -1009,6 +1009,82 @@
 
         // Load draws on page load
         loadAffiliateDraws();
+
+        // Payment Modal Functions
+        let currentPaymentPhone = '';
+
+        function openPaymentModal(phone, name, balance) {
+            currentPaymentPhone = phone;
+            document.getElementById('payAffName').textContent = name;
+            document.getElementById('payAffPhone').textContent = phone;
+            document.getElementById('payAffBalance').textContent = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('payAmount').value = balance.toFixed(2);
+            document.getElementById('payAmount').max = balance;
+            document.getElementById('payMethod').value = 'PIX';
+            document.getElementById('payReference').value = '';
+            document.getElementById('payNotes').value = '';
+            document.getElementById('payOverride').checked = false;
+
+            const modal = document.getElementById('paymentModal');
+            modal.style.display = 'flex';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        async function confirmPayment() {
+            const amount = parseFloat(document.getElementById('payAmount').value);
+            const method = document.getElementById('payMethod').value;
+            const reference = document.getElementById('payReference').value;
+            const notes = document.getElementById('payNotes').value;
+            const override = document.getElementById('payOverride').checked;
+
+            if (!amount || amount <= 0) {
+                alert('Digite um valor válido!');
+                return;
+            }
+
+            if (!confirm(`Confirmar pagamento de ${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/audit/payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        affiliate_phone: currentPaymentPhone,
+                        amount: amount,
+                        payment_method: method,
+                        reference: reference,
+                        notes: notes,
+                        override_validation: override,
+                        created_by: 'Admin'
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    if (data.can_override) {
+                        if (confirm(`${data.error}\n\nDeseja prosseguir mesmo assim? (Marcará como exceção)`)) {
+                            document.getElementById('payOverride').checked = true;
+                            await confirmPayment();
+                        }
+                        return;
+                    }
+                    throw new Error(data.error || 'Erro ao registrar pagamento');
+                }
+
+                alert(`✅ Pagamento registrado com sucesso!\n\nNovo saldo: ${data.new_balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`);
+                closePaymentModal();
+                checkAffiliateStats(); // Recarrega a tabela
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao registrar pagamento: ' + error.message);
+            }
+        }
     </script>
 
     <!-- IDSR Footer -->
@@ -1081,6 +1157,68 @@
             }
         }
     </style>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-secondary); padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;">
+            <h2 style="margin: 0 0 20px 0; color: var(--text-primary);">💰 Registrar Pagamento</h2>
+
+            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin: 5px 0; color: var(--text-secondary);"><strong>Afiliado:</strong> <span id="payAffName"
+                        style="color: var(--gold);"></span></p>
+                <p style="margin: 5px 0; color: var(--text-secondary);"><strong>Telefone:</strong> <span
+                        id="payAffPhone"></span></p>
+                <p style="margin: 5px 0; color: var(--text-secondary);"><strong>Saldo Disponível:</strong> <span
+                        id="payAffBalance" style="color: #4ade80; font-weight: 600;"></span></p>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Valor a Pagar
+                    (R$)*</label>
+                <input type="number" id="payAmount" step="0.01" min="0" placeholder="Ex: 500.00"
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); font-size: 16px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Método de
+                    Pagamento</label>
+                <select id="payMethod"
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+                    <option value="PIX">PIX</option>
+                    <option value="Transferência">Transferência Bancária</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Outro">Outro</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label
+                    style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Comprovante/Referência</label>
+                <input type="text" id="payReference" placeholder="ID da transação, comprovante..."
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Observações</label>
+                <textarea id="payNotes" rows="3" placeholder="Observações adicionais..."
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); resize: vertical;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="payOverride" style="cursor: pointer;">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">⚠️ Ignorar validações
+                        (exceções)</span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closePaymentModal()" class="btn btn-secondary">Cancelar</button>
+                <button onclick="confirmPayment()" class="btn btn-gold">Confirmar Pagamento</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 
