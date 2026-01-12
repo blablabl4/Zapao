@@ -97,17 +97,63 @@ router.post('/toggle-sales', async (req, res) => {
         }
 
         const draw = await DrawService.toggleSalesLock(locked);
-
-        res.json({
-            success: true,
-            sales_locked: draw.sales_locked,
-            lock_time: draw.lock_time
-        });
+        res.json(draw);
 
     } catch (error) {
         console.error('[Admin API] Error toggling sales:', error.message);
         res.status(500).json({ error: error.message });
     }
+});
+
+/**
+ * POST /api/admin/winner-payment
+ * Register a prize payment for a winner
+ */
+router.post('/winner-payment', async (req, res) => {
+    try {
+        const { order_id, amount, payment_method, reference, notes } = req.body;
+        const { query } = require('../database/db');
+
+        if (!order_id || !amount) {
+            return res.status(400).json({ error: 'Order ID and Amount are required' });
+        }
+
+        // Check if order exists and is a winner
+        // (Simplified check: just check if order exists, stricter check could verify winning number)
+        const orderRes = await query('SELECT * FROM orders WHERE order_id = $1', [order_id]);
+        if (orderRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Insert payment
+        const result = await query(`
+            INSERT INTO winner_payments (order_id, amount, payment_method, reference, notes, created_by)
+            VALUES ($1, $2, $3, $4, $5, 'Admin')
+            RETURNING *
+        `, [order_id, amount, payment_method || 'PIX', reference, notes]);
+
+        res.json({ success: true, payment: result.rows[0] });
+
+    } catch (error) {
+        // Check for unique constraint violation
+        if (error.code === '23505') { // unique_violation
+            return res.status(400).json({ error: 'Pagamento já registrado para este ganhador' });
+        }
+        console.error('[Admin API] Error registering winner payment:', error);
+        res.status(500).json({ error: 'Error registering payment' });
+    }
+});
+
+res.json({
+    success: true,
+    sales_locked: draw.sales_locked,
+    lock_time: draw.lock_time
+});
+
+    } catch (error) {
+    console.error('[Admin API] Error toggling sales:', error.message);
+    res.status(500).json({ error: error.message });
+}
 });
 
 /**

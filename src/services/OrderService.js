@@ -182,10 +182,15 @@ class OrderService {
         let queryStr = `
             SELECT o.*, 
                    COALESCE(p.paid_at, o.created_at) as paid_at,
-                   d.draw_name
+                   d.draw_name,
+                   wp.amount as prize_paid_amount,
+                   wp.payment_method as prize_payment_method,
+                   wp.paid_at as prize_paid_at,
+                   wp.reference as prize_reference
             FROM orders o
             LEFT JOIN payments p ON o.order_id = p.order_id
             JOIN draws d ON o.draw_id = d.id
+            LEFT JOIN winner_payments wp ON o.order_id = wp.order_id
             WHERE o.number = $1 AND o.status = 'PAID'
         `;
 
@@ -228,7 +233,13 @@ class OrderService {
             return {
                 ...order,
                 buyer: buyerData,
-                draw_name: order.draw_name // Pass through
+                draw_name: order.draw_name,// Pass through
+                prize_payment: order.prize_paid_amount ? {
+                    amount: parseFloat(order.prize_paid_amount),
+                    method: order.prize_payment_method,
+                    paid_at: order.prize_paid_at,
+                    reference: order.prize_reference
+                } : null
             };
         });
     }
