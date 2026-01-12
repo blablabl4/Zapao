@@ -257,8 +257,11 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
                 const subInfo = subsResult.rows.find(s => s.sub_code === subRow.referrer_id);
 
                 const subRevenue = parseFloat(subRow.total_revenue || 0);
-                const subCommission = subRevenue * 0.25; // 25% for sub
-                const parentCommission = subRevenue * 0.25; // 25% for parent
+                // Calculate NET revenue after payment fee (0.99%)
+                const netRevenue = subRevenue * (1 - 0.0099);
+                // Sub and parent each get 25% of NET revenue
+                const subCommission = netRevenue * 0.25;
+                const parentCommission = netRevenue * 0.25;
 
                 subAffiliates.push({
                     name: subInfo?.sub_name || subRow.referrer_id,
@@ -442,8 +445,11 @@ async function getAffiliateStatsHistorical() {
             for (const subRow of subStats.rows) {
                 const subInfo = subsResult.rows.find(s => s.sub_code === subRow.referrer_id);
                 const subRevenue = parseFloat(subRow.total_revenue || 0);
-                const subCommission = subRevenue * 0.25; // 25% for sub
-                const parentCommission = subRevenue * 0.25; // 25% for parent
+                // Calculate NET revenue after payment fee (0.99%)
+                const netRevenue = subRevenue * (1 - 0.0099);
+                // Sub and parent each get 25% of NET revenue
+                const subCommission = netRevenue * 0.25;
+                const parentCommission = netRevenue * 0.25;
 
                 parentCommissionFromSubs += parentCommission;
 
