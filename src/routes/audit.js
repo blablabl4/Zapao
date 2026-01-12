@@ -99,6 +99,24 @@ router.get('/history', async (req, res) => {
 });
 
 /**
+ * Helper: Get total amount already paid to an affiliate
+ */
+async function getTotalPaid(phone) {
+    try {
+        const result = await query(
+            `SELECT COALESCE(SUM(amount), 0) as total_paid 
+             FROM affiliate_payments 
+             WHERE affiliate_phone = $1`,
+            [phone]
+        );
+        return parseFloat(result.rows[0]?.total_paid || 0);
+    } catch (e) {
+        console.error('[getTotalPaid] Error:', e.message);
+        return 0;
+    }
+}
+
+/**
  * Get affiliate stats with unique clients count
  */
 async function getAffiliateStatsWithUniqueClients(drawId) {
@@ -277,6 +295,12 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
 
         // Calculate total parent commission from subs
         const parentCommissionFromSubs = subAffiliates.reduce((sum, sub) => sum + sub.parent_commission, 0);
+        const totalCommission = netCommission + parentCommissionFromSubs;
+
+        // Get payment info
+        const paidAmount = await getTotalPaid(padrinhoPhone);
+        const balance = totalCommission - paidAmount;
+        const canWithdraw = balance >= 500;
 
         enrichedResults.push({
             referrer_id: row.referrer_id,
@@ -287,7 +311,10 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             total_revenue: totalRevenue,
             net_commission: netCommission,
             parent_commission_from_subs: parentCommissionFromSubs,
-            total_commission: netCommission + parentCommissionFromSubs,
+            total_commission: totalCommission,
+            paid_amount: paidAmount,
+            balance: balance,
+            can_withdraw: canWithdraw,
             access_count: accesses,
             conversion_rate: conversionRate,
             sub_affiliates: subAffiliates,
@@ -463,6 +490,13 @@ async function getAffiliateStatsHistorical() {
             }
         }
 
+        const totalCommission = netCommission + parentCommissionFromSubs;
+
+        // Get payment info
+        const paidAmount = await getTotalPaid(padrinhoPhone);
+        const balance = totalCommission - paidAmount;
+        const canWithdraw = balance >= 500;
+
         enrichedResults.push({
             name: padrinhoName,
             phone: formatPhone(padrinhoPhone),
@@ -472,7 +506,10 @@ async function getAffiliateStatsHistorical() {
             total_revenue: totalRevenue,
             net_commission: netCommission,
             parent_commission_from_subs: parentCommissionFromSubs,
-            total_commission: netCommission + parentCommissionFromSubs,
+            total_commission: totalCommission,
+            paid_amount: paidAmount,
+            balance: balance,
+            can_withdraw: canWithdraw,
             access_count: accesses,
             conversion_rate: conversionRate,
             sub_affiliates: subAffiliates,
@@ -619,6 +656,109 @@ router.get('/sub-affiliates', async (req, res) => {
         });
     } catch (error) {
         console.error('[Audit API] Sub-affiliates list error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/audit/payments
+ * Register a payment to an affiliate
+ * Minimum: R$ 500.00
+ */
+router.post('/payments', async (req, res) => {
+    try {
+        const { affiliate_phone, amount, payment_method, reference, notes, created_by } = req.body;
+
+        // Validation
+        if (!affiliate_phone || !amount) {
+            return res.status(400).json({ error: 'Telefone e valor são obrigatórios' });
+        }
+
+        const paymentAmount = parseFloat(amount);
+
+        // Minimum withdrawal check
+        if (paymentAmount < 500) {
+            return res.status(400).json({
+                error: 'Valor mínimo para saque: R$ 500,00'
+            });
+        }
+
+        // Get affiliate total commission
+        const affiliateStats = await getAffiliateStatsHistorical();
+        const affiliate = affiliateStats.find(a => a.phone.replace(/\D/g, '') === affiliate_phone.replace(/\D/g, ''));
+
+        if (!affiliate) {
+            return res.status(404).json({ error: 'Afiliado não encontrado' });
+        }
+
+        // Get total already paid
+        const paidResult = await query(
+            `SELECT COALESCE(SUM(amount), 0) as total_paid 
+             FROM affiliate_payments 
+             WHERE affiliate_phone = $1`,
+            [affiliate_phone]
+        );
+
+        const totalPaid = parseFloat(paidResult.rows[0].total_paid || 0);
+        const balance = affiliate.total_commission - totalPaid;
+
+        // Balance check
+        if (paymentAmount > balance) {
+            return res.status(400).json({
+                error: `Saldo insuficiente. Disponível: R$ ${balance.toFixed(2)}`
+            });
+        }
+
+        // Register payment
+        const insertResult = await query(
+            `INSERT INTO affiliate_payments 
+             (affiliate_phone, amount, payment_method, reference, notes, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING *`,
+            [affiliate_phone, paymentAmount, payment_method || 'PIX', reference, notes, created_by || 'Admin']
+        );
+
+        const newBalance = balance - paymentAmount;
+
+        res.json({
+            success: true,
+            payment: insertResult.rows[0],
+            new_balance: newBalance,
+            can_withdraw: newBalance >= 500
+        });
+
+    } catch (error) {
+        console.error('[Audit API] Payment error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/audit/payments/:phone
+ * Get payment history for an affiliate
+ */
+router.get('/payments/:phone', async (req, res) => {
+    try {
+        const phone = req.params.phone;
+
+        const payments = await query(
+            `SELECT * FROM affiliate_payments 
+             WHERE affiliate_phone = $1 
+             ORDER BY payment_date DESC`,
+            [phone]
+        );
+
+        const totalPaid = payments.rows.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+        res.json({
+            phone,
+            payments: payments.rows,
+            total_paid: totalPaid,
+            payment_count: payments.rows.length
+        });
+
+    } catch (error) {
+        console.error('[Audit API] Get payments error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });
