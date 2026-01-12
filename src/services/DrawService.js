@@ -304,10 +304,16 @@ class DrawService {
         for (const draw of draws) {
             let winners = [];
             if (draw.status === 'CLOSED') {
-                // Get winners for this draw
+                // Get winners for this draw with payment info
                 const winnersRes = await query(`
-                    SELECT o.number, o.buyer_ref, o.created_at
+                    SELECT o.number, o.buyer_ref, o.created_at, o.order_id,
+                           wp.amount as prize_paid_amount,
+                           wp.payment_method as prize_payment_method,
+                           wp.paid_at as prize_paid_at,
+                           wp.reference as prize_reference,
+                           wp.notes as prize_notes
                     FROM orders o
+                    LEFT JOIN winner_payments wp ON o.order_id = wp.order_id
                     WHERE o.draw_id = $1 AND o.status = 'PAID' AND o.number = $2
                 `, [draw.id, draw.drawn_number]);
 
@@ -327,13 +333,21 @@ class DrawService {
                     if (city.includes('BATCH')) city = 'Brasil';
 
                     return {
+                        order_id: w.order_id,
                         number: w.number,
                         name: parts[0] ? parts[0].split(' ')[0] + ' ' + (parts[0].split(' ')[1] || '') : 'Ganhador',
                         phone: parts[1] || '',
                         pix: parts[2] || '',
                         date: w.created_at,
                         city: city,
-                        bairro: bairro
+                        bairro: bairro,
+                        prize_payment: w.prize_paid_amount ? {
+                            amount: parseFloat(w.prize_paid_amount),
+                            method: w.prize_payment_method,
+                            paid_at: w.prize_paid_at,
+                            reference: w.prize_reference,
+                            notes: w.prize_notes
+                        } : null
                     };
                 });
             }
