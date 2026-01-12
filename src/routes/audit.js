@@ -667,7 +667,7 @@ router.get('/sub-affiliates', async (req, res) => {
  */
 router.post('/payments', async (req, res) => {
     try {
-        const { affiliate_phone, amount, payment_method, reference, notes, created_by } = req.body;
+        const { affiliate_phone, amount, payment_method, reference, notes, created_by, override_validation } = req.body;
 
         // Validation
         if (!affiliate_phone || !amount) {
@@ -676,10 +676,11 @@ router.post('/payments', async (req, res) => {
 
         const paymentAmount = parseFloat(amount);
 
-        // Minimum withdrawal check
-        if (paymentAmount < 500) {
+        // Minimum withdrawal check (can be overridden for exceptional cases)
+        if (!override_validation && paymentAmount < 500) {
             return res.status(400).json({
-                error: 'Valor mínimo para saque: R$ 500,00'
+                error: 'Valor mínimo para saque: R$ 500,00',
+                can_override: true
             });
         }
 
