@@ -1012,8 +1012,8 @@
                 return;
             }
 
-            // Find affiliate
-            const aff = cachedAffiliates.find(a => a.phone === phone);
+            // Find affiliate (compare raw digits)
+            const aff = cachedAffiliates.find(a => a.phone.replace(/\D/g, '') === phone);
 
             if (!aff) {
                 alert('Afiliado não encontrado neste relatório. Verifique se digitou o telefone corretamente.');
