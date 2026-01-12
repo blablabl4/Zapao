@@ -991,59 +991,60 @@
         });
 
         // Auto-refresh every 30 seconds
-        setInterval(() => {
-            function handleBalanceEnter(e) {
-                if (e.key === 'Enter') checkBalance();
+        setInterval(loadDrawData, 30000);
+
+        function handleBalanceEnter(e) {
+            if (e.key === 'Enter') checkBalance();
+        }
+
+        function checkBalance() {
+            const phone = document.getElementById('balancePhone').value.replace(/\D/g, '');
+            const resultDiv = document.getElementById('balanceResult');
+            const tbody = document.getElementById('balanceSubsTable');
+
+            if (!phone || phone.length < 10) {
+                alert('Por favor, digite um telefone válido.');
+                return;
             }
 
-            function checkBalance() {
-                const phone = document.getElementById('balancePhone').value.replace(/\D/g, '');
-                const resultDiv = document.getElementById('balanceResult');
-                const tbody = document.getElementById('balanceSubsTable');
+            if (cachedAffiliates.length === 0) {
+                alert('Aguarde o carregamento dos dados ou clique em Atualizar na aba Ranking.');
+                return;
+            }
 
-                if (!phone || phone.length < 10) {
-                    alert('Por favor, digite um telefone válido.');
-                    return;
-                }
+            // Find affiliate
+            const aff = cachedAffiliates.find(a => a.phone === phone);
 
-                if (cachedAffiliates.length === 0) {
-                    alert('Aguarde o carregamento dos dados ou clique em Atualizar na aba Ranking.');
-                    return;
-                }
+            if (!aff) {
+                alert('Afiliado não encontrado neste relatório. Verifique se digitou o telefone corretamente.');
+                resultDiv.style.display = 'none';
+                return;
+            }
 
-                // Find affiliate
-                const aff = cachedAffiliates.find(a => a.phone === phone);
+            // Populate cards
+            // Note: total_commission is from backend.
+            // We need paid_amount. If backend doesn't send it to public API, we might need to fetch personalized data.
+            // Assumption: Backend public API sends 'balance' and 'paid_amount'?
+            // Checking step 1006: changed getAffiliateStatsWithUniqueClients to include paid_amount and balance.
+            // Assuming /api/audit/affiliates calls that function.
 
-                if (!aff) {
-                    alert('Afiliado não encontrado neste relatório. Verifique se digitou o telefone corretamente.');
-                    resultDiv.style.display = 'none';
-                    return;
-                }
+            const total = aff.total_commission || 0;
+            const balance = aff.balance !== undefined ? aff.balance : total; // Fallback if missing
+            const paid = aff.paid_amount || (total - balance) || 0;
 
-                // Populate cards
-                // Note: total_commission is from backend. 
-                // We need paid_amount. If backend doesn't send it to public API, we might need to fetch personalized data.
-                // Assumption: Backend public API sends 'balance' and 'paid_amount'? 
-                // Checking step 1006: changed getAffiliateStatsWithUniqueClients to include paid_amount and balance.
-                // Assuming /api/audit/affiliates calls that function.
+            document.getElementById('resBalance').textContent = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('resPaid').textContent = paid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('resTotal').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-                const total = aff.total_commission || 0;
-                const balance = aff.balance !== undefined ? aff.balance : total; // Fallback if missing
-                const paid = aff.paid_amount || (total - balance) || 0;
+            // Populate Sub-Links Table
+            let html = '';
+            if (aff.all_sub_links && aff.all_sub_links.length > 0) {
+                aff.all_sub_links.forEach(link => {
+                    const subWithSales = aff.sub_affiliates?.find(s => s.sub_code === link.sub_code);
+                    const comm = subWithSales ? subWithSales.sub_commission : 0;
+                    const clients = subWithSales ? subWithSales.unique_clients : 0;
 
-                document.getElementById('resBalance').textContent = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById('resPaid').textContent = paid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById('resTotal').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-                // Populate Sub-Links Table
-                let html = '';
-                if (aff.all_sub_links && aff.all_sub_links.length > 0) {
-                    aff.all_sub_links.forEach(link => {
-                        const subWithSales = aff.sub_affiliates?.find(s => s.sub_code === link.sub_code);
-                        const comm = subWithSales ? subWithSales.sub_commission : 0;
-                        const clients = subWithSales ? subWithSales.unique_clients : 0;
-
-                        html += `
+                    html += `
                         <tr>
                             <td>${link.sub_name}</td>
                             <td style="font-size: 0.8em; color: var(--text-secondary);">${link.sub_code}</td>
@@ -1051,18 +1052,17 @@
                             <td class="revenue">R$ ${comm.toFixed(2)}</td>
                         </tr>
                     `;
-                    });
-                } else {
-                    html = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #666;">Nenhum sub-afiliado encontrado.</td></tr>';
-                }
-
-                tbody.innerHTML = html;
-                resultDiv.style.display = 'block';
+                });
+            } else {
+                html = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #666;">Nenhum sub-afiliado encontrado.</td></tr>';
             }
 
-            // Initialize
-            loadDrawHistory();
-            setInterval(loadDrawData, 30000); // Refresh every 30s
+            tbody.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        // Initialize
+        loadDrawHistory();
     </script>
 </body>
 
