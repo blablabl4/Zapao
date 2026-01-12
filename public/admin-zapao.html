@@ -726,9 +726,9 @@
                                 <th>Telefone</th>
                                 <th style="text-align: center;">Tickets</th>
                                 <th style="text-align: center;">Clientes Únicos</th>
-                                <th style="text-align: center;">Acessos</th>
-                                <th style="text-align: right;">Receita</th>
-                                <th style="text-align: right;">Saldo Disponível</th>
+                                <th style="text-align: right;">Comissão Total</th>
+                                <th style="text-align: right;">Total Pago</th>
+                                <th style="text-align: right;">Saldo Atual</th>
                                 <th style="text-align: center;">Ações</th>
                             </tr>
                         </thead>
@@ -891,19 +891,25 @@
 
                 let html = '';
                 affiliates.forEach(aff => {
-                    const revenue = parseFloat(aff.total_revenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const commission = parseFloat(aff.total_commission || 0);
+                    const paidAmount = parseFloat(aff.paid_amount || 0);
                     const balance = parseFloat(aff.balance || 0);
+
+                    const commissionFormatted = commission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const paidFormatted = paidAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                     const balanceFormatted = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
                     const canWithdraw = aff.can_withdraw || false;
 
                     // Badge de status do saldo
                     const balanceClass = canWithdraw ? 'badge-success' : 'badge-blocked';
                     const balanceIcon = canWithdraw ? '✅' : '🔒';
 
-                    // Botão de pagar (só aparece se pode sacar)
-                    const payButton = canWithdraw
-                        ? `<button class="btn btn-sm btn-gold" onclick="openPaymentModal('${aff.phone}', '${aff.name}', ${balance})" style="padding: 4px 12px; font-size: 0.85rem;">💰 Pagar</button>`
-                        : `<span style="color: var(--text-secondary); font-size: 0.75rem;">Saldo < R$ 500</span>`;
+                    // Botão de pagar
+                    const cleanPhone = aff.phone.replace(/\D/g, '');
+                    const payButton = balance > 0
+                        ? `<button class="btn btn-sm btn-gold" onclick="openPaymentModal('${cleanPhone}', '${aff.name.replace(/'/g, "\\'")}', ${balance})" style="padding: 4px 12px; font-size: 0.85rem;">💰 Pagar</button>`
+                        : `<span style="color: var(--text-secondary); font-size: 0.75rem;">Sem saldo</span>`;
 
                     html += `
                         <tr>
@@ -911,10 +917,10 @@
                             <td style="color:var(--text-secondary);">${aff.phone}</td>
                             <td style="text-align:center;">${aff.ticket_count}</td>
                             <td style="text-align:center; color:#4ade80;">${aff.unique_clients}</td>
-                            <td style="text-align:center; color: var(--blue);">${aff.access_count}</td>
-                            <td style="text-align:right; color:#4ade80; font-weight: 600;">${revenue}</td>
+                            <td style="text-align:right; color:#4ade80; font-weight: 600;">${commissionFormatted}</td>
+                            <td style="text-align:right; color:#fb923c;">${paidFormatted}</td>
                             <td style="text-align:right;">
-                                <span class="${balanceClass}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">
+                                <span class="${balanceClass}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
                                     ${balanceIcon} ${balanceFormatted}
                                 </span>
                             </td>
