@@ -558,12 +558,14 @@
         <!-- Tab 1: Ranking -->
         <div id="tab-ranking" class="tab-content active">
             <div class="draw-selector">
-                <label>Selecionar Rifa:</label>
+                <label>📊 Visualizar:</label>
                 <select id="drawSelect" onchange="loadDrawData()">
-                    <option value="">Carregando...</option>
+                    <option value="all" selected>📈 Todas as Rifas (Histórico Acumulado)</option>
+                    <option value="" disabled>───────────────</option>
+                    <!-- Rifas específicas carregadas via JS -->
                 </select>
                 <div class="draw-info">
-                    <span>Status: <strong id="drawStatus">-</strong></span>
+                    <span id="viewModeIndicator"><strong id="drawStatus">Modo Histórico</strong></span>
                     <span>Atualizado: <strong id="lastUpdate">-</strong></span>
                 </div>
             </div>
@@ -594,10 +596,11 @@
                 </div>
                 <table>
                     <thead>
-                        <tr>
+                        <tr id="tableHeaderRow">
                             <th>#</th>
                             <th>Nome</th>
                             <th>Clientes Únicos</th>
+                            <th id="drawsCountHeader" style="display:none;">Rifas</th>
                             <th>Comissão Líquida</th>
                             <th>Sub-Links</th>
                             <th>Acessos</th>
@@ -699,31 +702,49 @@
             }
         }
 
-        // Load affiliate data for selected draw
+        // Load affiliate data for selected draw (or all draws if 'all')
         async function loadDrawData() {
             const select = document.getElementById('drawSelect');
-            const drawId = select.value || currentDrawId;
+            const drawId = select.value;
 
             if (!drawId) return;
 
             try {
-                const res = await fetch(`/api/audit/affiliates?draw_id=${drawId}`);
+                // Build API URL based on selection
+                let apiUrl = '/api/audit/affiliates';
+                if (drawId !== 'all') {
+                    apiUrl += `?draw_id=${drawId}`;
+                }
+
+                const res = await fetch(apiUrl);
                 const data = await res.json();
 
-                document.getElementById('drawStatus').textContent = data.draw_status;
+                // Update UI based on mode
+                const isHistorical = data.mode === 'historical';
+                const statusEl = document.getElementById('drawStatus');
+
+                if (isHistorical) {
+                    statusEl.textContent = '📈 Histórico Acumulado';
+                    statusEl.style.color = 'var(--gold)';
+                } else {
+                    statusEl.textContent = data.draw_status || '-';
+                    statusEl.style.color = data.draw_status === 'ACTIVE' ? 'var(--success)' : 'var(--text-secondary)';
+                }
+
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR');
 
                 const affiliates = data.affiliates || [];
                 const totalTickets = affiliates.reduce((sum, a) => sum + a.ticket_count, 0);
                 const totalClients = affiliates.reduce((sum, a) => sum + a.unique_clients, 0);
                 const totalRevenue = affiliates.reduce((sum, a) => sum + a.total_revenue, 0);
+                const totalCommission = affiliates.reduce((sum, a) => sum + (a.total_commission || 0), 0);
 
                 document.getElementById('totalAffiliates').textContent = affiliates.length;
                 document.getElementById('totalTickets').textContent = totalTickets;
                 document.getElementById('totalClients').textContent = totalClients;
                 document.getElementById('totalRevenue').textContent = `R$ ${totalRevenue.toFixed(2)}`;
 
-                renderTable(affiliates);
+                renderTable(affiliates, isHistorical);
 
             } catch (e) {
                 console.error('Error loading data:', e);
@@ -732,11 +753,19 @@
             }
         }
 
-        function renderTable(affiliates) {
+        function renderTable(affiliates, isHistorical = false) {
             const tbody = document.getElementById('affiliateTable');
+            const drawsHeader = document.getElementById('drawsCountHeader');
+
+            // Show/hide Rifas column based on mode
+            if (drawsHeader) {
+                drawsHeader.style.display = isHistorical ? 'table-cell' : 'none';
+            }
+
+            const colSpan = isHistorical ? 8 : 7;
 
             if (!affiliates || affiliates.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum afiliado encontrado nesta rifa</p></td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-state"><p>Nenhum afiliado encontrado</p></td></tr>`;
                 return;
             }
 
@@ -755,11 +784,14 @@
                 const expandIcon = hasContent ? '<span class="expand-icon">▶</span>' : '';
                 const rowClass = hasContent ? 'parent-row' : '';
 
+                const drawsCountCell = isHistorical ? `<td class="number" style="color: var(--gold);">${aff.draws_count || 0}</td>` : '';
+
                 html += `
                     <tr class="${rowClass}" data-rank="${rank}" onclick="${hasContent ? `toggleSubs(${rank})` : ''}">
                         <td class="rank ${rankClass}">${rank}º</td>
                         <td class="name">${expandIcon}${aff.name}</td>
                         <td class="number highlight">${aff.unique_clients}</td>
+                        ${drawsCountCell}
                         <td class="revenue">R$ ${aff.total_commission.toFixed(2)}</td>
                         <td class="number">${aff.sub_links_count || 0}</td>
                         <td class="number">${aff.access_count}</td>

@@ -6,33 +6,46 @@ const DrawService = require('../services/DrawService');
 /**
  * GET /api/audit/affiliates
  * Public endpoint for affiliate audit with unique clients
- * Optional: ?draw_id=X for specific draw, otherwise uses current
+ * Optional: ?draw_id=X for specific draw
+ * Default: Returns accumulated historical data from ALL draws
  */
 router.get('/affiliates', async (req, res) => {
     try {
         const drawId = req.query.draw_id ? parseInt(req.query.draw_id) : null;
 
-        let targetDraw;
+        let stats;
+        let responseData = {};
+
         if (drawId) {
+            // Specific draw mode
             const drawRes = await query('SELECT * FROM draws WHERE id = $1', [drawId]);
             if (drawRes.rows.length === 0) {
                 return res.status(404).json({ error: 'Draw not found' });
             }
-            targetDraw = drawRes.rows[0];
+            const targetDraw = drawRes.rows[0];
+            stats = await getAffiliateStatsWithUniqueClients(targetDraw.id);
+
+            responseData = {
+                mode: 'specific',
+                draw_id: targetDraw.id,
+                draw_name: targetDraw.draw_name,
+                draw_status: targetDraw.status,
+                total_affiliates: stats.length,
+                affiliates: stats
+            };
         } else {
-            targetDraw = await DrawService.getCurrentDraw();
+            // Historical accumulated mode (ALL draws)
+            stats = await getAffiliateStatsHistorical();
+
+            responseData = {
+                mode: 'historical',
+                draw_id: null,
+                total_affiliates: stats.length,
+                affiliates: stats
+            };
         }
 
-        // Get affiliate stats with unique clients count
-        const stats = await getAffiliateStatsWithUniqueClients(targetDraw.id);
-
-        res.json({
-            draw_id: targetDraw.id,
-            draw_name: targetDraw.draw_name,
-            draw_status: targetDraw.status,
-            total_affiliates: stats.length,
-            affiliates: stats
-        });
+        res.json(responseData);
     } catch (error) {
         console.error('[Audit API] Error:', error.message);
         res.status(500).json({ error: error.message });
@@ -268,6 +281,188 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             phone: formatPhone(padrinhoPhone),
             ticket_count: parseInt(row.ticket_count) || 0,
             unique_clients: parseInt(row.unique_clients) || 0,
+            total_revenue: totalRevenue,
+            net_commission: netCommission,
+            parent_commission_from_subs: parentCommissionFromSubs,
+            total_commission: netCommission + parentCommissionFromSubs,
+            access_count: accesses,
+            conversion_rate: conversionRate,
+            sub_affiliates: subAffiliates,
+            all_sub_links: allSubLinks,
+            sub_links_count: allSubLinks.length
+        });
+    }
+
+    return enrichedResults;
+}
+
+/**
+ * Get historical accumulated affiliate stats from ALL draws
+ * Returns aggregated data with net commission calculations
+ */
+async function getAffiliateStatsHistorical() {
+    // Get all affiliates with sales across all draws
+    const result = await query(`
+        WITH sales_stats AS (
+            SELECT 
+                referrer_id,
+                COUNT(*) as ticket_count,
+                COUNT(DISTINCT order_id) as transaction_count,
+                SUM(amount) as total_revenue,
+                COUNT(DISTINCT buyer_ref) as unique_clients,
+                COUNT(DISTINCT draw_id) as draws_count
+            FROM orders
+            WHERE status = 'PAID'
+              AND referrer_id IS NOT NULL
+              AND referrer_id != ''
+            GROUP BY referrer_id
+        ),
+        click_stats AS (
+            SELECT 
+                referrer_id,
+                COUNT(*) as click_count
+            FROM affiliate_clicks
+            WHERE referrer_id IS NOT NULL
+              AND referrer_id != ''
+            GROUP BY referrer_id
+        )
+        SELECT
+            COALESCE(s.referrer_id, c.referrer_id) as referrer_id,
+            COALESCE(s.ticket_count, 0) as ticket_count,
+            COALESCE(s.transaction_count, 0) as transaction_count,
+            COALESCE(s.total_revenue, 0) as total_revenue,
+            COALESCE(s.unique_clients, 0) as unique_clients,
+            COALESCE(s.draws_count, 0) as draws_count,
+            COALESCE(c.click_count, 0) as access_count
+        FROM sales_stats s
+        FULL OUTER JOIN click_stats c ON s.referrer_id = c.referrer_id
+        WHERE s.ticket_count > 0
+        ORDER BY s.total_revenue DESC NULLS LAST
+    `);
+
+    const enrichedResults = [];
+
+    for (const row of result.rows) {
+        let padrinhoName = null;
+        let padrinhoPhone = '';
+
+        try {
+            // Extract phone from referrer_id
+            padrinhoPhone = (row.referrer_id || '').replace(/\D/g, '');
+
+            if (padrinhoPhone && /^\d{10,11}$/.test(padrinhoPhone)) {
+                // Try affiliates table
+                const affRes = await query(
+                    `SELECT name FROM affiliates WHERE phone = $1 LIMIT 1`,
+                    [padrinhoPhone]
+                );
+
+                if (affRes.rows.length > 0 && affRes.rows[0].name) {
+                    padrinhoName = affRes.rows[0].name;
+                }
+
+                // Fallback: search in orders
+                if (!padrinhoName) {
+                    const orderRes = await query(
+                        `SELECT buyer_ref FROM orders 
+                         WHERE buyer_ref LIKE $1 AND status = 'PAID'
+                         ORDER BY created_at DESC LIMIT 1`,
+                        [`%${padrinhoPhone}%`]
+                    );
+
+                    if (orderRes.rows.length > 0 && orderRes.rows[0].buyer_ref) {
+                        const parts = orderRes.rows[0].buyer_ref.split('|');
+                        if (parts[0] && parts[0].length > 1) {
+                            padrinhoName = parts[0];
+                        }
+                    }
+                }
+            }
+
+            if (!padrinhoName) {
+                padrinhoName = `Afiliado #${(row.referrer_id || '').slice(0, 6)}`;
+            }
+        } catch (e) {
+            console.error(`[Audit] Error processing referrer: ${e.message}`);
+            padrinhoName = `Afiliado #${(row.referrer_id || '').slice(0, 6)}`;
+        }
+
+        // Calculate conversion
+        const transactions = parseInt(row.transaction_count) || 0;
+        const accesses = parseInt(row.access_count) || 0;
+        let conversionRate = '-';
+
+        if (accesses > 0 && transactions > 0) {
+            const percentage = ((transactions / accesses) * 100).toFixed(1);
+            conversionRate = `${percentage}%`;
+        } else if (transactions > 0 && accesses === 0) {
+            conversionRate = '100%';
+        }
+
+        // Calculate NET commissions (49.01% for direct sales)
+        const totalRevenue = parseFloat(row.total_revenue || 0);
+        const netCommissionRate = 0.4901; // 50% - 0.99% fee
+        const netCommission = totalRevenue * netCommissionRate;
+
+        // Get sub-affiliates (accumulated across all draws)
+        const subsResult = await query(
+            `SELECT sub_code, sub_name, created_at FROM sub_affiliates WHERE parent_phone = $1`,
+            [padrinhoPhone]
+        );
+
+        let subAffiliates = [];
+        let allSubLinks = [];
+
+        for (const subRow of subsResult.rows) {
+            allSubLinks.push({
+                sub_name: subRow.sub_name,
+                sub_code: subRow.sub_code,
+                link: `https://www.tvzapao.com.br/zapao-da-sorte?ref=${subRow.sub_code}`,
+                created_at: subRow.created_at
+            });
+        }
+
+        const subCodes = subsResult.rows.map(s => s.sub_code);
+        let parentCommissionFromSubs = 0;
+
+        if (subCodes.length > 0) {
+            // Get accumulated sales stats for sub-affiliates
+            const subStats = await query(
+                `SELECT 
+                    referrer_id,
+                    COUNT(*) as ticket_count,
+                    SUM(amount) as total_revenue,
+                    COUNT(DISTINCT buyer_ref) as unique_clients
+                 FROM orders
+                 WHERE status = 'PAID' AND referrer_id = ANY($1)
+                 GROUP BY referrer_id`,
+                [subCodes]
+            );
+
+            for (const subRow of subStats.rows) {
+                const subInfo = subsResult.rows.find(s => s.sub_code === subRow.referrer_id);
+                const subRevenue = parseFloat(subRow.total_revenue || 0);
+                const subCommission = subRevenue * 0.25; // 25% for sub
+                const parentCommission = subRevenue * 0.25; // 25% for parent
+
+                parentCommissionFromSubs += parentCommission;
+
+                subAffiliates.push({
+                    name: subInfo ? subInfo.sub_name : 'Sub-Afiliado',
+                    sub_code: subRow.referrer_id,
+                    unique_clients: parseInt(subRow.unique_clients) || 0,
+                    sub_commission: subCommission,
+                    parent_commission: parentCommission
+                });
+            }
+        }
+
+        enrichedResults.push({
+            name: padrinhoName,
+            phone: formatPhone(padrinhoPhone),
+            ticket_count: parseInt(row.ticket_count) || 0,
+            unique_clients: parseInt(row.unique_clients) || 0,
+            draws_count: parseInt(row.draws_count) || 0,
             total_revenue: totalRevenue,
             net_commission: netCommission,
             parent_commission_from_subs: parentCommissionFromSubs,

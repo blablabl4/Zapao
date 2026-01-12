@@ -1,28 +1,47 @@
-const { query } = require('./src/database/db');
+// Query simples - Ver estrutura da tabela affiliates
+const { Client } = require('pg');
 
-async function checkSchema() {
+async function main() {
+    const client = new Client({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    });
+
     try {
-        console.log('--- DRAWS COLUMNS ---');
-        const drawsConfig = await query(`
+        await client.connect();
+        console.log('Conectado!\n');
+
+        // Ver colunas da tabela
+        const cols = await client.query(`
             SELECT column_name, data_type 
             FROM information_schema.columns 
-            WHERE table_name = 'draws'
+            WHERE table_name = 'affiliates'
         `);
-        drawsConfig.rows.forEach(r => console.log(`${r.column_name} (${r.data_type})`));
 
-        console.log('\n--- ORDERS COLUMNS ---');
-        const ordersConfig = await query(`
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name = 'orders'
+        console.log('📋 Colunas da tabela affiliates:');
+        cols.rows.forEach(c => console.log(`- ${c.column_name} (${c.data_type})`));
+
+        // Buscar Marcos por nome
+        console.log('\n🔍 Buscando Marcos Luis...\n');
+        const result = await client.query(`
+            SELECT * FROM affiliates 
+            WHERE name ILIKE '%Marcos%' 
+            LIMIT 5
         `);
-        ordersConfig.rows.forEach(r => console.log(`${r.column_name} (${r.data_type})`));
 
-        process.exit(0);
+        if (result.rows.length === 0) {
+            console.log('Não encontrado. Listando alguns afiliados:\n');
+            const all = await client.query('SELECT name, phone FROM affiliates LIMIT 10');
+            all.rows.forEach((a, i) => console.log(`${i + 1}. ${a.name} - ${a.phone}`));
+        } else {
+            console.log('Encontrados:');
+            result.rows.forEach(r => console.log(JSON.stringify(r, null, 2)));
+        }
+
+        await client.end();
     } catch (e) {
-        console.error(e);
-        process.exit(1);
+        console.error('Erro:', e.message);
     }
 }
 
-checkSchema();
+main();
