@@ -453,7 +453,7 @@ async function loadPayments() {
 // ========== WINNERS HISTORY ==========
 async function loadWinnersHistory() {
     const tbody = document.getElementById('winnersHistoryBody');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">Carregando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem;">Carregando...</td></tr>';
 
     try {
         // Fetch ALL completed draws
@@ -465,7 +465,7 @@ async function loadWinnersHistory() {
         const winners = draws.filter(d => d.status === 'CLOSED' && d.winning_number !== null);
 
         if (winners.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#666;">Nenhum histórico disponível.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:#666;">Nenhum histórico disponível.</td></tr>';
             return;
         }
 
@@ -487,6 +487,7 @@ async function loadWinnersHistory() {
                         <td style="padding: 1rem;">-</td>
                         <td style="padding: 1rem;">R$ ${parseFloat(w.prize).toFixed(2)}</td>
                         <td style="padding: 1rem; color: var(--text-secondary);">${dateStr}</td>
+                        <td style="padding: 1rem; text-align:center;">-</td>
                     </tr>
                 `];
             }
@@ -497,6 +498,10 @@ async function loadWinnersHistory() {
                 const dateRaw = p.date || w.closed_at;
                 const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('pt-BR') : '-';
 
+                const prizeAmount = parseFloat(w.payout_each || (w.prize / w.winners.length));
+                const phoneClean = p.phone.replace(/\D/g, '');
+                const payButton = `<button class="btn btn-sm btn-gold" onclick="openPaymentModal('${phoneClean}', '${toTitleCase(p.name).replace(/'/g, "\\'")}', ${prizeAmount})" style="padding: 4px 12px; font-size: 0.75rem;">💰 Pagar</button>`;
+
                 return `
                     <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.85rem;">
                         <td style="padding: 0.75rem;">${w.name || '#' + w.id}</td>
@@ -504,15 +509,16 @@ async function loadWinnersHistory() {
                         <td style="padding: 0.75rem;">${toTitleCase(p.name)}</td>
                         <td style="padding: 0.75rem;">${formatTelefone(p.phone)}</td>
                         <td style="padding: 0.75rem;">${formatPixKey(p.pix)}</td>
-                        <td style="padding: 0.75rem;">R$ ${parseFloat(w.payout_each || (w.prize / w.winners.length)).toFixed(2)}</td>
+                        <td style="padding: 0.75rem;">R$ ${prizeAmount.toFixed(2)}</td>
                         <td style="padding: 0.75rem; color: var(--text-secondary);">${dateStr}</td>
+                        <td style="padding: 0.75rem; text-align:center;">${payButton}</td>
                     </tr>
                 `;
             });
         }).join('');
 
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Erro: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">Erro: ${e.message}</td></tr>`;
     }
 }
 
