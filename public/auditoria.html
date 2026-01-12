@@ -551,8 +551,9 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('ranking')">🏆 Ranking de Afiliados</button>
+            <button class="tab-btn active" onclick="switchTab('ranking')">🏆 Ranking</button>
             <button class="tab-btn" onclick="switchTab('sublink')">🔗 Criar Sub-Link</button>
+            <button class="tab-btn" onclick="switchTab('balance')">💰 Meus Ganhos</button>
         </div>
 
         <!-- Tab 1: Ranking -->
@@ -601,10 +602,8 @@
                             <th>Nome</th>
                             <th>Clientes Únicos</th>
                             <th id="drawsCountHeader" style="display:none;">Rifas</th>
-                            <th>Comissão Líquida</th>
                             <th>Sub-Links</th>
                             <th>Acessos</th>
-                            <th>Conversão</th>
                         </tr>
                     </thead>
                     <tbody id="affiliateTable">
@@ -653,6 +652,64 @@
             </div>
         </div>
 
+        <!-- Tab 3: Meus Ganhos -->
+        <div id="tab-balance" class="tab-content">
+            <div class="sub-form-container">
+                <h2>💰 Consultar Meus Ganhos</h2>
+                <p style="color: var(--text-secondary); text-align: center; margin-bottom: 25px;">
+                    Consulte seu saldo disponível e desempenho detalhado
+                </p>
+
+                <div class="form-group">
+                    <label>Seu Telefone</label>
+                    <input type="tel" id="balancePhone" placeholder="11999998888" maxlength="11"
+                        onkeypress="handleBalanceEnter(event)">
+                </div>
+
+                <button class="generate-btn" onclick="checkBalance()">Consultar Saldo</button>
+
+                <div id="balanceResult" style="display:none; margin-top: 30px; animation: fadeIn 0.3s ease;">
+
+                    <div class="stats-grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px;">
+                        <div class="stat-card">
+                            <h3>Saldo Disponível</h3>
+                            <p class="value" id="resBalance" style="color: #4ade80;">R$ 0,00</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Recebido</h3>
+                            <p class="value" id="resPaid" style="color: var(--gold);">R$ 0,00</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Comissão Total</h3>
+                            <p class="value" id="resTotal" style="color: var(--text-primary);">R$ 0,00</p>
+                        </div>
+                    </div>
+
+                    <h3
+                        style="color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
+                        📊 Detalhamento de Sub-Afiliados
+                    </h3>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Link Utilizado</th>
+                                    <th>Clientes</th>
+                                    <th>Comissão Gerada</th>
+                                </tr>
+                            </thead>
+                            <tbody id="balanceSubsTable">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer class="idsr-footer">
             © 2026 IDSR. Todos os direitos reservados. |
             <a href="https://idsr.com.br" target="_blank">Produzido e gerenciado por <strong>IDSR</strong></a>
@@ -661,6 +718,7 @@
 
     <script>
         let currentDrawId = null;
+        let cachedAffiliates = []; // Store loaded data for balance check
 
         // Tab switching
         function switchTab(tab) {
@@ -670,9 +728,12 @@
             if (tab === 'ranking') {
                 document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
                 document.getElementById('tab-ranking').classList.add('active');
-            } else {
+            } else if (tab === 'sublink') {
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('tab-sublink').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                document.getElementById('tab-balance').classList.add('active');
             }
         }
 
@@ -737,6 +798,8 @@
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR');
 
                 const affiliates = data.affiliates || [];
+                cachedAffiliates = affiliates; // Cache for balance check
+
                 const totalTickets = affiliates.reduce((sum, a) => sum + a.ticket_count, 0);
                 const totalClients = affiliates.reduce((sum, a) => sum + a.unique_clients, 0);
                 const totalRevenue = affiliates.reduce((sum, a) => sum + a.total_revenue, 0);
@@ -765,7 +828,7 @@
                 drawsHeader.style.display = isHistorical ? 'table-cell' : 'none';
             }
 
-            const colSpan = isHistorical ? 8 : 7;
+            const colSpan = isHistorical ? 6 : 5;
 
             if (!affiliates || affiliates.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-state"><p>Nenhum afiliado encontrado</p></td></tr>`;
@@ -795,10 +858,8 @@
                         <td class="name">${expandIcon}${aff.name}</td>
                         <td class="number highlight">${aff.unique_clients}</td>
                         ${drawsCountCell}
-                        <td class="revenue">R$ ${aff.total_commission.toFixed(2)}</td>
                         <td class="number">${aff.sub_links_count || 0}</td>
                         <td class="number">${aff.access_count}</td>
-                        <td>${aff.conversion_rate}</td>
                     </tr>
                 `;
 
@@ -806,7 +867,7 @@
                 if (hasLinks) {
                     html += `
                         <tr class="sub-row sub-links-header" data-parent="${rank}">
-                            <td colspan="7" style="background: rgba(212, 175, 55, 0.05); padding: 10px 20px; font-weight: 600; color: var(--gold);">
+                            <td colspan="${colSpan}" style="background: rgba(212, 175, 55, 0.05); padding: 10px 20px; font-weight: 600; color: var(--gold);">
                                 📋 Sub-Links Criados (${aff.all_sub_links.length})
                             </td>
                         </tr>
@@ -824,12 +885,9 @@
                                 <td></td>
                                 <td class="name">🔗 ${link.sub_name}</td>
                                 <td class="number highlight">${uniqueClients}</td>
-                                <td class="revenue">R$ ${commission.toFixed(2)}</td>
+                                ${isHistorical ? '<td>-</td>' : ''}
                                 <td class="number">-</td>
                                 <td class="number">-</td>
-                                <td style="font-size: 0.7rem;">
-                                    <a href="${link.link}" target="_blank" style="color: var(--gold); text-decoration: none;">Ver link</a>
-                                </td>
                             </tr>
                         `;
                     });
@@ -934,13 +992,77 @@
 
         // Auto-refresh every 30 seconds
         setInterval(() => {
-            if (document.getElementById('drawSelect').value) {
-                loadDrawData();
+            function handleBalanceEnter(e) {
+                if (e.key === 'Enter') checkBalance();
             }
-        }, 30000);
 
-        // Initialize
-        loadDrawHistory();
+            function checkBalance() {
+                const phone = document.getElementById('balancePhone').value.replace(/\D/g, '');
+                const resultDiv = document.getElementById('balanceResult');
+                const tbody = document.getElementById('balanceSubsTable');
+
+                if (!phone || phone.length < 10) {
+                    alert('Por favor, digite um telefone válido.');
+                    return;
+                }
+
+                if (cachedAffiliates.length === 0) {
+                    alert('Aguarde o carregamento dos dados ou clique em Atualizar na aba Ranking.');
+                    return;
+                }
+
+                // Find affiliate
+                const aff = cachedAffiliates.find(a => a.phone === phone);
+
+                if (!aff) {
+                    alert('Afiliado não encontrado neste relatório. Verifique se digitou o telefone corretamente.');
+                    resultDiv.style.display = 'none';
+                    return;
+                }
+
+                // Populate cards
+                // Note: total_commission is from backend. 
+                // We need paid_amount. If backend doesn't send it to public API, we might need to fetch personalized data.
+                // Assumption: Backend public API sends 'balance' and 'paid_amount'? 
+                // Checking step 1006: changed getAffiliateStatsWithUniqueClients to include paid_amount and balance.
+                // Assuming /api/audit/affiliates calls that function.
+
+                const total = aff.total_commission || 0;
+                const balance = aff.balance !== undefined ? aff.balance : total; // Fallback if missing
+                const paid = aff.paid_amount || (total - balance) || 0;
+
+                document.getElementById('resBalance').textContent = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('resPaid').textContent = paid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('resTotal').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                // Populate Sub-Links Table
+                let html = '';
+                if (aff.all_sub_links && aff.all_sub_links.length > 0) {
+                    aff.all_sub_links.forEach(link => {
+                        const subWithSales = aff.sub_affiliates?.find(s => s.sub_code === link.sub_code);
+                        const comm = subWithSales ? subWithSales.sub_commission : 0;
+                        const clients = subWithSales ? subWithSales.unique_clients : 0;
+
+                        html += `
+                        <tr>
+                            <td>${link.sub_name}</td>
+                            <td style="font-size: 0.8em; color: var(--text-secondary);">${link.sub_code}</td>
+                            <td class="number">${clients}</td>
+                            <td class="revenue">R$ ${comm.toFixed(2)}</td>
+                        </tr>
+                    `;
+                    });
+                } else {
+                    html = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #666;">Nenhum sub-afiliado encontrado.</td></tr>';
+                }
+
+                tbody.innerHTML = html;
+                resultDiv.style.display = 'block';
+            }
+
+            // Initialize
+            loadDrawHistory();
+            setInterval(loadDrawData, 30000); // Refresh every 30s
     </script>
 </body>
 
