@@ -1,0 +1,222 @@
+/* Admin Standard Design System */
+:root {
+    --bg-dark: #0d0d0d;
+    --bg-card: #1a1a1a;
+    --bg-hover: #252525;
+    --text-primary: #ffffff;
+    --text-secondary: #888888;
+    --border-color: #2a2a2a;
+    --gold: #D4AF37;
+    --gold-light: #FFD700;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+    --blue: #60a5fa;
+
+    /* Typography System */
+    --font-family: 'Inter', sans-serif;
+    --font-size-h1-mobile: 1.75rem;
+    --font-size-h1-desktop: 2.5rem;
+    --font-size-h2-mobile: 1.4rem;
+    --font-size-h2-desktop: 1.8rem;
+    --font-size-h3: 1.2rem;
+    --font-size-body: 1rem;
+    --font-size-small: 0.875rem;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%; /* Default to full width for mobile */
+    text-decoration: none;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    color: #000;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.btn-success {
+    background: var(--green);
+    color: #000;
+}
+
+.btn-success:hover {
+    background: #3ecf72;
+}
+
+.btn-danger {
+    background: var(--red);
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #e06060;
+}
+
+.btn-secondary {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: #333;
+}
+
+/* Cards */
+.section-card, .login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+/* Flex Utilities */
+.d-flex { display: flex; }
+.flex-column { flex-direction: column; }
+.gap-10 { gap: 10px; }
+.gap-20 { gap: 20px; }
+.align-center { align-items: center; }
+.justify-center { justify-content: center; }
+.w-100 { width: 100%; }
+.mt-auto { margin-top: auto; }
+
+/* Status Badges e Pills */
+.status-pill {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-pill.paid { background: rgba(74, 222, 128, 0.2); color: var(--green); }
+.status-pill.pending { background: rgba(250, 204, 21, 0.2); color: var(--yellow); }
+.status-pill.expired { background: rgba(248, 113, 113, 0.2); color: var(--red); }
+
+/* Message/Alerts */
+.status-msg, .message {
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.message.error {
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--red);
+    border: 1px solid var(--red);
+}
+
+.message.success {
+    background: rgba(74, 222, 128, 0.1);
+    color: var(--green);
+    border: 1px solid var(--green);
+}
+
+/* Footer (IDSR Standard) */
+.idsr-footer {
+    width: 100%;
+    padding: 15px 20px;
+    margin-top: 40px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.2);
+}
+
+.idsr-footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.idsr-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.idsr-link:hover { color: var(--text-primary); }
+.idsr-link strong { color: var(--gold); }

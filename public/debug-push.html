@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Push Notifications</title>
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        .log {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            border-left: 3px solid #555;
+        }
+
+        .success {
+            border-left-color: #4ade80;
+            color: #4ade80;
+        }
+
+        .error {
+            border-left-color: #f87171;
+            color: #f87171;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #eab308;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🕵️ Debug Notificações</h1>
+    <p>Status: <b id="status">Aguardando...</b></p>
+    <button onclick="startTest()">INICIAR TESTE AGORA</button>
+    <div id="logs"></div>
+
+    <script>
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log ' + type;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            document.getElementById('logs').prepend(div);
+            console.log(msg);
+        }
+
+        async function startTest() {
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('status').innerText = 'Testando...';
+
+            try {
+                // 1. Check Env
+                log('1. Verificando suporte...', 'info');
+                if (!('serviceWorker' in navigator)) throw new Error('Service Worker não suportado');
+                if (!('PushManager' in window)) throw new Error('Push API não suportada');
+                log('✅ Navegador suporta notificações', 'success');
+
+                // 2. Fetch VAPID
+                log('2. Buscando chave VAPID...', 'info');
+                const keyRes = await fetch('/api/marketing/vapid-public-key');
+                if (!keyRes.ok) throw new Error('Falha ao buscar chave VAPID: ' + keyRes.status);
+                const keyData = await keyRes.json();
+                const publicKey = keyData.publicKey;
+                log('✅ VAPID Key recebida: ' + publicKey.substring(0, 15) + '...', 'success');
+
+                // 3. Register SW
+                log('3. Registrando Service Worker...', 'info');
+                const reg = await navigator.serviceWorker.register('/sw.js');
+                await navigator.serviceWorker.ready;
+                log('✅ Service Worker Ativo', 'success');
+
+                // 4. Permission
+                log('4. Solicitando Permissão...', 'info');
+                const perm = await Notification.requestPermission();
+                log('ℹ️ Status Permissão: ' + perm, perm === 'granted' ? 'success' : 'error');
+                if (perm !== 'granted') throw new Error('Permissão negada pelo usuário');
+
+                // 5. Subscribe
+                log('5. Criando Inscrição Push...', 'info');
+
+                // Unsubscribe existing just to test fresh
+                const existing = await reg.pushManager.getSubscription();
+                if (existing) {
+                    log('ℹ️ Removendo inscrição antiga...', 'info');
+                    await existing.unsubscribe();
+                }
+
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+                log('✅ Inscrição Push criada no navegador!', 'success');
+
+                // 6. Send to Backend
+                log('6. Salvando no Servidor...', 'info');
+                const saveRes = await fetch('/api/marketing/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription: sub, phone: '11999999999' })
+                });
+
+                if (!saveRes.ok) throw new Error('Erro ao salvar no servidor: ' + saveRes.status);
+                log('✅ Salvo no Banco de Dados com sucesso!', 'success');
+
+                document.getElementById('status').innerText = 'SUCESSO TOTAL!';
+                log('🎉 TUDO FUNCIONANDO! Tente enviar broadcast agora.', 'success');
+
+            } catch (e) {
+                log('❌ ERRO FATAL: ' + e.message, 'error');
+                document.getElementById('status').innerText = 'FALHOU';
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+            return outputArray;
+        }
+    </script>
+</body>
+
+</html>

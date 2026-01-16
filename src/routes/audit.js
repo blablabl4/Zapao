@@ -161,14 +161,27 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
     for (const row of result.rows) {
         let padrinhoName = '';
         let padrinhoPhone = '';
+        let isSubaffiliate = false;
+        let parentPhone = null;
 
         try {
             // referrer_id is the phone number directly (NOT base64)
             // Extract digits only
             padrinhoPhone = (row.referrer_id || '').replace(/\D/g, '');
 
-            // Validate phone - should be 10-11 digits
-            if (padrinhoPhone && /^\d{10,11}$/.test(padrinhoPhone)) {
+            // Check if this is a sub-affiliate code first
+            const subCheck = await query(
+                `SELECT parent_phone, sub_name FROM sub_affiliates WHERE sub_code = $1 LIMIT 1`,
+                [row.referrer_id]
+            );
+
+            if (subCheck.rows.length > 0) {
+                // This is a sub-affiliate
+                isSubaffiliate = true;
+                parentPhone = formatPhone(subCheck.rows[0].parent_phone);
+                padrinhoName = subCheck.rows[0].sub_name || `Sub #${row.referrer_id.slice(0, 6)}`;
+                padrinhoPhone = row.referrer_id; // Keep the sub_code as identifier
+            } else if (padrinhoPhone && /^\d{10,11}$/.test(padrinhoPhone)) {
                 // 1. Try affiliates table first
                 const affRes = await query(`
                     SELECT name FROM affiliates 
@@ -227,12 +240,13 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             conversionRate = '100%'; // Venda direta
         }
 
-        // Calculate commissions
+        // Calculate commissions - different rates for padrinhos vs subaffiliates
         const totalRevenue = parseFloat(row.total_revenue || 0);
-        const commissionRate = 0.50; // 50%
         const platformFee = 0.0099; // 0.99%
-        const netCommissionRate = commissionRate - platformFee; // 49.01%
-        const netCommission = totalRevenue * netCommissionRate;
+        // Padrinhos get 50%, subaffiliates get 25%
+        const commissionRate = isSubaffiliate ? 0.25 : 0.50;
+        const netRevenue = totalRevenue * (1 - platformFee); // Revenue after MP fee
+        const netCommission = netRevenue * commissionRate;
 
 
         // Get sub-affiliates for this parent
@@ -306,6 +320,8 @@ async function getAffiliateStatsWithUniqueClients(drawId) {
             referrer_id: row.referrer_id,
             name: padrinhoName,
             phone: formatPhone(padrinhoPhone),
+            is_subaffiliate: isSubaffiliate,
+            parent_phone: parentPhone,
             ticket_count: parseInt(row.ticket_count) || 0,
             unique_clients: parseInt(row.unique_clients) || 0,
             total_revenue: totalRevenue,
@@ -375,12 +391,26 @@ async function getAffiliateStatsHistorical() {
     for (const row of result.rows) {
         let padrinhoName = null;
         let padrinhoPhone = '';
+        let isSubaffiliate = false;
+        let parentPhone = null;
 
         try {
             // Extract phone from referrer_id
             padrinhoPhone = (row.referrer_id || '').replace(/\D/g, '');
 
-            if (padrinhoPhone && /^\d{10,11}$/.test(padrinhoPhone)) {
+            // Check if this is a sub-affiliate code first
+            const subCheck = await query(
+                `SELECT parent_phone, sub_name FROM sub_affiliates WHERE sub_code = $1 LIMIT 1`,
+                [row.referrer_id]
+            );
+
+            if (subCheck.rows.length > 0) {
+                // This is a sub-affiliate
+                isSubaffiliate = true;
+                parentPhone = formatPhone(subCheck.rows[0].parent_phone);
+                padrinhoName = subCheck.rows[0].sub_name || `Sub #${row.referrer_id.slice(0, 6)}`;
+                padrinhoPhone = row.referrer_id; // Keep the sub_code as identifier
+            } else if (padrinhoPhone && /^\d{10,11}$/.test(padrinhoPhone)) {
                 // Try affiliates table
                 const affRes = await query(
                     `SELECT name FROM affiliates WHERE phone = $1 LIMIT 1`,
@@ -429,10 +459,13 @@ async function getAffiliateStatsHistorical() {
             conversionRate = '100%';
         }
 
-        // Calculate NET commissions (49.01% for direct sales)
+        // Calculate NET commissions - different rates for padrinhos vs subaffiliates
         const totalRevenue = parseFloat(row.total_revenue || 0);
-        const netCommissionRate = 0.4901; // 50% - 0.99% fee
-        const netCommission = totalRevenue * netCommissionRate;
+        const platformFee = 0.0099; // 0.99%
+        // Padrinhos get 50%, subaffiliates get 25%
+        const commissionRate = isSubaffiliate ? 0.25 : 0.50;
+        const netRevenue = totalRevenue * (1 - platformFee);
+        const netCommission = netRevenue * commissionRate;
 
         // Get sub-affiliates (accumulated across all draws)
         const subsResult = await query(
@@ -500,6 +533,8 @@ async function getAffiliateStatsHistorical() {
         enrichedResults.push({
             name: padrinhoName,
             phone: formatPhone(padrinhoPhone),
+            is_subaffiliate: isSubaffiliate,
+            parent_phone: parentPhone,
             ticket_count: parseInt(row.ticket_count) || 0,
             unique_clients: parseInt(row.unique_clients) || 0,
             draws_count: parseInt(row.draws_count) || 0,
@@ -558,14 +593,34 @@ function formatPhone(phone) {
  */
 router.post('/sub-affiliate', async (req, res) => {
     try {
-        const { parent_phone, sub_name } = req.body;
+        const { parent_phone, sub_name, sub_phone, pix_key } = req.body;
 
         if (!parent_phone || !sub_name) {
             return res.status(400).json({ error: 'parent_phone e sub_name são obrigatórios' });
         }
 
-        // Clean phone number
-        const cleanPhone = parent_phone.replace(/\D/g, '');
+        if (!sub_phone) {
+            return res.status(400).json({ error: 'sub_phone é obrigatório' });
+        }
+
+        // Clean phone numbers
+        const cleanParentPhone = parent_phone.replace(/\D/g, '');
+        const cleanSubPhone = sub_phone.replace(/\D/g, '');
+
+        // Check if this phone already has a sub-affiliate link
+        const existingCheck = await query(`
+            SELECT sub_code, sub_name FROM sub_affiliates 
+            WHERE sub_phone = $1 OR sub_phone = $2
+            LIMIT 1
+        `, [cleanSubPhone, sub_phone]);
+
+        if (existingCheck.rows.length > 0) {
+            const existing = existingCheck.rows[0];
+            return res.status(409).json({
+                error: `Este telefone já possui um link de sub-afiliado: ${existing.sub_name}`,
+                existing_code: existing.sub_code
+            });
+        }
 
         // Generate unique sub_code from name
         const baseCode = sub_name
@@ -580,11 +635,11 @@ router.post('/sub-affiliate', async (req, res) => {
         const randomSuffix = Math.random().toString(36).substring(2, 6);
         const sub_code = `${baseCode}-${randomSuffix}`;
 
-        // Insert sub-affiliate
+        // Insert sub-affiliate with phone and pix
         await query(`
-            INSERT INTO sub_affiliates (parent_phone, sub_name, sub_code)
-            VALUES ($1, $2, $3)
-        `, [cleanPhone, sub_name, sub_code]);
+            INSERT INTO sub_affiliates (parent_phone, sub_name, sub_code, sub_phone, pix_key)
+            VALUES ($1, $2, $3, $4, $5)
+        `, [cleanParentPhone, sub_name, sub_code, cleanSubPhone, pix_key || null]);
 
         // Generate full link
         const link = `https://www.tvzapao.com.br/zapao-da-sorte?ref=${sub_code}`;
@@ -595,7 +650,7 @@ router.post('/sub-affiliate', async (req, res) => {
                 sub_name,
                 sub_code,
                 link,
-                parent_phone: cleanPhone
+                parent_phone: cleanParentPhone
             }
         });
     } catch (error) {
@@ -603,6 +658,49 @@ router.post('/sub-affiliate', async (req, res) => {
         if (error.code === '23505') { // Unique violation
             return res.status(409).json({ error: 'Código de sub-afiliado já existe. Tente outro nome.' });
         }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/audit/verify-fix-sublink
+ * Temporary route to verify and fix the specific sublink
+ */
+router.get('/verify-fix-sublink', async (req, res) => {
+    try {
+        const subCode = 'rei-dos-brinquedos-olck';
+        const targetPhone = '11991025621';
+
+        // Check if exists
+        const check = await query('SELECT * FROM sub_affiliates WHERE sub_code = $1', [subCode]);
+
+        let result = {
+            found: false,
+            before: null,
+            after: null,
+            action: 'none'
+        };
+
+        if (check.rows.length > 0) {
+            result.found = true;
+            result.before = check.rows[0];
+
+            // Update
+            await query('UPDATE sub_affiliates SET sub_phone = $1 WHERE sub_code = $2', [targetPhone, subCode]);
+
+            // Verify after
+            const verify = await query('SELECT * FROM sub_affiliates WHERE sub_code = $1', [subCode]);
+            result.after = verify.rows[0];
+            result.action = 'updated';
+        } else {
+            // Insert if missing (using dummy parent if needed or try to find one)
+            // Assuming parent might be the target phone itself if they are self-referring or we don't know.
+            // Let's just report not found for now, user can create it if missing.
+            result.action = 'not_found_cannot_update';
+        }
+
+        res.json(result);
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
@@ -656,6 +754,99 @@ router.get('/sub-affiliates', async (req, res) => {
         });
     } catch (error) {
         console.error('[Audit API] Sub-affiliates list error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/audit/subaffiliate-earnings
+ * Get earnings for a specific sub-affiliate by their phone number
+ * Query params: phone (required), draw_id (optional)
+ */
+router.get('/subaffiliate-earnings', async (req, res) => {
+    try {
+        const { phone, draw_id } = req.query;
+
+        if (!phone) {
+            return res.status(400).json({ error: 'Telefone é obrigatório' });
+        }
+
+        const cleanPhone = phone.replace(/\D/g, '');
+
+        // Find sub-affiliate by phone
+        const subResult = await query(
+            `SELECT id, sub_name, sub_code, parent_phone, pix_key, created_at 
+             FROM sub_affiliates 
+             WHERE sub_phone = $1
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [cleanPhone]
+        );
+
+        if (subResult.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Sub-afiliado não encontrado. Verifique se seu telefone foi cadastrado pelo seu padrinho.',
+                is_subaffiliate: false
+            });
+        }
+
+        const subAffiliate = subResult.rows[0];
+
+        // Get earnings for current draw (if specified) or all draws
+        const currentDrawQuery = draw_id
+            ? `SELECT COALESCE(SUM(amount), 0) as revenue, COUNT(*) as ticket_count, COUNT(DISTINCT buyer_ref) as unique_clients
+               FROM orders WHERE referrer_id = $1 AND draw_id = $2 AND status = 'PAID'`
+            : `SELECT COALESCE(SUM(amount), 0) as revenue, COUNT(*) as ticket_count, COUNT(DISTINCT buyer_ref) as unique_clients
+               FROM orders WHERE referrer_id = $1 AND status = 'PAID'`;
+
+        const statsParams = draw_id ? [subAffiliate.sub_code, draw_id] : [subAffiliate.sub_code];
+        const statsResult = await query(currentDrawQuery, statsParams);
+
+        const statsRow = statsResult.rows[0] || {};
+        const revenue = parseFloat(statsRow.revenue || 0);
+        const ticketCount = parseInt(statsRow.ticket_count || 0);
+        const uniqueClients = parseInt(statsRow.unique_clients || 0);
+
+        // Calculate NET commission (25% after payment fee of 0.99%)
+        const netCommissionRate = 0.25 * (1 - 0.0099); // ~24.75%
+        const netCommission = revenue * netCommissionRate;
+
+        // Get historical total (all draws)
+        const historyResult = await query(
+            `SELECT COALESCE(SUM(amount), 0) as total_revenue, COUNT(*) as total_tickets
+             FROM orders WHERE referrer_id = $1 AND status = 'PAID'`,
+            [subAffiliate.sub_code]
+        );
+
+        const historyRow = historyResult.rows[0] || {};
+        const totalRevenue = parseFloat(historyRow.total_revenue || 0);
+        const totalCommission = totalRevenue * netCommissionRate;
+
+        res.json({
+            success: true,
+            is_subaffiliate: true,
+            sub_affiliate: {
+                name: subAffiliate.sub_name,
+                sub_code: subAffiliate.sub_code,
+                parent_phone: formatPhone(subAffiliate.parent_phone),
+                pix_key: subAffiliate.pix_key,
+                created_at: subAffiliate.created_at
+            },
+            current: {
+                draw_id: draw_id || 'all',
+                revenue: revenue,
+                tickets: ticketCount,
+                unique_clients: uniqueClients,
+                net_commission: netCommission
+            },
+            historical: {
+                total_revenue: totalRevenue,
+                total_net_commission: totalCommission
+            }
+        });
+
+    } catch (error) {
+        console.error('[Audit API] Subaffiliate earnings error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -768,6 +959,169 @@ router.get('/payments/:phone', async (req, res) => {
 
     } catch (error) {
         console.error('[Audit API] Get payments error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/audit/affiliate-balance
+ * Get accumulated balance for an affiliate (total commissions - paid amounts)
+ * Returns: total_earned, total_paid, available_balance, current_draw_commission
+ */
+router.get('/affiliate-balance', async (req, res) => {
+    try {
+        const phone = (req.query.phone || '').replace(/\D/g, '');
+
+        if (!phone || phone.length < 10) {
+            return res.status(400).json({ error: 'Telefone inválido' });
+        }
+
+        // 1. Check if affiliate exists
+        const affiliateResult = await query(
+            `SELECT id, name, phone, pix_key FROM affiliates WHERE phone = $1 OR phone = $2`,
+            [phone, `+55${phone}`]
+        );
+
+        if (affiliateResult.rows.length === 0) {
+            // Check if it's a sub-affiliate
+            const subResult = await query(
+                `SELECT sa.id, sa.sub_name as name, sa.sub_phone as phone, sa.pix_key, sa.parent_phone, a.name as parent_name
+                 FROM sub_affiliates sa
+                 LEFT JOIN affiliates a ON a.phone = sa.parent_phone OR a.phone = '+55' || sa.parent_phone
+                 WHERE sa.sub_phone = $1 OR sa.sub_phone = $2`,
+                [phone, `+55${phone}`]
+            );
+
+            if (subResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Afiliado não encontrado' });
+            }
+
+            // Sub-affiliate balance calculation
+            const sub = subResult.rows[0];
+            const subCode = await query(
+                `SELECT sub_code FROM sub_affiliates WHERE sub_phone = $1 OR sub_phone = $2`,
+                [phone, `+55${phone}`]
+            );
+            const referrerCode = subCode.rows[0]?.sub_code;
+
+            // Get total commissions for sub-affiliate (5% of their sales)
+            const subEarnings = await query(`
+                SELECT 
+                    COALESCE(SUM(o.amount * 0.05), 0) as total_earned,
+                    COUNT(DISTINCT o.id) as total_tickets,
+                    COUNT(DISTINCT o.buyer_phone) as total_clients
+                FROM orders o
+                WHERE o.referrer_id = $1 
+                AND o.status = 'PAID'
+            `, [referrerCode]);
+
+            // Get paid amounts (if tracked separately for subs, otherwise 0)
+            const subPaid = await query(
+                `SELECT COALESCE(SUM(amount), 0) as total_paid 
+                 FROM affiliate_payments 
+                 WHERE affiliate_phone = $1 OR affiliate_phone = $2`,
+                [phone, `+55${phone}`]
+            );
+
+            const totalEarned = parseFloat(subEarnings.rows[0]?.total_earned || 0);
+            const totalPaid = parseFloat(subPaid.rows[0]?.total_paid || 0);
+
+            return res.json({
+                success: true,
+                is_sub_affiliate: true,
+                affiliate: {
+                    name: sub.name,
+                    phone: sub.phone,
+                    parent_name: sub.parent_name
+                },
+                earnings: {
+                    total_earned: totalEarned,
+                    total_paid: totalPaid,
+                    available_balance: totalEarned - totalPaid,
+                    total_tickets: parseInt(subEarnings.rows[0]?.total_tickets || 0),
+                    total_clients: parseInt(subEarnings.rows[0]?.total_clients || 0)
+                }
+            });
+        }
+
+        // Main affiliate balance calculation
+        const affiliate = affiliateResult.rows[0];
+
+        // 2. Get TOTAL accumulated commissions from ALL draws
+        const earningsResult = await query(`
+            SELECT 
+                COALESCE(SUM(o.amount * 0.20), 0) as direct_commission,
+                COUNT(DISTINCT o.id) as total_tickets,
+                COUNT(DISTINCT o.buyer_phone) as total_clients
+            FROM orders o
+            WHERE o.referrer_id = $1 
+            AND o.status = 'PAID'
+        `, [affiliate.phone]);
+
+        // 3. Get bonus from sub-affiliates (5% split)
+        const bonusResult = await query(`
+            SELECT COALESCE(SUM(o.amount * 0.05), 0) as sub_bonus
+            FROM orders o
+            JOIN sub_affiliates sa ON o.referrer_id = sa.sub_code
+            WHERE sa.parent_phone = $1 OR sa.parent_phone = $2
+            AND o.status = 'PAID'
+        `, [affiliate.phone, phone]);
+
+        // 4. Get total paid
+        const totalPaid = await getTotalPaid(affiliate.phone);
+        const totalPaidAlt = await getTotalPaid(phone);
+        const finalPaid = Math.max(totalPaid, totalPaidAlt);
+
+        const directCommission = parseFloat(earningsResult.rows[0]?.direct_commission || 0);
+        const subBonus = parseFloat(bonusResult.rows[0]?.sub_bonus || 0);
+        const totalEarned = directCommission + subBonus;
+        const availableBalance = totalEarned - finalPaid;
+
+        // 5. Get current draw info (if active)
+        let currentDrawCommission = 0;
+        let currentDrawName = null;
+        try {
+            const currentDraw = await DrawService.getCurrentDraw();
+            if (currentDraw) {
+                currentDrawName = currentDraw.draw_name;
+                const currentEarnings = await query(`
+                    SELECT COALESCE(SUM(o.amount * 0.20), 0) as current_commission
+                    FROM orders o
+                    WHERE o.referrer_id = $1 
+                    AND o.status = 'PAID'
+                    AND o.draw_id = $2
+                `, [affiliate.phone, currentDraw.id]);
+                currentDrawCommission = parseFloat(currentEarnings.rows[0]?.current_commission || 0);
+            }
+        } catch (e) {
+            console.log('[affiliate-balance] No current draw or error:', e.message);
+        }
+
+        res.json({
+            success: true,
+            is_sub_affiliate: false,
+            affiliate: {
+                name: affiliate.name,
+                phone: affiliate.phone,
+                pix_key: affiliate.pix_key
+            },
+            earnings: {
+                total_earned: totalEarned,
+                direct_commission: directCommission,
+                sub_bonus: subBonus,
+                total_paid: finalPaid,
+                available_balance: availableBalance,
+                total_tickets: parseInt(earningsResult.rows[0]?.total_tickets || 0),
+                total_clients: parseInt(earningsResult.rows[0]?.total_clients || 0)
+            },
+            current_draw: currentDrawName ? {
+                name: currentDrawName,
+                commission: currentDrawCommission
+            } : null
+        });
+
+    } catch (error) {
+        console.error('[Audit API] Affiliate balance error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });

@@ -50,11 +50,16 @@ class DrawService {
         let paramCount = 1;
 
         if (updates.end_time) {
+            const newDate = new Date(updates.end_time);
+            if (newDate < new Date()) {
+                throw new Error('A data de término não pode ser no passado!');
+            }
             setClauses.push(`end_time = $${paramCount++}`);
             values.push(updates.end_time);
         }
 
         if (updates.prize_base !== undefined) {
+            if (updates.prize_base < 0) throw new Error('O prêmio base não pode ser negativo');
             setClauses.push(`prize_base = $${paramCount++}`);
             values.push(updates.prize_base);
         }
@@ -269,7 +274,7 @@ class DrawService {
             FROM draws d
             JOIN orders o ON o.draw_id = d.id AND o.number = d.drawn_number
             WHERE d.status = 'CLOSED' AND o.status = 'PAID'
-            ORDER BY d.closed_at DESC
+            ORDER BY d.id DESC, o.created_at DESC
         `);
 
         return result.rows.map(row => {
@@ -309,7 +314,7 @@ class DrawService {
                     SELECT o.number, o.buyer_ref, o.created_at, o.order_id,
                            wp.amount as prize_paid_amount,
                            wp.payment_method as prize_payment_method,
-                           wp.paid_at as prize_paid_at,
+                           wp.created_at as prize_paid_at,
                            wp.reference as prize_reference,
                            wp.notes as prize_notes
                     FROM orders o

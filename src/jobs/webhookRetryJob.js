@@ -17,11 +17,11 @@ async function retryFailedWebhooks() {
         // Get failed events created in the last 24 hours (ignore very old ones)
         // Order by oldest first to process in sequence
         const failedEvents = await query(`
-            SELECT id, raw_payload, created_at 
+            SELECT id, raw_payload, received_at 
             FROM webhook_events 
             WHERE status = 'FAILED' 
-            AND created_at >= NOW() - INTERVAL '24 hours'
-            ORDER BY created_at ASC
+            AND received_at >= NOW() - INTERVAL '24 hours'
+            ORDER BY received_at ASC
             LIMIT 10
         `);
 

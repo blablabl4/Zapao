@@ -227,13 +227,15 @@
         }
 
         .modal-box {
-            background: var(--bg-card);
+            background: var(--bg-card-solid);
             border-radius: 16px;
+            border: 2px solid var(--gold);
             width: 100%;
             max-width: 400px;
             max-height: 90vh;
             overflow-y: auto;
             padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px var(--gold-glow);
         }
 
         .modal-header {
@@ -274,6 +276,22 @@
             font-size: 1rem;
         }
 
+        /* Fix visibility for disabled/readonly inputs */
+        /* Fix visibility for disabled/readonly inputs */
+        .form-group input:read-only,
+        .form-group input:disabled {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+            /* Force bright white */
+            border-color: #555 !important;
+            opacity: 1 !important;
+            -webkit-text-fill-color: #ffffff !important;
+            /* Fix for Safari/Chrome autofill/disabled */
+            font-weight: 500;
+        }
+
+
+
         .btn {
             width: 100%;
             padding: 14px;
@@ -281,19 +299,40 @@
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
+            font-family: 'Inter', sans-serif;
             cursor: pointer;
             margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--gold-light), var(--gold));
+            background: var(--gradient-gold);
             color: #000;
+            text-shadow: none;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 4px 20px var(--gold-glow);
         }
 
         .btn-secondary {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
         }
 
         /* ACCORDION STYLES */
@@ -815,6 +854,7 @@
         <h1 id="campaignTitleEl">🍀 Zapão da Sorte</h1>
         <div class="prize" id="prizeDisplay" style="opacity: 0.6;">Carregando...</div>
         <p class="subtitle">Escolha um número de 01 a 150 e concorra!</p>
+        <div class="header-actions" style="position: absolute; top: 15px; right: 15px;"></div>
 
         <!-- Rules Accordion -->
         <div class="rules-accordion">
@@ -863,8 +903,12 @@
         </div>
     </div>
 
+    <!-- SCRATCHINCENTIVE BANNER REMOVED - Feature disabled -->
+
     <!-- BOTÃO FLUTUANTE -->
     <button id="floatBtn" onclick="openCheckout()">🛒 Comprar</button>
+
+    <!-- INCENTIVE MODAL REMOVED - Feature disabled -->
 
     <!-- MODAL -->
     <div class="modal-overlay" id="modal">
@@ -876,29 +920,102 @@
                     <div class="amount" id="modalTotal">R$ 0,00</div>
                 </div>
 
-                <div class="form-group">
-                    <label>Celular (WhatsApp) *</label>
-                    <input type="tel" id="inputPhone" placeholder="(11) 99999-9999" required>
+                <!-- STEP 1: Phone only -->
+                <div id="phoneStep">
+                    <div class="form-group">
+                        <label>Celular (WhatsApp) *</label>
+                        <input type="tel" id="inputPhone" placeholder="(11) 99999-9999" required>
+                    </div>
+                    <button class="btn btn-primary" onclick="verifyPhone()" id="btnVerifyPhone">Continuar</button>
                 </div>
 
-                <div class="form-group">
-                    <label>Nome completo *</label>
-                    <input type="text" id="inputName" placeholder="Seu nome" required>
+                <!-- STEP 2: User data (hidden initially) -->
+                <div id="userDataStep" style="display: none;">
+                    <!-- Phone display (locked, standard look) -->
+                    <div class="form-group">
+                        <label>Celular (WhatsApp)</label>
+                        <input type="tel" id="inputPhoneDisplay" readonly>
+                    </div>
+
+                    <!-- Pre-filled data display (when found in DB) -->
+                    <div id="prefilledDisplay"
+                        style="display: none; background: rgba(74, 222, 128, 0.05); border: 1px solid #4ade80; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                        <!-- Header -->
+                        <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <div
+                                style="background: rgba(74, 222, 128, 0.2); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <span style="color: #4ade80; font-size: 14px; font-weight: bold;">✓</span>
+                            </div>
+                            <span style="color: #4ade80; font-weight: bold; font-size: 1rem;">Dados encontrados</span>
+                        </div>
+
+                        <!-- Data Grid -->
+                        <div
+                            style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; padding-left: 5px;">
+                            <!-- Name -->
+                            <div style="display: flex; flex-direction: column;">
+                                <span
+                                    style="color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Nome</span>
+                                <span id="displayName" style="color: #fff; font-weight: 500; font-size: 1rem;">-</span>
+                            </div>
+
+                            <!-- Row for PIX and CEP -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span
+                                        style="color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">PIX</span>
+                                    <span id="displayPix"
+                                        style="color: #fff; font-weight: 500; font-size: 0.95rem; overflow-wrap: break-word;">-</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span
+                                        style="color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">CEP</span>
+                                    <span id="displayCep"
+                                        style="color: #fff; font-weight: 500; font-size: 0.95rem;">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Button -->
+                        <button type="button" onclick="enableEditMode()" class="btn btn-sm"
+                            style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ccc; border-radius: 8px; padding: 10px; font-size: 0.9rem; transition: all 0.2s;">
+                            ✏️ Editar / Trocar dados
+                        </button>
+                    </div>
+
+                    <!-- Editable fields (shown when new user or editing) -->
+                    <div id="editableFields">
+                        <div class="form-group">
+                            <label>Nome completo *</label>
+                            <input type="text" id="inputName" placeholder="Seu nome" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Chave Pix (para receber prêmio) *</label>
+                            <input type="text" id="inputPixKey" placeholder="CPF, telefone, email ou chave aleatória"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>CEP *</label>
+                            <input type="text" id="inputCep" placeholder="00000-000" maxlength="9"
+                                oninput="formatCep(this)" onblur="fetchCepData()" required>
+                            <div id="cepLocation"
+                                style="font-size: 0.85rem; color: var(--gold-light); margin-top: 5px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Small edit/change phone button above submit -->
+                    <div style="text-align: right; margin-bottom: 5px;">
+                        <button type="button" onclick="changePhone()"
+                            style="background: transparent; border: none; color: var(--text-secondary); font-size: 0.8rem; cursor: pointer; text-decoration: underline;">
+                            Trocar telefone / Editar dados
+                        </button>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="submitOrder()" id="btnSubmitOrder">Pagar com Pix</button>
                 </div>
 
-                <div class="form-group">
-                    <label>Chave Pix (para receber prêmio) *</label>
-                    <input type="text" id="inputPixKey" placeholder="CPF, telefone, email ou chave aleatória" required>
-                </div>
-
-                <div class="form-group">
-                    <label>CEP *</label>
-                    <input type="text" id="inputCep" placeholder="00000-000" maxlength="9" oninput="formatCep(this)"
-                        onblur="fetchCepData()" required>
-                    <div id="cepLocation" style="font-size: 0.85rem; color: var(--gold-light); margin-top: 5px;"></div>
-                </div>
-
-                <button class="btn btn-primary" onclick="submitOrder()">Pagar com Pix</button>
                 <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
             </div>
 
@@ -922,36 +1039,30 @@
 
                 <button class="btn btn-primary" onclick="copyPix()">📋 Copiar Código</button>
                 <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+
+                <!-- DEBUG BUTTON REMOVED -->
             </div>
 
             <!-- ETAPA 3: SUCESSO -->
             <div id="stepSuccess" class="success-section hidden">
 
-                <!-- 🔥 50% - AFFILIATE LINK (DESTAQUE MÁXIMO) -->
-                <div id="affiliateLinkContainer"
-                    style="padding: 25px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.15)); border-radius: 16px; border: 2px solid var(--gold); margin-bottom: 15px; animation: pulse-gold 2s infinite;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">🏆</span>
-                        <h3
-                            style="color: var(--gold); margin: 0; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 1px;">
-                            INDICAÇÃO PREMIADA!</h3>
-                        <p style="font-size: 1rem; color: #fff; margin: 10px 0 0 0;">
-                            Indique amigos e <strong style="color: var(--gold);">CONCORRA A PRÊMIOS EXTRAS</strong>
+                <!-- ✅ CONFIRMAÇÃO DE PAGAMENTO (SEM RASPADINHA) -->
+                <div
+                    style="padding: 25px; background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.15)); border-radius: 16px; border: 2px solid #4ade80; margin-bottom: 15px;">
+                    <div style="text-align: center;">
+                        <h3 style="color: #4ade80; margin: 0 0 15px; font-size: 1.5rem; text-transform: uppercase;">
+                            ✅ PAGAMENTO CONFIRMADO!</h3>
+                        <p style="font-size: 1.2rem; color: #fff; margin: 0 0 15px; line-height: 1.4;">
+                            Seus números estão confirmados e participando do sorteio!
+                        </p>
+                        <p style="font-size: 1rem; color: var(--text-secondary); margin: 0;">
+                            Boa sorte! 🍀
                         </p>
                     </div>
-                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-                        <input type="text" id="affiliateLinkInput" readonly
-                            style="flex: 1; background: rgba(0,0,0,0.5); border: 2px solid var(--gold); color: #fff; padding: 14px; border-radius: 10px; font-size: 0.9em; font-weight: 500;">
-                        <button onclick="copyAffiliateLink()" class="btn"
-                            style="width: auto; padding: 14px 20px; background: var(--gradient-gold); color: #000; font-weight: bold; border: none; font-size: 1rem; border-radius: 10px;">
-                            📋 Copiar
-                        </button>
-                    </div>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin: 0;">
-                        🚀 Quanto mais amigos comprarem pelo seu link, <strong style="color: #fff;">mais chances você
-                            tem!</strong>
-                    </p>
                 </div>
+
+                <!-- Hidden affiliate link for copy function -->
+                <input type="hidden" id="affiliateLinkInput" value="">
 
                 <style>
                     @keyframes pulse-gold {
@@ -967,16 +1078,16 @@
                     }
                 </style>
 
-                <!-- 15% - CONFIRMAÇÃO -->
+                <!-- CONFIRMAÇÃO -->
                 <div
                     style="text-align: center; padding: 12px; background: rgba(74, 222, 128, 0.15); border-radius: 10px; margin-bottom: 15px;">
-                    <p style="margin: 0; font-size: 0.95rem;">
-                        ✅ <strong>Pagamento Confirmado!</strong> Boa sorte! 🍀
+                    <p style="margin: 0; font-size: 1rem; color: #4ade80;">
+                        <strong>Pagamento Confirmado</strong>
                     </p>
                 </div>
 
                 <!-- RESTANTE - BOTÕES -->
-                <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
                     <a href="https://chat.whatsapp.com/KVfNKMR7W1lGMtMSWtN5W3" target="_blank" class="btn"
                         style="background-color: #25D366; color: white; display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px; font-size: 0.9rem; justify-content: center; border-radius: 8px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -992,8 +1103,324 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT -->
+    <!-- SCRATCHCARD MODAL REMOVED - Feature disabled -->
+
+    <!-- SCRATCHCARD CSS REMOVED - Feature disabled -->
+
     <script>
+        // ... (Keep existing CONFIG/State vars) ...
+
+        // ========== SCRATCHCARD LOGIC (REFACTORED) ==========
+        let scratchCanvases = [];
+        let scratchContexts = [];
+        let logoImage = new Image();
+        logoImage.src = '/images/logo-z-gold.jpg'; // Load once
+
+        function initScratchCanvas() {
+            const grid = document.getElementById('scratchArea');
+            grid.innerHTML = '';
+            scratchCanvases = [];
+            scratchContexts = [];
+            scratchedPercent = 0; // Reset global tracking (simplified)
+
+            // Create 9 cells
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'scratch-cell';
+
+                // Symbol Container
+                const symbol = document.createElement('div');
+                symbol.className = 'scratch-symbol';
+                symbol.id = `slot${i}`;
+                symbol.textContent = '❓';
+                cell.appendChild(symbol);
+
+                // Canvas Cover
+                const canvas = document.createElement('canvas');
+                canvas.className = 'scratch-canvas';
+                canvas.width = 100; // Small canvas
+                canvas.height = 100;
+                canvas.dataset.index = i;
+                cell.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                scratchCanvases.push(canvas);
+                scratchContexts.push(ctx);
+
+                // Draw Cover
+                drawCover(ctx, 100, 100);
+
+                // Events
+                addScratchEvents(canvas);
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function drawCover(ctx, w, h) {
+            // Metallic Gradient (Silver)
+            const grad = ctx.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, '#CCCCCC');
+            grad.addColorStop(0.5, '#EEEEEE');
+            grad.addColorStop(1, '#999999');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Add Texture/Noise (Simple dots)
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            for (let i = 0; i < 50; i++) {
+                ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+            }
+
+            // Draw Logo Centered (if loaded)
+            if (logoImage.complete) {
+                drawLogoOnCanvas(ctx, w, h);
+            } else {
+                logoImage.onload = () => {
+                    scratchContexts.forEach(c => drawLogoOnCanvas(c, 100, 100)); // Redraw all when loaded
+                }
+            }
+        }
+
+        function drawLogoOnCanvas(ctx, w, h) {
+            // Save context
+            ctx.save();
+
+            // Full size logo
+            const x = 0;
+            const y = 0;
+            const width = w;
+            const height = h;
+
+            // Effect: Engraved Aluminum
+            // 1. Set Blend Mode to blend with the silver gradient
+            ctx.globalCompositeOperation = 'overlay';
+            // Alternative: 'hard-light' or 'soft-light' depending on image contrast.
+            // 'multiply' makes it dark. 'overlay' keeps highlights.
+
+            // 2. Reduce Opacity
+            ctx.globalAlpha = 0.4; // Subtle effect
+
+            // 3. Draw Image stretched
+            ctx.drawImage(logoImage, x, y, width, height);
+
+            // 4. Restore
+            ctx.restore();
+        }
+
+        function addScratchEvents(canvas) {
+            let matches = ['mousedown', 'mousemove', 'mouseup', 'touchstart', 'touchmove', 'touchend'];
+            matches.forEach((type) => {
+                canvas.addEventListener(type, (e) => handleScratch(e, canvas));
+            });
+        }
+
+        let isScratchingCell = false;
+
+        function handleScratch(e, canvas) {
+            const ctx = scratchContexts[canvas.dataset.index];
+            const type = e.type;
+            const cell = canvas.parentElement; // Get parent .scratch-cell
+
+            if (type === 'mousedown' || type === 'touchstart') {
+                isScratchingCell = true;
+                ctx.globalCompositeOperation = 'destination-out';
+
+                // Stop shimmer animation on ALL cells when scratching starts
+                document.querySelectorAll('.scratch-cell').forEach(c => c.classList.add('scratching'));
+
+                doDraw(e, canvas, ctx);
+            } else if (type === 'mouseup' || type === 'touchend') {
+                isScratchingCell = false;
+                checkRevealProgress();
+            } else if (type === 'mousemove' || type === 'touchmove') {
+                if (isScratchingCell) {
+                    doDraw(e, canvas, ctx);
+                    // Update % counter in real-time
+                    updateScratchPercent();
+                }
+            }
+        }
+
+        function doDraw(e, canvas, ctx) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 35, 0, Math.PI * 2); // BIGGER Brush for faster reveal
+            ctx.fill();
+        }
+
+        // Update scratch percentage display in real-time
+        function updateScratchPercent() {
+            let totalTransparent = 0;
+            let totalPixels = 0;
+
+            scratchContexts.forEach(ctx => {
+                const data = ctx.getImageData(0, 0, 100, 100).data;
+                for (let i = 3; i < data.length; i += 4) {
+                    if (data[i] === 0) totalTransparent++;
+                }
+                totalPixels += (100 * 100);
+            });
+
+            const percent = (totalTransparent / totalPixels) * 100;
+            document.getElementById('scratchProgress').textContent = `Raspado: ${Math.round(percent)}%`;
+        }
+
+        function checkRevealProgress() {
+            let totalTransparent = 0;
+            let totalPixels = 0;
+
+            scratchContexts.forEach(ctx => {
+                const data = ctx.getImageData(0, 0, 100, 100).data;
+                for (let i = 3; i < data.length; i += 4) {
+                    if (data[i] === 0) totalTransparent++;
+                }
+                totalPixels += (100 * 100);
+            });
+
+            const percent = (totalTransparent / totalPixels) * 100;
+            document.getElementById('scratchProgress').textContent = `Raspado: ${Math.round(percent)}%`;
+
+            // Reveal at 40%
+            if (percent > 40 && currentScratchCard && currentScratchCard.status === 'PENDING') {
+                revealScratchCard();
+            }
+        }
+
+        // ... (Existing revealScratchCard needs update for grid) ...
+        async function revealScratchCard() {
+            if (!currentScratchCard) return;
+
+            document.getElementById('scratchProgress').textContent = 'Revelando...';
+
+            try {
+                const res = await fetch(`/api/scratch/reveal/${currentScratchCard.token}`, {
+                    method: 'POST'
+                });
+                const result = await res.json();
+
+                currentScratchCard.status = 'REVEALED';
+                currentScratchCard.is_winner = result.isWinner;
+                currentScratchCard.prize_value = result.prizeValue;
+
+                // 1. Populate Symbols
+                const grid = result.grid || result.generated_grid || [];
+                for (let i = 0; i < 9; i++) {
+                    const slot = document.getElementById(`slot${i}`);
+                    if (slot && grid[i]) slot.textContent = grid[i];
+                }
+
+                // 2. Clear All Canvases (Visual Reveal)
+                scratchCanvases.forEach(canvas => {
+                    canvas.style.transition = 'opacity 1s';
+                    canvas.style.opacity = '0'; // Fade out cover
+                    // Also pointer events none
+                    canvas.style.pointerEvents = 'none';
+                });
+
+                // 3. Show Message
+                const msgDiv = document.getElementById('scratchMessage');
+                const msgText = document.getElementById('scratchMessageText');
+                msgDiv.style.display = 'block';
+
+                if (result.isWinner) {
+                    msgDiv.style.background = 'linear-gradient(135deg, #00C853 0%, #00E676 100%)';
+                    msgText.style.color = '#fff';
+                    msgText.textContent = `🎉 PARABÉNS! Você ganhou R$ ${result.prizeValue.toFixed(2)}!`;
+
+                    document.getElementById('claimPrizeBtn').style.display = 'block';
+                    document.getElementById('prizeValueDisplay').textContent = result.prizeValue.toFixed(2);
+                } else {
+                    msgDiv.style.background = 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)';
+                    msgText.style.color = '#fff';
+                    msgText.textContent = result.message || '😢 Quase! Tente novamente!';
+                }
+
+                document.getElementById('scratchProgress').style.display = 'none';
+
+                // Next Card Logic
+                pendingScratchCards.shift();
+                if (pendingScratchCards.length > 0) {
+                    document.getElementById('nextCardBtn').style.display = 'block';
+                    document.getElementById('remainingCards').textContent = pendingScratchCards.length;
+                }
+
+            } catch (e) {
+                console.error('[Scratch] Reveal error:', e);
+                alert('Erro ao revelar raspadinha. Tente novamente.');
+            }
+        }
+
+        /**
+         * Play the next scratchcard in the queue
+         */
+        function playNextCard() {
+            if (pendingScratchCards.length === 0) {
+                alert('Não há mais raspadinhas!');
+                closeScratchModal();
+                return;
+            }
+
+            // Load next card
+            currentScratchCard = pendingScratchCards[0];
+
+            // Reset UI state
+            document.getElementById('scratchMessage').style.display = 'none';
+            document.getElementById('claimPrizeBtn').style.display = 'none';
+            document.getElementById('nextCardBtn').style.display = 'none';
+            document.getElementById('scratchProgress').style.display = 'block';
+            document.getElementById('scratchProgress').textContent = 'Raspe as áreas prateadas!';
+            document.getElementById('remainingCards').textContent = pendingScratchCards.length - 1;
+
+            // Remove scratching class to restore shimmer
+            document.querySelectorAll('.scratch-cell').forEach(c => c.classList.remove('scratching'));
+
+            // Re-initialize canvas grid
+            initScratchCanvas();
+        }
+
+        function closeScratchModal() {
+            document.getElementById('scratchModal').style.display = 'none';
+            currentScratchCard = null;
+
+            // Reset UI for next time
+            document.getElementById('scratchMessage').style.display = 'none';
+            document.getElementById('claimPrizeBtn').style.display = 'none';
+            document.getElementById('nextCardBtn').style.display = 'none';
+            document.getElementById('scratchProgress').style.display = 'block';
+            document.getElementById('scratchProgress').textContent = 'Raspe as áreas prateadas!';
+
+            // Remove scratching class
+            document.querySelectorAll('.scratch-cell').forEach(c => c.classList.remove('scratching'));
+        }
+
+        // ... (claimScratchPrize stays same) ...
+        async function claimScratchPrize() {
+            if (!currentScratchCard || !currentScratchCard.is_winner) return;
+
+            try {
+                const res = await fetch(`/api/scratch/claim/${currentScratchCard.token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('🎉 Prêmio registrado! Você receberá via PIX em breve!');
+                    document.getElementById('claimPrizeBtn').style.display = 'none';
+                    document.getElementById('claimPrizeBtn').textContent = '✅ Resgatado!';
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao resgatar');
+            }
+        }
+
         // ========== CONFIGURAÇÃO ==========
         const CONFIG = {
             totalNumbers: 75, // Default, will update per draw
@@ -1007,12 +1434,82 @@
         let currentDrawId = null; // Active draw ID
         let drawsData = []; // Store fetched draws
 
+        // ========== NEW SCRATCH GAME OPENER ==========
+        function openScratchGame() {
+            // Filter out any already-revealed cards (in case user re-opens)
+            pendingScratchCards = pendingScratchCards.filter(c => c.status !== 'REVEALED');
+
+            if (pendingScratchCards.length === 0) {
+                alert('Nenhuma raspadinha disponível!');
+                return;
+            }
+
+            currentScratchCard = pendingScratchCards[0];
+            document.getElementById('scratchModal').style.display = 'flex';
+            document.getElementById('remainingCards').textContent = pendingScratchCards.length - 1;
+
+            // Reset UI state
+            document.getElementById('scratchMessage').style.display = 'none';
+            document.getElementById('claimPrizeBtn').style.display = 'none';
+            document.getElementById('nextCardBtn').style.display = 'none';
+            document.getElementById('scratchProgress').style.display = 'block';
+            document.getElementById('scratchProgress').textContent = 'Raspe as áreas prateadas!';
+
+            // Remove scratching class to restore shimmer
+            document.querySelectorAll('.scratch-cell').forEach(c => c.classList.remove('scratching'));
+
+            // Use the NEW grid initialization
+            initScratchCanvas();
+        }
+
+        // ========== SCRATCHCARD INCENTIVE ==========
+        function updateScratchIncentive() {
+            const selectedCount = selected.length;
+            const minNumbers = 7;
+            const remainder = selectedCount % minNumbers;
+            const needed = remainder === 0 ? 0 : minNumbers - remainder;
+
+            const banner = document.getElementById('scratchIncentive');
+            const neededEl = document.getElementById('numbersNeeded');
+
+            // Show banner ONLY if: 
+            // 1. Has numbers selected
+            // 2. Not at a multiple of 7
+            // 3. Hasn't reached limit of 100
+            if (needed > 0 && selectedCount > 0 && selectedCount < 100) {
+                neededEl.textContent = needed;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
         // ========== INICIALIZAÇÃO ==========
         document.addEventListener('DOMContentLoaded', () => {
             loadDrawsList();
             loadCampaignBranding();
             trackAffiliateClick();
         });
+
+        // ========== INCENTIVE MODAL CONTROLS ==========
+        function continueToCheckout() {
+            // User wants to go back and add more numbers
+            document.getElementById('incentiveModal').style.display = 'none';
+        }
+
+        function proceedAnyway() {
+            // User wants to continue with current selection
+            document.getElementById('incentiveModal').style.display = 'none';
+
+            // Re-trigger openCheckout but skip the incentive check
+            const minNumbers = 7;
+            const remainder = selected.length % minNumbers;
+
+            // Temporarily set to avoid re-triggering modal
+            window.__skipIncentiveCheck = true;
+            openCheckout();
+            window.__skipIncentiveCheck = false;
+        }
 
         // ========== AFFILIATE CLICK TRACKING ==========
         // Global variable as fallback (survives page load but not tab close)
@@ -1360,6 +1857,7 @@
             }
 
             updateFloatBtn();
+            updateScratchIncentive(); // Update incentive banner
         }
 
         function updateFloatBtn() {
@@ -1377,6 +1875,8 @@
         function openCheckout() {
             if (selected.length === 0) return;
 
+            // INCENTIVE MODAL REMOVED - Skip directly to checkout
+
             const sorted = [...selected].sort((a, b) => a - b);
             const total = sorted.length * CONFIG.price;
 
@@ -1387,6 +1887,22 @@
             document.getElementById('stepForm').classList.remove('hidden');
             document.getElementById('stepPix').classList.add('hidden');
             document.getElementById('stepSuccess').classList.add('hidden');
+
+            // Reset Phone Verification Flow
+            document.getElementById('phoneStep').style.display = 'block';
+            document.getElementById('userDataStep').style.display = 'none';
+            document.getElementById('inputPhone').value = '';
+            document.getElementById('inputPhone').readOnly = false;
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputPixKey').value = '';
+
+            // If logged in, pre-fill
+            if (currentUser && currentUser.phone) {
+                document.getElementById('inputPhone').value = formatTelefone(currentUser.phone);
+                // Trigger verification automatically if needed, or just let them click
+                // For better UX, let's auto-verify
+                setTimeout(verifyPhone, 100);
+            }
 
             // Hide Floating Button
             toggleWhatsApp(false);
@@ -1436,6 +1952,477 @@
             toggleWhatsApp(true);
         }
 
+        // --- AUTH SYSTEM START ---
+
+        let currentUser = null; // Global User State
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 0. Inject Modal HTML into Body
+            const loginModalHTML = `
+            <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10001; justify-content: center; align-items: center;">
+                <div style="background: #1a1a1a; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; border: 2px solid var(--gold); text-align: center;">
+                    <h2 style="color: var(--gold); margin-bottom: 20px;">👤 Identifique-se</h2>
+                    <p style="color: #ccc; margin-bottom: 20px;">Digite seu celular para entrar ou cadastrar.</p>
+                    
+                    <input type="tel" id="loginPhone" placeholder="(11) 99999-9999" maxlength="15" onkeyup="mascaraTelefone(this)"
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; text-align: center; font-size: 1.2rem; margin-bottom: 20px;">
+                    
+                    <button onclick="performLogin()" class="btn btn-gold full-width" style="font-size: 1.1rem;">
+                        🚀 Entrar / Continuar
+                    </button>
+                    <button onclick="closeLoginModal()" style="background: none; border: none; color: #666; margin-top: 15px; cursor: pointer;">Cancelar</button>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', loginModalHTML);
+
+            // 1. Check Session
+            checkAuthStatus();
+
+            // 2. Setup Login Button in Header (REMOVED as per request)
+            /* 
+            const headerActions = document.querySelector('.header-actions');
+            if (headerActions) {
+               // Login button removed to rely on checkout flow
+            }
+            */
+        });
+
+        async function checkAuthStatus() {
+            try {
+                const res = await fetch('/api/auth/me');
+                const data = await res.json();
+
+                if (data.loggedIn) {
+                    currentUser = data.user;
+                    updateUIForLoggedInUser();
+                } else {
+                    currentUser = null;
+                }
+            } catch (e) {
+                console.error("Auth check failed", e);
+            }
+        }
+
+        function updateUIForLoggedInUser() {
+            // Update Header Name (Discreet display)
+            const headerActions = document.querySelector('.header-actions');
+            if (headerActions && currentUser) {
+                const firstName = currentUser.name ? currentUser.name.trim().split(' ')[0] : 'Visitante';
+
+                // Remove any existing user display
+                const existingDisplay = document.getElementById('userHeaderDisplay');
+                if (existingDisplay) existingDisplay.remove();
+
+                const userDisplay = document.createElement('div');
+                userDisplay.id = 'userHeaderDisplay';
+                // Discreet style: small text, secondary color, simple icon
+                userDisplay.style.cssText = 'color: rgba(255,255,255,0.7); font-size: 0.9rem; display: flex; align-items: center; gap: 6px;';
+
+                userDisplay.innerHTML = `
+                    <i class="fas fa-user" style="color: var(--gold); font-size: 0.9rem;"></i>
+                    <span>${firstName}</span>
+                `;
+
+                headerActions.innerHTML = ''; // Clear anything else
+                headerActions.appendChild(userDisplay);
+            }
+
+            // Pre-fill Checkout if open
+            if (document.getElementById('modal').classList.contains('active')) {
+                prefillCheckoutForm();
+            }
+        }
+
+        function openLoginModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('loginPhone').focus();
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        async function performLogin() {
+            const phone = document.getElementById('loginPhone').value;
+            if (phone.length < 14) return alert('Digite um telefone válido!');
+
+            const btn = document.querySelector('#loginModal button.btn-gold');
+            const originalText = btn.textContent;
+            btn.textContent = 'Verificando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentUser = data.user;
+                    updateUIForLoggedInUser();
+                    closeLoginModal();
+                    // If user was creating order, auto-open payment modal
+                    // alert(data.message); 
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) {
+                alert('Erro ao entrar');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function prefillCheckoutForm() {
+            if (!currentUser) return;
+
+            const nameInput = document.getElementById('inputName');
+            const phoneInput = document.getElementById('inputPhone');
+            const pixInput = document.getElementById('inputPixKey');
+
+            if (currentUser.name) {
+                nameInput.value = currentUser.name;
+                // nameInput.readOnly = true; // Optional: Lock name
+            }
+            if (currentUser.phone) {
+                // Format phone
+                phoneInput.value = formatTelefone(currentUser.phone);
+                phoneInput.readOnly = true; // Lock phone (identity)
+            }
+            if (currentUser.pix_key) {
+                pixInput.value = currentUser.pix_key;
+            }
+        }
+
+        /**
+         * Auto-fill Name and PIX when user leaves Phone field
+         * This creates the "invisible login" experience
+         */
+        let autoFilledFromLookup = false;
+        let foundUserData = null;
+
+        /**
+         * Verify phone and show appropriate step
+         */
+        async function verifyPhone() {
+            const phoneInput = document.getElementById('inputPhone');
+            const phone = phoneInput.value.replace(/\D/g, '');
+
+            if (phone.length < 10) {
+                alert('Digite um telefone válido!');
+                return;
+            }
+
+            const btn = document.getElementById('btnVerifyPhone');
+            const originalText = btn.textContent;
+            btn.textContent = 'Verificando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/auth/lookup?phone=${phone}`);
+                const data = await res.json();
+
+                // ROBUSTNESS: If lookup says not found, but we are logged in with this phone, use session data
+                if (!data.found && currentUser && currentUser.phone === phone) {
+                    data.found = true;
+                    data.name = currentUser.name;
+                    data.pix_key = currentUser.pix_key;
+                }
+
+                // Show phone display
+                document.getElementById('inputPhoneDisplay').value = formatTelefone(phone);
+
+                // Hide phone step, show user data step
+                document.getElementById('phoneStep').style.display = 'none';
+                document.getElementById('userDataStep').style.display = 'block';
+
+                if (data.found) {
+                    // User exists - show pre-filled data
+                    foundUserData = data;
+                    autoFilledFromLookup = true;
+
+                    document.getElementById('displayName').textContent = data.name || '-';
+                    document.getElementById('displayPix').textContent = data.pix_key || '-';
+
+                    // Add CEP
+                    let cep = data.zip_code || data.cep || '-';
+                    if (cep.length === 8) cep = cep.replace(/^(\d{5})(\d{3})$/, "$1-$2"); // Format header
+                    document.getElementById('displayCep').textContent = cep;
+
+                    document.getElementById('prefilledDisplay').style.display = 'block';
+                    document.getElementById('editableFields').style.display = 'none';
+
+                    // Pre-fill hidden inputs for submit
+                    document.getElementById('inputName').value = data.name || '';
+                    document.getElementById('inputPixKey').value = data.pix_key || '';
+
+                    // CRITICAL: Also fill CEP input
+                    const cleanCep = (data.zip_code || '').replace(/\D/g, '');
+                    if (cleanCep.length === 8) {
+                        const formattedCep = cleanCep.replace(/^(\d{5})(\d{3})$/, "$1-$2");
+                        document.getElementById('inputCep').value = formattedCep;
+                        // Trigger CEP fetch to show location
+                        fetchCepData();
+                    }
+
+                    console.log('[Auth] User found, showing pre-filled data');
+                } else {
+                    // New user - show empty fields
+                    foundUserData = null;
+                    autoFilledFromLookup = false;
+
+                    document.getElementById('prefilledDisplay').style.display = 'none';
+                    document.getElementById('editableFields').style.display = 'block';
+
+                    // Focus on name field
+                    document.getElementById('inputName').focus();
+
+                    console.log('[Auth] New user, showing empty fields');
+                }
+
+            } catch (e) {
+                console.error('[Auth] Lookup failed:', e);
+                // On error, show empty fields
+                document.getElementById('phoneStep').style.display = 'none';
+                document.getElementById('userDataStep').style.display = 'block';
+                document.getElementById('prefilledDisplay').style.display = 'none';
+                document.getElementById('editableFields').style.display = 'block';
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        /**
+         * Allow user to change phone number (go back to step 1)
+         */
+        function changePhone() {
+            document.getElementById('phoneStep').style.display = 'block';
+            document.getElementById('userDataStep').style.display = 'none';
+            document.getElementById('inputPhone').focus();
+            foundUserData = null;
+            autoFilledFromLookup = false;
+        }
+
+        /**
+         * Enable edit mode when user wants to change pre-filled data
+         */
+        function enableEditMode() {
+            document.getElementById('prefilledDisplay').style.display = 'none';
+            document.getElementById('editableFields').style.display = 'block';
+
+            // Ensure fields have the values
+            if (foundUserData) {
+                document.getElementById('inputName').value = foundUserData.name || '';
+                document.getElementById('inputPixKey').value = foundUserData.pix_key || '';
+
+                // CRITICAL: Also copy CEP
+                const cleanCep = (foundUserData.zip_code || '').replace(/\D/g, '');
+                if (cleanCep.length === 8) {
+                    const formattedCep = cleanCep.replace(/^(\d{5})(\d{3})$/, "$1-$2");
+                    document.getElementById('inputCep').value = formattedCep;
+                }
+            }
+
+            document.getElementById('inputName').readOnly = false;
+            document.getElementById('inputPixKey').readOnly = false;
+            document.getElementById('inputName').focus();
+
+            autoFilledFromLookup = false;
+        }
+
+        // Legacy function - kept for compatibility but redirects to verifyPhone
+        async function lookupPhoneAutofill() {
+            // Now handled by verifyPhone()
+        }
+
+        /**
+         * Check if PIX key is already used by ANOTHER customer (fraud detection)
+         */
+        async function checkPixDuplicate(pixKey, currentPhone) {
+            try {
+                const res = await fetch('/api/auth/check-pix', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pix_key: pixKey, phone: currentPhone })
+                });
+                const data = await res.json();
+                return data.duplicate; // true = PIX belongs to another account
+            } catch (e) {
+                console.error('[Auth] PIX check failed:', e);
+                return false; // Don't block on error
+            }
+        }
+
+        // ========== SCRATCHCARD SYSTEM ==========
+        let pendingScratchCards = [];
+        let currentScratchCard = null;
+        let scratchCanvas, scratchCtx;
+        let isScratching = false;
+        let scratchedPercent = 0;
+
+        /**
+         * Check for pending scratchcards after payment (with retry)
+         */
+        async function checkScratchcardsForOrder(orderId, attempt = 1) {
+            // Show Loading, Hide others
+            document.getElementById('scratchLoading').style.display = 'block';
+            document.getElementById('scratchHasCards').style.display = 'none';
+            document.getElementById('scratchNoCards').style.display = 'none';
+
+            try {
+                // Correct Endpoint: /api/scratch/pending-by-order/:orderId
+                const res = await fetch(`/api/scratch/pending-by-order/${orderId}`);
+                const data = await res.json();
+
+                if (data.count > 0) {
+                    // Update Count
+                    document.getElementById('scratchcardCount').textContent = data.count;
+
+                    // Show HasCards (Success)
+                    document.getElementById('scratchLoading').style.display = 'none';
+                    document.getElementById('scratchHasCards').style.display = 'block';
+                    document.getElementById('scratchNoCards').style.display = 'none';
+
+                    // Update global state
+                    pendingScratchCards = data.cards;
+
+                } else if (attempt < 5) {
+                    // Still processing? Retry
+                    setTimeout(() => {
+                        checkScratchcardsForOrder(orderId, attempt + 1);
+                    }, 2000);
+                } else {
+                    // No cards found after retries
+                    document.getElementById('scratchLoading').style.display = 'none';
+                    document.getElementById('scratchHasCards').style.display = 'none';
+                    document.getElementById('scratchNoCards').style.display = 'block';
+                }
+            } catch (e) {
+                console.error('[Scratch] Error checking cards:', e);
+                // On error, show No Cards (fallback)
+                document.getElementById('scratchLoading').style.display = 'none';
+                document.getElementById('scratchNoCards').style.display = 'block';
+            }
+        }
+
+        /**
+         * Open the scratch game modal
+         */
+        function forceScratchTest() {
+            if (typeof pendingScratchCards === 'undefined') window.pendingScratchCards = [];
+
+            pendingScratchCards.push({
+                token: 'FORCE-' + Date.now(),
+                is_winner: true,
+                prize_value: 50.00,
+                prize_tier: 'TEST-WIN',
+                is_test: true
+            });
+
+            // Update UI
+            document.getElementById('scratchNoCards').style.display = 'none';
+            document.getElementById('scratchHasCards').style.display = 'block';
+
+            const countEl = document.getElementById('scratchcardCount');
+            if (countEl) countEl.textContent = pendingScratchCards.length;
+
+            alert('Raspadinha de teste INJETADA!\nClique em "JOGAR AGORA" para testar.');
+        }
+
+        // [LEGACY SCRATCH LOGIC REMOVED]
+        /**
+         * Claim a winning prize
+         */
+        async function claimScratchPrize() {
+            if (!currentScratchCard || !currentScratchCard.is_winner) return;
+
+            try {
+                const res = await fetch(`/api/scratch/claim/${currentScratchCard.token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('🎉 Prêmio registrado! Você receberá via PIX em breve!');
+                    document.getElementById('claimPrizeBtn').style.display = 'none';
+                    document.getElementById('claimPrizeBtn').textContent = '✅ Resgatado!';
+                }
+            } catch (e) {
+                console.error('[Scratch] Claim error:', e);
+                alert('Erro ao resgatar prêmio. Entre em contato conosco.');
+            }
+        }
+
+        /**
+         * Play next scratchcard
+         */
+        function playNextCard() {
+            if (pendingScratchCards.length === 0) {
+                closeScratchModal();
+                return;
+            }
+
+            currentScratchCard = pendingScratchCards[0];
+            initScratchCanvas();
+            resetScratchUI();
+        }
+
+        /**
+         * Reset scratch UI for new card
+         */
+        function resetScratchUI() {
+            // Reset all 9 slots
+            for (let i = 0; i < 9; i++) {
+                document.getElementById(`slot${i}`).textContent = '❓';
+            }
+            document.getElementById('scratchMessage').style.display = 'none';
+            document.getElementById('claimPrizeBtn').style.display = 'none';
+            document.getElementById('nextCardBtn').style.display = 'none';
+            document.getElementById('scratchProgress').style.display = 'block';
+            document.getElementById('scratchProgress').textContent = 'Raspe a área dourada!';
+        }
+
+        // ========== END SCRATCHCARD SYSTEM ==========
+
+        /**
+         * Open Pix Modal Logic
+         */
+        function openPixModal(data) {
+            document.getElementById('stepForm').classList.add('hidden');
+            document.getElementById('stepPix').classList.remove('hidden');
+
+            const total = parseFloat(data.totalAmount) || 0;
+            const totalEl = document.getElementById('pixTotal');
+            if (totalEl) totalEl.textContent = `R$ ${total.toFixed(2)}`;
+
+            const qrEl = document.getElementById('qrImage') || document.getElementById('pixImage');
+            if (qrEl) {
+                if (data.qr_image_data_url) {
+                    qrEl.src = data.qr_image_data_url;
+                } else if (data.qr_code_base64) {
+                    qrEl.src = `data:image/jpeg;base64,${data.qr_code_base64}`;
+                }
+            }
+
+            const codeEl = document.getElementById('pixCode');
+            if (codeEl) codeEl.value = data.pix_copy_paste;
+
+            if (typeof startPixTimer === 'function') startPixTimer();
+
+            // Start Polling
+            const orderIdToPoll = data.primary_order_id || (data.orders && data.orders[0] ? data.orders[0].order_id : null);
+            if (orderIdToPoll) {
+                currentOrderId = orderIdToPoll;
+                startPolling(currentOrderId);
+            }
+        }
+
         // ========== SUBMIT ORDER ==========
         let currentLocation = { bairro: '', cidade: '' };
         let isSubmitting = false; // ANTI-DUPLICATE: Prevent multiple submissions
@@ -1453,151 +2440,147 @@
             const originalBtnText = submitBtn ? submitBtn.textContent : '';
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.textContent = '⏳ Gerando PIX...';
+                submitBtn.textContent = '⏳ Verificando dados...';
             }
 
-            const name = document.getElementById('inputName').value.trim();
-            const phone = document.getElementById('inputPhone').value.trim();
-            const pixKey = document.getElementById('inputPixKey').value.trim();
-            const cep = document.getElementById('inputCep').value.trim();
-
-            if (!name || !phone || !pixKey || !cep) {
-                alert('Preencha todos os campos!');
-                isSubmitting = false;
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
-                return;
-            }
-
-            // VALIDATION: Phone (only reject if ALL digits are the same)
-            const cleanPhone = phone.replace(/\D/g, '');
-            if (cleanPhone.length < 10 || /^(\d)\1+$/.test(cleanPhone)) {
-                alert('Por favor, insira um telefone válido!');
-                isSubmitting = false;
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
-                return;
-            }
-
-            // VALIDATION: CEP (Strict - only reject if ALL digits are the same)
-            const cleanCep = cep.replace(/\D/g, '');
-            if (cleanCep.length !== 8 || /^(\d)\1{7}$/.test(cleanCep)) {
-                alert('O CEP informado é inválido!');
-                isSubmitting = false;
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
-                return;
-            }
-
-            // Verify if location is loaded. If not, force check.
-            if (!currentLocation.bairro || !currentLocation.cidade) {
-                try {
-                    const btn = document.querySelector('#stepForm button');
-                    const originalText = btn.textContent;
-                    if (btn) { btn.textContent = 'Verificando CEP...'; btn.disabled = true; }
-
-                    const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-                    const data = await res.json();
-
-                    if (btn) { btn.textContent = originalText; btn.disabled = false; }
-
-                    if (data.erro) {
-                        alert('CEP não encontrado! Verifique o número digitado.');
-                        const cepEl = document.getElementById('inputCep');
-                        if (cepEl) { cepEl.value = ''; cepEl.focus(); }
-                        return;
-                    }
-
-                    currentLocation.bairro = data.bairro;
-                    currentLocation.cidade = data.localidade;
-
-                    // Re-check empty response (some CEPs return no error but empty fields)
-                    if (!data.localidade) {
-                        alert('CEP Válido mas sem cidade associada. Tente outro.');
-                        return;
-                    }
-
-                } catch (e) {
-                    alert('Erro ao validar CEP. Verifique sua conexão.');
-                    const btn = document.querySelector('#stepForm button');
-                    if (btn) btn.disabled = false;
-                    return;
-                }
-            }
-
-            // Fallback for Neighborhood if empty (Rural)
-            if (!currentLocation.bairro && currentLocation.cidade) currentLocation.bairro = 'Centro';
-
-            // Final check
-            if (!currentLocation.bairro || !currentLocation.cidade) {
-                alert('Não foi possível identificar seu endereço pelo CEP. Tente novamente.');
-                return;
-            }
-
-            const numbers = [...selected].sort((a, b) => a - b);
-            // Format: name|phone|pixKey|bairro|cidade|cep
-            const buyer_ref = `${name}|${phone}|${pixKey}|${currentLocation.bairro}|${currentLocation.cidade}|${cleanCep}`;
-
-            // Get referrer_id with MULTIPLE FALLBACKS for device compatibility
-            let referrer_id = null;
-
-            // 1. Try localStorage first (persistent)
             try {
-                const affiliateData = JSON.parse(localStorage.getItem('affiliateData'));
-                if (affiliateData && affiliateData.code) {
-                    referrer_id = affiliateData.code;
-                }
-            } catch (e) { }
 
-            // 2. Fallback: sessionStorage (works in private browsing on some devices)
-            if (!referrer_id) {
+                // AUTO-FILL from session if empty (Safety check)
+                if (currentUser && !document.getElementById('inputName').value) prefillCheckoutForm();
+
+                const name = document.getElementById('inputName').value.trim();
+                const phone = document.getElementById('inputPhone').value.trim();
+                const pixKey = document.getElementById('inputPixKey').value.trim();
+                const cep = document.getElementById('inputCep').value.trim();
+
+                if (!name || !phone || !pixKey) {
+                    alert('Preencha Nome, Telefone e PIX!');
+                    throw new Error('Campos obrigatórios vazios');
+                }
+
+                // VALIDATION: Phone
+                const cleanPhone = phone.replace(/\D/g, '');
+                if (cleanPhone.length < 10 || /^(\d)\1+$/.test(cleanPhone)) {
+                    alert('Por favor, insira um telefone válido!');
+                    throw new Error('Telefone inválido');
+                }
+
+                // FRAUD CHECK: PIX key duplicate detection
+                if (submitBtn) submitBtn.textContent = '⏳ Checando PIX...';
+
+                // Add Timeout to PIX check
+                const pixCheckPromise = checkPixDuplicate(pixKey, cleanPhone);
+                const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(false), 5000));
+
+                const pixDuplicate = await Promise.race([pixCheckPromise, timeoutPromise]);
+
+                if (pixDuplicate) {
+                    alert('⚠️ ATENÇÃO: Esta chave PIX já está cadastrada em outra conta!\n\nSe você trocou de número, entre em contato conosco.');
+                    throw new Error('PIX duplicado');
+                }
+
+                // VALIDATION: CEP
+                const cleanCep = cep.replace(/\D/g, '');
+                if (cleanCep.length > 0 && (cleanCep.length !== 8 || /^(\d)\1{7}$/.test(cleanCep))) {
+                    alert('O CEP informado é inválido!');
+                    throw new Error('CEP inválido');
+                }
+
+                // Verify location
+                if (!currentLocation.bairro || !currentLocation.cidade) {
+                    try {
+                        if (submitBtn) submitBtn.textContent = '⏳ Buscando CEP...';
+
+                        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+                        const data = await res.json();
+
+                        if (data.erro) {
+                            alert('CEP não encontrado! Verifique o número digitado.');
+                            const cepEl = document.getElementById('inputCep');
+                            if (cepEl) { cepEl.value = ''; cepEl.focus(); }
+                            throw new Error('CEP não encontrado');
+                        }
+
+                        currentLocation.bairro = data.bairro;
+                        currentLocation.cidade = data.localidade;
+
+                        if (!data.localidade) {
+                            alert('CEP Válido mas sem cidade associada. Tente outro.');
+                            throw new Error('CEP sem cidade');
+                        }
+
+                    } catch (e) {
+                        if (e.message.includes('CEP')) throw e; // Propagate CEP errors
+                        // Ignore fetch errors if just network
+                    }
+                }
+
+                // Fallback for Neighborhood
+                if (!currentLocation.bairro && currentLocation.cidade) currentLocation.bairro = 'Centro';
+
+                // Final check location
+                if (!currentLocation.bairro || !currentLocation.cidade) {
+                    console.warn('[Submit] Location missing, using fallback');
+                    // Fallback to avoid block
+                    currentLocation.bairro = 'Bairro';
+                    currentLocation.cidade = 'Cidade';
+                }
+
+                if (submitBtn) submitBtn.textContent = '⏳ Gerando Pagamento...';
+
+                const numbers = [...selected].sort((a, b) => a - b);
+                const buyer_ref = `${name}|${cleanPhone}|${pixKey}|${currentLocation.bairro}|${currentLocation.cidade}|${cleanCep}`;
+
+                // Get referrer_id with MULTIPLE FALLBACKS
+                let referrer_id = null;
                 try {
-                    referrer_id = sessionStorage.getItem('affiliateRef');
+                    const affiliateData = JSON.parse(localStorage.getItem('affiliateData'));
+                    if (affiliateData && affiliateData.code) referrer_id = affiliateData.code;
                 } catch (e) { }
-            }
 
-            // 3. Fallback: URL param (if still on same page)
-            if (!referrer_id) {
-                const urlRef = new URLSearchParams(window.location.search).get('ref');
-                if (urlRef) referrer_id = urlRef;
-            }
+                if (!referrer_id && window.sessionStorage.getItem('referrer_id')) {
+                    referrer_id = window.sessionStorage.getItem('referrer_id');
+                }
 
-            // 4. Fallback: global variable (set during this session)
-            if (!referrer_id && window.__affiliateRef) {
-                referrer_id = window.__affiliateRef;
-            }
+                // Final Paylaod
+                const payload = {
+                    buyer_ref: buyer_ref,
+                    draw_id: currentDrawId,
+                    numbers: numbers,
+                    referrer_id: referrer_id
+                };
 
-            console.log('[Purchase] Using referrer_id:', referrer_id || 'none');
-
-            try {
                 const res = await fetch('/api/orders/bulk', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ numbers, buyer_ref, referrer_id })
+                    body: JSON.stringify(payload)
                 });
 
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.error || err.message || 'Erro ao criar pedido');
-                }
-
                 const data = await res.json();
-                currentOrderId = data.orders[0].order_id;
 
-                // Show Pix
-                document.getElementById('stepForm').classList.add('hidden');
-                document.getElementById('stepPix').classList.remove('hidden');
-                document.getElementById('pixTotal').textContent = `R$ ${(numbers.length * CONFIG.price).toFixed(2)}`;
-                document.getElementById('qrImage').src = data.qr_image_data_url;
-                document.getElementById('pixCode').value = data.pix_copy_paste;
+                if (!res.ok) throw new Error(data.error || 'Erro ao processar pedido');
 
-                // Start polling
-                startPolling(currentOrderId);
+                // TRACKING PIXEL
+                try {
+                    if (typeof fbq === 'function') fbq('track', 'InitiateCheckout');
+                    if (typeof gtag === 'function') gtag('event', 'begin_checkout');
+                } catch (e) { }
+
+                openPixModal(data);
 
             } catch (e) {
-                alert(e.message);
-                // Re-habilita o botão para permitir nova tentativa
+                if (e.message !== 'Campos obrigatórios vazios' &&
+                    e.message !== 'Telefone inválido' &&
+                    e.message !== 'PIX duplicado' &&
+                    e.message !== 'CEP inválido' &&
+                    e.message !== 'CEP não encontrado') {
+                    alert(e.message);
+                }
+            } finally {
                 isSubmitting = false;
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.textContent = originalBtnText || 'Gerar PIX';
+                    submitBtn.textContent = originalBtnText || 'Pagar com Pix';
                 }
             }
         }
@@ -1609,14 +2592,64 @@
             alert('Código copiado!');
         }
 
-        async function simulatePay() {
-            if (!currentOrderId) return;
+        async function simulateCashPayment() {
+            if (!currentOrderId) {
+                alert('Nenhum pedido ativo!');
+                return;
+            }
+
+            if (!confirm('CONFIRMAR recebimento em DINHEIRO?\nIsso vai liberar as raspadinhas.')) return;
+
             try {
-                await fetch(`/api/mock/pay/${currentOrderId}`, { method: 'POST' });
+                const btn = event.target;
+                btn.disabled = true;
+                btn.textContent = '⏳ Processando...';
+
+                const res = await fetch(`/api/debug/fake-payment/${currentOrderId}`, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('Pagamento confirmado manualmente! 🎉\nAs raspadinhas foram geradas.');
+
+                    // Explicitly update UI instead of just closing modal
+                    // 1. Hide PIX step
+                    document.getElementById('stepPix').classList.add('hidden');
+
+                    // 2. Show Success Step
+                    document.getElementById('stepSuccess').classList.remove('hidden');
+
+                    // 3. Force check scratchcards immediately
+                    checkScratchcardsForOrder(currentOrderId);
+
+                    // 4. Update polling to stop checking
+                    if (pollInterval) clearInterval(pollInterval);
+
+                } else {
+                    alert('Erro ao simular: ' + (data.error || 'Desconhecido'));
+                    btn.disabled = false;
+                    btn.textContent = '💵 Simular Pagamento (Dinheiro)';
+                }
             } catch (e) {
                 console.error(e);
+                alert('Erro de conexão ou resposta inválida do servidor.');
+                const btn = event.target; // Re-select or use cached? event.target might be lost in async?
+                // Better to use ID or closure variable. 
+                // But wait, 'btn' was defined above in the function scope?
+                // javascript scope: yes, 'const btn = event.target' at start.
+                if (typeof btn !== 'undefined') {
+                    btn.disabled = false;
+                    btn.textContent = '💵 Simular Pagamento (Dinheiro)';
+                } else {
+                    // Fallback
+                    const fallbackBtn = document.querySelector('#stepPix .btn-dashed'); // Assuming class/selector
+                    if (fallbackBtn) {
+                        fallbackBtn.disabled = false;
+                        fallbackBtn.textContent = '💵 Simular Pagamento (Dinheiro)';
+                    }
+                }
             }
         }
+
 
         // ========== PIX TIMER LOGIC ==========
         let pixTimerInterval;
@@ -1780,6 +2813,25 @@
         // No, better to search and replace usage. 
         // Or simpler: Add 'toggleWhatsApp(false)' to openCheckout and 'toggleWhatsApp(true)' to closeModal.
 
+        // Helper to silently login user after purchase
+        async function performSilentLogin(phone) {
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = data.user;
+                    updateUIForLoggedInUser();
+                    console.log('[Auth] Silent login successful');
+                }
+            } catch (e) {
+                console.error('[Auth] Silent login failed', e);
+            }
+        }
+
         function startPolling(orderId) {
             pollInterval = setInterval(async () => {
                 try {
@@ -1791,9 +2843,13 @@
                         document.getElementById('stepPix').classList.add('hidden');
                         document.getElementById('stepSuccess').classList.remove('hidden');
 
-                        // Show Affiliate Link
+                        // Show Affiliate Link & Perform Silent Login
                         const buyerPhone = document.getElementById('inputPhone').value.replace(/\D/g, '');
                         if (buyerPhone) {
+                            // Link user session
+                            performSilentLogin(buyerPhone);
+
+                            // Affiliate Link Layout
                             const link = `https://tvzapao.com.br/?ref=${buyerPhone}`;
                             const affiliateContainer = document.getElementById('affiliateLinkContainer');
                             const affiliateInput = document.getElementById('affiliateLinkInput');
@@ -1807,6 +2863,9 @@
                         selected = [];
                         document.querySelectorAll('.num-btn.selected').forEach(el => el.classList.remove('selected'));
                         updateFloatBtn();
+
+                        // Check scratchcards IMMEDIATELY (they're pre-generated on backend now!)
+                        checkScratchcardsForOrder(orderId);
                     }
                 } catch (e) {
                     console.error(e);
@@ -1826,6 +2885,9 @@
                 alert('Link copiado! Envie para seus amigos.');
             }
         }
+
+        // DEBUG FUNCTION REMOVED - testPayment
+
 
         // ========== STATS & COUNTDOWN ==========
         let drawEndTime = null;
@@ -1936,7 +2998,12 @@
 
                 // Add pulse animation
                 const style = document.createElement('style');
-                style.textContent = '@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }';
+                style.innerHTML = `
+                @keyframes pulse {
+                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+                    70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+                }`;
                 document.head.appendChild(style);
 
                 clearInterval(countdownInterval);
@@ -1963,6 +3030,24 @@
             document.getElementById('countHours').textContent = hours.toString().padStart(2, '0');
             document.getElementById('countMinutes').textContent = minutes.toString().padStart(2, '0');
             document.getElementById('countSeconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        // Helper: Format Telefone
+        function formatTelefone(v) {
+            if (!v) return "";
+            v = v.replace(/\D/g, "");
+            v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+            v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+            return v;
+        }
+
+        // Helper: Format CEP
+        function formatCep(input) {
+            let value = input.value.replace(/\D/g, ''); // Remove non-digits
+            if (value.length > 5) {
+                value = value.substring(0, 5) + '-' + value.substring(5, 8);
+            }
+            input.value = value;
         }
 
         // Refresh stats every 30 seconds to keep countdown accurate
@@ -2034,8 +3119,9 @@
     <section class="lookup-section"
         style="background: linear-gradient(180deg, var(--bg-card-solid), #000); border-top: 1px solid var(--gold-glow);">
         <div class="lookup-container">
-            <h3 style="color: var(--gold);">🎁 Concorra a prêmios por indicação!</h3>
-            <p>Indique amigos e concorra sem custo nenhum:</p>
+            <h3 style="color: var(--gold); font-size: 1.2rem;">Seja um Afiliado</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Ganha 25% de tudo que vender<br>pelo seu link!
+            </p>
             <div class="lookup-form">
                 <input type="tel" id="affiliatePhone" placeholder="Seu WhatsApp" maxlength="15"
                     oninput="this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2')">
@@ -2336,6 +3422,234 @@
             }
         }
     </style>
+
+    <script>
+        // ========== PUSH NOTIFICATIONS ==========
+        let publicVapidKey = '';
+
+        // Fetch key immediately
+        fetch('/api/marketing/vapid-public-key')
+            .then(r => r.json())
+            .then(data => { publicVapidKey = data.publicKey; })
+            .catch(e => console.error('Failed to load VAPID key', e));
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const register = await navigator.serviceWorker.register('/sw.js');
+                    console.log('[SW] Service Worker Registered');
+
+                    // Check permission on load
+                    if (Notification.permission === 'default') {
+                        // Ask after 5 seconds
+                        setTimeout(askForNotificationPermission, 5000);
+                    } else if (Notification.permission === 'granted') {
+                        // Ensure subscription is up to date
+                        subscribeUser();
+                    }
+                } catch (e) {
+                    console.error('[SW] Register failed:', e);
+                }
+            });
+        }
+
+        async function askForNotificationPermission(customerPhone) {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    subscribeUser(customerPhone);
+                }
+            } catch (e) {
+                console.error('[Push] Permission error:', e);
+            }
+        }
+
+        async function subscribeUser(customerPhone) {
+            if (!('serviceWorker' in navigator)) return;
+
+            // Ensure key is loaded
+            if (!publicVapidKey) {
+                try {
+                    const res = await fetch('/api/marketing/vapid-public-key');
+                    const data = await res.json();
+                    publicVapidKey = data.publicKey;
+                } catch (e) {
+                    console.error('Missing VAPID key', e);
+                    return;
+                }
+            }
+
+            try {
+                try {
+                    const register = await navigator.serviceWorker.ready;
+
+                    // Check if already subscribed
+                    const existingSub = await register.pushManager.getSubscription();
+                    if (existingSub) {
+                        // Convert key to compare (basic check)
+                        const existingKey = existingSub.options.applicationServerKey;
+                        const newKey = urlBase64ToUint8Array(publicVapidKey);
+
+                        // Simple logic: if keys differ significantly or just force re-sub if 410 error happens backend side
+                        // But here we'll just Unsubscribe first to be safe since we changed keys recently
+                        // Only do this once per session to avoid loops? 
+                        // Let's rely on server response mostly, but here let's force update
+
+                        const currentKeyStr = btoa(String.fromCharCode.apply(null, new Uint8Array(existingKey))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                        // If stored key is different (or we just want to force update)
+                        if (currentKeyStr !== publicVapidKey) {
+                            console.log('[Push] Key mismatch, resubscribing...');
+                            await existingSub.unsubscribe();
+                        }
+                    }
+
+                    const subscription = await register.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                    });
+
+                    console.log('[Push] User Subscribed');
+
+                    // Send to server with phone link
+                    await fetch('/api/marketing/subscribe', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            subscription: subscription,
+                            phone: customerPhone || window.lastPurchasePhone || null
+                        }),
+                        headers: {
+                            'content-type': 'application/json'
+                        }
+                    });
+                } catch (e) {
+                    console.error('[Push] Subscribe error:', e);
+                }
+            }
+
+        function urlBase64ToUint8Array(base64String) {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding)
+                    .replace(/\-/g, '+')
+                    .replace(/_/g, '/');
+
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+
+                for (let i = 0; i < rawData.length; ++i) {
+                    outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+            }
+
+            // Show notification banner after successful purchase
+            function showNotificationBanner(customerPhone) {
+                if (Notification.permission === 'granted') {
+                    // Already subscribed, just update phone link
+                    subscribeUser(customerPhone);
+                    return;
+                }
+
+                if (Notification.permission === 'denied') {
+                    return; // User already denied
+                }
+
+                // Create non-intrusive banner
+                const banner = document.createElement('div');
+                banner.id = 'pushBanner';
+                banner.innerHTML = `
+                <div style="
+                    position: fixed;
+                    bottom: 100px;
+                    left: 20px;
+                    right: 20px;
+                    max-width: 400px;
+                    margin: 0 auto;
+                    background: linear-gradient(135deg, #1a1a23 0%, #2a2a3a 100%);
+                    border: 1px solid var(--gold);
+                    border-radius: 12px;
+                    padding: 16px;
+                    z-index: 9999;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                    animation: slideUp 0.3s ease;
+                ">
+                    <style>
+                        @keyframes slideUp {
+                            from { transform: translateY(100px); opacity: 0; }
+                            to { transform: translateY(0); opacity: 1; }
+                        }
+                    </style>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 2rem;">🔔</span>
+                        <div style="flex: 1;">
+                            <strong style="color: var(--gold);">Quer receber alertas?</strong>
+                            <p style="font-size: 0.85rem; color: #aaa; margin: 4px 0 0;">
+                                Saiba quando a rifa estiver encerrando e não perca!
+                            </p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 12px;">
+                        <button onclick="acceptNotifications('${customerPhone}')" style="
+                            flex: 1;
+                            background: var(--gradient-gold);
+                            border: none;
+                            padding: 10px;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            color: #000;
+                        ">Ativar Alertas</button>
+                        <button onclick="dismissBanner()" style="
+                            background: transparent;
+                            border: 1px solid #555;
+                            padding: 10px 16px;
+                            border-radius: 8px;
+                            color: #888;
+                            cursor: pointer;
+                        ">Agora não</button>
+                    </div>
+                </div>
+            `;
+                document.body.appendChild(banner);
+            }
+
+            function acceptNotifications(phone) {
+                window.lastPurchasePhone = phone;
+                askForNotificationPermission(phone);
+                dismissBanner();
+            }
+
+            function dismissBanner() {
+                const banner = document.getElementById('pushBanner');
+                if (banner) banner.remove();
+                // Remember dismissal for 24 hours
+                localStorage.setItem('pushBannerDismissed', Date.now());
+            }
+
+            // Auto-show notification banner after 3 seconds if not already subscribed
+            setTimeout(function () {
+                // Skip if already dismissed recently (24h)
+                const dismissed = localStorage.getItem('pushBannerDismissed');
+                if (dismissed && (Date.now() - parseInt(dismissed)) < 24 * 60 * 60 * 1000) {
+                    return;
+                }
+
+                // Skip if already granted
+                if (Notification.permission === 'granted') {
+                    // Make sure we're subscribed
+                    subscribeUser();
+                    return;
+                }
+
+                // Skip if denied
+                if (Notification.permission === 'denied') {
+                    return;
+                }
+
+                // Show banner
+                showNotificationBanner();
+            }, 3000);
+    </script>
 </body>
 
 </html>

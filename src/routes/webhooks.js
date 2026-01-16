@@ -32,25 +32,14 @@ router.post('/pix', async (req, res) => {
         // For now, let's acknowledge 200 OK to keep MP happy.
         res.status(200).send('OK');
 
-        // Async process
-        if (payload.action === 'payment.updated' || payload.action === 'payment.created') {
-            const paymentId = payload.data.id;
-            // We need to fetch the payment details from MP to get the external_reference (order_id)
-            const { getPaymentProvider } = require('../services/PaymentProvider');
-            const provider = getPaymentProvider();
+        // Async process: Queue raw webhook immediately
+        // PaymentService will handle fetching and validation safely
+        // This ensures NO WEBHOOK IS LOST even if MP API is slow/down
+        PaymentService.processWebhook(payload).catch(err => {
+            Logger.error('WEBHOOK_ASYNC_FAIL', err.message, null);
+        });
 
-            if (provider.client) {
-                const payment = await provider.getPayment(paymentId);
-                if (payment.status === 'approved') {
-                    await PaymentService.processWebhook({
-                        order_id: payment.external_reference,
-                        amount_paid: payment.transaction_amount,
-                        provider: 'MercadoPago',
-                        txid: payment.id.toString()
-                    });
-                }
-            }
-        }
+
 
     } catch (error) {
         Logger.error('WEBHOOK_ROUTE_ERROR', error.message, null);

@@ -27,7 +27,7 @@ module.exports = {
 
     // Session
     SESSION_SECRET: process.env.SESSION_SECRET,
-    SESSION_MAX_AGE: 24 * 60 * 60 * 1000, // 24 hours
+    SESSION_MAX_AGE: 365 * 24 * 60 * 60 * 1000, // 1 year (persistent login)
 
     // Security
     // Relaxed for High Traffic Events

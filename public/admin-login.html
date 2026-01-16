@@ -6,37 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Admin - Amigos do Zapão</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin-standard.css">
     <style>
-        :root {
-            --az-primary: #00E676;
-            --az-dark: #121212;
-            --az-card-bg: #1E1E1E;
-            --az-text: #FFFFFF;
-            --az-text-muted: #AAAAAA;
-            --az-danger: #ff4444;
-
-            /* Typography System */
-            --font-size-h1-mobile: 1.75rem;
-            --font-size-h1-desktop: 2.5rem;
-            --font-size-h2-mobile: 1.4rem;
-            --font-size-h2-desktop: 1.8rem;
-            --font-size-h3: 1.2rem;
-            --font-size-body: 1rem;
-            --font-size-small: 0.875rem;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--az-dark);
-            color: var(--az-text);
-            font-size: var(--font-size-body);
-            min-height: 100vh;
+            /* Override standard body for centering login */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -44,14 +17,10 @@
         }
 
         .login-card {
-            background: var(--az-card-bg);
-            border: 1px solid #333;
-            border-radius: 16px;
-            padding: 2.5rem;
-            width: 100%;
             max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 100%;
             text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .logo-glow {
@@ -60,67 +29,10 @@
             max-width: 150px;
         }
 
-        h2 {
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
-
-        p.subtitle {
-            color: var(--az-text-muted);
+        .subtitle {
+            color: var(--text-secondary);
             margin-bottom: 2rem;
             font-size: 0.9rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #ccc;
-            font-size: 0.9rem;
-        }
-
-        input {
-            width: 100%;
-            padding: 1rem;
-            background: #121212;
-            border: 1px solid #444;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: var(--az-primary);
-        }
-
-        .btn {
-            width: 100%;
-            background: var(--az-primary);
-            color: #000;
-            border: none;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: opacity 0.2s;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
 
         .input-code {
@@ -130,30 +42,10 @@
             font-weight: bold;
         }
 
-        .message {
-            margin-top: 1rem;
-            padding: 0.8rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            display: none;
-        }
-
-        .message.error {
-            background: rgba(255, 68, 68, 0.1);
-            color: var(--az-danger);
-            border: 1px solid var(--az-danger);
-        }
-
-        .message.success {
-            background: rgba(0, 230, 118, 0.1);
-            color: var(--az-primary);
-            border: 1px solid var(--az-primary);
-        }
-
         .back-link {
             display: block;
             margin-top: 1.5rem;
-            color: var(--az-text-muted);
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.9rem;
         }
@@ -180,12 +72,12 @@
                 <input type="tel" id="phone" placeholder="(11) 99999-9999" maxlength="15" required
                     oninput="maskPhone(this)">
             </div>
-            <button type="submit" class="btn" id="btnCheck">Continuar</button>
+            <button type="submit" class="btn btn-primary" id="btnCheck">Continuar</button>
         </form>
 
         <!-- STEP 2: Password (Dynamic) -->
         <form id="stepPassword" style="display: none;">
-            <p id="welcomeMsg" style="color: var(--az-primary); margin-bottom: 1rem; font-weight: bold;"></p>
+            <p id="welcomeMsg" style="color: var(--gold); margin-bottom: 1rem; font-weight: bold;"></p>
 
             <div class="form-group">
                 <label id="lblPassword">Senha</label>
@@ -198,10 +90,21 @@
                 <input type="password" id="confirmPassword" placeholder="Repita a senha">
             </div>
 
-            <button type="submit" class="btn" id="btnLogin">Entrar</button>
+            <button type="submit" class="btn btn-primary" id="btnLogin">Entrar</button>
             <a href="#" onclick="resetFlow(event)" class="back-link">← Voltar / Alterar Número</a>
         </form>
     </div>
+
+    <!-- IDSR Footer (Standard Styles) -->
+    <footer class="idsr-footer" style="position: absolute; bottom: 0;">
+        <div class="idsr-footer-content">
+            <span class="idsr-footer-text">© 2026 IDSR. Todos os direitos reservados.</span>
+            <span class="idsr-separator">|</span>
+            <a href="https://idsr.com.br" target="_blank" rel="noopener noreferrer" class="idsr-link">
+                Produzido e gerenciado por <strong>IDSR</strong>
+            </a>
+        </div>
+    </footer>
 
     <script>
         const stepPhone = document.getElementById('stepPhone');
@@ -344,78 +247,6 @@
             }
         };
     </script>
-
-    <!-- IDSR Footer -->
-    <footer class="idsr-footer">
-        <div class="idsr-footer-content">
-            <span class="idsr-footer-text">© 2026 IDSR. Todos os direitos reservados.</span>
-            <span class="idsr-separator">|</span>
-            <a href="https://idsr.com.br" target="_blank" rel="noopener noreferrer" class="idsr-link">
-                Produzido e gerenciado por <strong>IDSR</strong>
-            </a>
-        </div>
-    </footer>
-
-    <style>
-    .idsr-footer {
-        width: 100%;
-        padding: 15px 20px;
-        background: rgba(0, 0, 0, 0.05);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        margin-top: 40px;
-        text-align: center;
-    }
-
-    .idsr-footer-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 0.75rem;
-        color: #666;
-    }
-
-    .idsr-footer-text {
-        opacity: 0.7;
-    }
-
-    .idsr-separator {
-        opacity: 0.3;
-    }
-
-    .idsr-link {
-        color: #666;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        opacity: 0.8;
-    }
-
-    .idsr-link:hover {
-        color: #000;
-        opacity: 1;
-    }
-
-    .idsr-link strong {
-        font-weight: 600;
-        color: #d4af37;
-    }
-
-    @media (max-width: 600px) {
-        .idsr-footer-content {
-            font-size: 0.7rem;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .idsr-separator {
-            display: none;
-        }
-    }
-    </style>
-
 </body>
 
 </html>

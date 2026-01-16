@@ -188,8 +188,83 @@ function updateStatsGrid(data) {
     }
 
     // 5. Revenue
+    const revenue = parseFloat(data.orders.revenue_total_paid) || 0;
     const revEl = document.getElementById('statRevenue');
-    if (revEl) revEl.innerText = fmtMoney(data.orders.revenue_total_paid);
+    if (revEl) revEl.innerText = fmtMoney(revenue);
+
+    // 6. Financial Cards - Fetch commission data
+    const prize = parseFloat(data.current_draw.current_prize) || 0;
+    const drawId = current_draw?.id;
+
+    // If no active draw, show zeros
+    if (!drawId) {
+        const breakevenEl = document.getElementById('statBreakeven');
+        if (breakevenEl) breakevenEl.innerText = fmtMoney(0);
+        const commissionEl = document.getElementById('statTotalCommission');
+        if (commissionEl) commissionEl.innerText = fmtMoney(0);
+        const profitEl = document.getElementById('statRealProfit');
+        if (profitEl) {
+            profitEl.innerText = fmtMoney(0);
+            profitEl.style.color = '#4ade80';
+        }
+        return;
+    }
+
+    // Async fetch commissions to calculate breakeven and profit
+    fetchAndUpdateFinancials(drawId, prize, revenue, fmtMoney);
+}
+
+async function fetchAndUpdateFinancials(drawId, prize, revenue, fmtMoney) {
+    // SECURITY: If no drawId, strictly zero out and return. Do not fetch global stats.
+    if (!drawId) {
+        const breakevenEl = document.getElementById('statBreakeven');
+        if (breakevenEl) breakevenEl.innerText = fmtMoney(0);
+        const commissionEl = document.getElementById('statTotalCommission');
+        if (commissionEl) commissionEl.innerText = fmtMoney(0);
+        const profitEl = document.getElementById('statRealProfit');
+        if (profitEl) {
+            profitEl.innerText = fmtMoney(0);
+            profitEl.style.color = '#4ade80';
+        }
+        return;
+    }
+
+    try {
+        // Fetch affiliate commission data for current draw
+        let url = `/api/audit/affiliates?draw_id=${drawId}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // Calculate total commissions (sum of all affiliates)
+        const affiliates = data.affiliates || [];
+        let totalCommissions = 0;
+
+        affiliates.forEach(aff => {
+            totalCommissions += parseFloat(aff.total_commission || 0);
+        });
+
+        // Calculate Breakeven and Profit
+        const breakeven = prize + totalCommissions;
+        const realProfit = revenue - breakeven;
+
+        // Update cards
+        const breakevenEl = document.getElementById('statBreakeven');
+        if (breakevenEl) breakevenEl.innerText = fmtMoney(breakeven);
+
+        const commissionEl = document.getElementById('statTotalCommission');
+        if (commissionEl) commissionEl.innerText = fmtMoney(totalCommissions);
+
+        const profitEl = document.getElementById('statRealProfit');
+        if (profitEl) {
+            profitEl.innerText = fmtMoney(realProfit);
+            // Color based on positive/negative
+            profitEl.style.color = realProfit >= 0 ? '#4ade80' : '#f87171';
+        }
+
+    } catch (e) {
+        console.error('Error fetching financials:', e);
+    }
 }
 
 let countdownInterval = null;
@@ -451,73 +526,55 @@ async function loadPayments() {
 }
 
 // ========== WINNERS HISTORY ==========
+// ========== WINNERS HISTORY ==========
 async function loadWinnersHistory() {
     const tbody = document.getElementById('winnersHistoryBody');
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem;">Carregando...</td></tr>';
 
     try {
-        // Fetch ALL completed draws
-        const res = await fetch('/api/public/draws');
+        // Fetch Global Winners History (Flat List)
+        const res = await fetch('/api/admin/winners-history');
         const data = await res.json();
-        const draws = data.draws || []; // FIX: array is inside 'draws' key
 
-        // Filter only those with winners
-        const winners = draws.filter(d => d.status === 'CLOSED' && d.winning_number !== null);
+        // Data format: { winners: [ { draw_name, number, prize, date, winner: { name, phone, pix } } ... ] }
+        const winners = data.winners || [];
 
         if (winners.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:#666;">Nenhum histórico disponível.</td></tr>';
             return;
         }
 
-        // Sort by date desc
-        winners.sort((a, b) => b.id - a.id); // Sort by ID/Date
+        tbody.innerHTML = winners.map(row => {
+            const w = row.winner;
+            const dateStr = row.date ? new Date(row.date).toLocaleString('pt-BR') : '-';
 
-        tbody.innerHTML = winners.flatMap(w => {
-            // w.winners is an array of { name, phone, pix, date ... }
+            // Calculate prize (rendering logic)
+            const prizeAmount = parseFloat(row.prize || 0);
 
-            // If no winners list or empty, show one row indicating 'Sem Ganhador'
-            if (!w.winners || w.winners.length === 0) {
-                const dateStr = w.closed_at ? new Date(w.closed_at).toLocaleString('pt-BR') : '-';
-                return [`
-                    <tr style="border-bottom: 1px solid var(--border-color);">
-                        <td style="padding: 1rem;">${w.name || '#' + w.id}</td>
-                        <td style="padding: 1rem; color: var(--gold); font-weight: bold;">${w.winning_number}</td>
-                        <td style="padding: 1rem; color: #666;">Sem ganhador</td>
-                        <td style="padding: 1rem;">-</td>
-                        <td style="padding: 1rem;">-</td>
-                        <td style="padding: 1rem;">R$ ${parseFloat(w.prize).toFixed(2)}</td>
-                        <td style="padding: 1rem; color: var(--text-secondary);">${dateStr}</td>
-                        <td style="padding: 1rem; text-align:center;">-</td>
-                    </tr>
-                `];
-            }
+            // Prepare Pay Button
+            const phoneClean = (w.phone || '').replace(/\D/g, '');
+            const safeName = (w.name || 'Ganhador').replace(/'/g, "\\'");
+            const payButton = `<button class="btn btn-sm btn-gold" onclick="openPaymentModal('${phoneClean}', '${safeName}', ${prizeAmount})" style="padding: 4px 12px; font-size: 0.75rem;">💰 Pagar</button>`;
 
-            // Iterate over winners to create one row per winner
-            return w.winners.map(p => {
-                // Use date from specific winner or draw
-                const dateRaw = p.date || w.closed_at;
-                const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('pt-BR') : '-';
+            // Helper for Title Case
+            const titleCase = (str) => str ? str.toLowerCase().replace(/(?:^|\s)\w/g, m => m.toUpperCase()) : '-';
 
-                const prizeAmount = parseFloat(w.payout_each || (w.prize / w.winners.length));
-                const phoneClean = p.phone.replace(/\D/g, '');
-                const payButton = `<button class="btn btn-sm btn-gold" onclick="openPaymentModal('${phoneClean}', '${toTitleCase(p.name).replace(/'/g, "\\'")}', ${prizeAmount})" style="padding: 4px 12px; font-size: 0.75rem;">💰 Pagar</button>`;
-
-                return `
-                    <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.85rem;">
-                        <td style="padding: 0.75rem;">${w.name || '#' + w.id}</td>
-                        <td style="padding: 0.75rem; color: var(--gold); font-weight: bold;">${w.winning_number}</td>
-                        <td style="padding: 0.75rem;">${toTitleCase(p.name)}</td>
-                        <td style="padding: 0.75rem;">${formatTelefone(p.phone)}</td>
-                        <td style="padding: 0.75rem;">${formatPixKey(p.pix)}</td>
-                        <td style="padding: 0.75rem;">R$ ${prizeAmount.toFixed(2)}</td>
-                        <td style="padding: 0.75rem; color: var(--text-secondary);">${dateStr}</td>
-                        <td style="padding: 0.75rem; text-align:center;">${payButton}</td>
-                    </tr>
-                `;
-            });
+            return `
+                <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.85rem;">
+                    <td style="padding: 0.75rem;">${row.draw_name}</td>
+                    <td style="padding: 0.75rem; color: var(--gold); font-weight: bold;">${row.number}</td>
+                    <td style="padding: 0.75rem;">${titleCase(w.name)}</td>
+                    <td style="padding: 0.75rem;">${formatTelefone(w.phone)}</td>
+                    <td style="padding: 0.75rem;">${formatPixKey(w.pix)}</td>
+                    <td style="padding: 0.75rem;">R$ ${prizeAmount.toFixed(2)}</td>
+                    <td style="padding: 0.75rem; color: var(--text-secondary);">${dateStr}</td>
+                    <td style="padding: 0.75rem; text-align:center;">${payButton}</td>
+                </tr>
+            `;
         }).join('');
 
     } catch (e) {
+        console.error(e);
         tbody.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">Erro: ${e.message}</td></tr>`;
     }
 }

@@ -1,121 +1,112 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+:root {
+--az-primary: #00E676;
+--az-dark: #121212;
+--az-card-bg: #1E1E1E;
+--az-text: #FFFFFF;
+--az-text-muted: #AAAAAA;
+--az-danger: #ff4444;
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setup Admin - Amigos do Zapão</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --az-primary: #00E676;
-            --az-dark: #121212;
-            --az-card-bg: #1E1E1E;
-            --az-text: #FFFFFF;
-            --az-text-muted: #AAAAAA;
-            --az-danger: #ff4444;
+/* Typography System */
+--font-size-h1-mobile: 1.75rem;
+--font-size-h1-desktop: 2.5rem;
+--font-size-h2-mobile: 1.4rem;
+--font-size-h2-desktop: 1.8rem;
+--font-size-h3: 1.2rem;
+--font-size-body: 1rem;
+--font-size-small: 0.875rem;
+}
 
-            /* Typography System */
-            --font-size-h1-mobile: 1.75rem;
-            --font-size-h1-desktop: 2.5rem;
-            --font-size-h2-mobile: 1.4rem;
-            --font-size-h2-desktop: 1.8rem;
-            --font-size-h3: 1.2rem;
-            --font-size-body: 1rem;
-            --font-size-small: 0.875rem;
-        }
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+body {
+font-family: 'Inter', sans-serif;
+background-color: var(--az-dark);
+color: var(--az-text);
+font-size: var(--font-size-body);
+min-height: 100vh;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--az-dark);
-            color: var(--az-text);
-            font-size: var(--font-size-body);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+.setup-card {
+background: var(--az-card-bg);
+border: 1px solid #333;
+border-radius: 16px;
+padding: 2.5rem;
+width: 100%;
+max-width: 450px;
+text-align: center;
+}
 
-        .setup-card {
-            background: var(--az-card-bg);
-            border: 1px solid #333;
-            border-radius: 16px;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-        }
+.logo-glow {
+filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.4));
+margin-bottom: 1.5rem;
+max-width: 120px;
+}
 
-        .logo-glow {
-            filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.4));
-            margin-bottom: 1.5rem;
-            max-width: 120px;
-        }
+h2 {
+margin-bottom: 0.5rem;
+color: #fff;
+}
 
-        h2 {
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
+.form-group {
+margin-bottom: 1.5rem;
+text-align: left;
+}
 
-        .form-group {
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
+.form-group label {
+display: block;
+margin-bottom: 0.5rem;
+color: #ccc;
+}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #ccc;
-        }
+input {
+width: 100%;
+padding: 1rem;
+background: #121212;
+border: 1px solid #444;
+border-radius: 8px;
+color: #fff;
+font-size: 1rem;
+outline: none;
+}
 
-        input {
-            width: 100%;
-            padding: 1rem;
-            background: #121212;
-            border: 1px solid #444;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-        }
+input:focus {
+border-color: var(--az-primary);
+}
 
-        input:focus {
-            border-color: var(--az-primary);
-        }
+.btn {
+width: 100%;
+background: var(--az-primary);
+color: #000;
+border: none;
+padding: 1rem;
+border-radius: 8px;
+font-weight: 800;
+cursor: pointer;
+text-transform: uppercase;
+letter-spacing: 1px;
+}
 
-        .btn {
-            width: 100%;
-            background: var(--az-primary);
-            color: #000;
-            border: none;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 800;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+.message {
+margin-top: 1rem;
+padding: 0.8rem;
+border-radius: 6px;
+display: none;
+}
 
-        .message {
-            margin-top: 1rem;
-            padding: 0.8rem;
-            border-radius: 6px;
-            display: none;
-        }
-
-        .message.error {
-            background: rgba(255, 68, 68, 0.1);
-            color: var(--az-danger);
-            border: 1px solid var(--az-danger);
-        }
-    </style>
+.message.error {
+background: rgba(255, 68, 68, 0.1);
+color: var(--az-danger);
+border: 1px solid var(--az-danger);
+}
+</style>
 </head>
 
 <body>
@@ -211,63 +202,63 @@
     </footer>
 
     <style>
-    .idsr-footer {
-        width: 100%;
-        padding: 15px 20px;
-        background: rgba(0, 0, 0, 0.05);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        margin-top: 40px;
-        text-align: center;
-    }
+        .idsr-footer {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.05);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+            text-align: center;
+        }
 
-    .idsr-footer-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 0.75rem;
-        color: #666;
-    }
-
-    .idsr-footer-text {
-        opacity: 0.7;
-    }
-
-    .idsr-separator {
-        opacity: 0.3;
-    }
-
-    .idsr-link {
-        color: #666;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        opacity: 0.8;
-    }
-
-    .idsr-link:hover {
-        color: #000;
-        opacity: 1;
-    }
-
-    .idsr-link strong {
-        font-weight: 600;
-        color: #d4af37;
-    }
-
-    @media (max-width: 600px) {
         .idsr-footer-content {
-            font-size: 0.7rem;
-            flex-direction: column;
-            gap: 4px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #666;
         }
-        
+
+        .idsr-footer-text {
+            opacity: 0.7;
+        }
+
         .idsr-separator {
-            display: none;
+            opacity: 0.3;
         }
-    }
+
+        .idsr-link {
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            opacity: 0.8;
+        }
+
+        .idsr-link:hover {
+            color: #000;
+            opacity: 1;
+        }
+
+        .idsr-link strong {
+            font-weight: 600;
+            color: #d4af37;
+        }
+
+        @media (max-width: 600px) {
+            .idsr-footer-content {
+                font-size: 0.7rem;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .idsr-separator {
+                display: none;
+            }
+        }
     </style>
 
 </body>

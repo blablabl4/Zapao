@@ -42,8 +42,44 @@ class OrderService {
         // Fixed amount: R$ 1.50 for all numbers
         const amount = 1.50;
 
-        // Unlimited numbers logic: We allow multiple orders for the same number
-        // No availability check needed.
+        // AUTH INTEGRATION:
+        // Parse buyer_ref to extract phone/name for Customer Link/Update
+        // format: "name|phone|pix|cpf|bairro|cidade|cep"
+        let customerId = null;
+        if (buyer_ref) {
+            try {
+                const parts = buyer_ref.split('|');
+                const name = parts[0] ? parts[0].trim() : null;
+                const phone = parts[1] ? parts[1].replace(/\D/g, '') : null;
+                const pixKey = parts[2] ? parts[2].trim() : null;
+                // parts[3] is CPF (optional validation)
+                // parts[4] is Bairro
+                // parts[5] is Cidade
+                // parts[6] is CEP (sometimes index 5 depending on version)
+
+                // Smart CEP detection (look for 8 chars in parts 5, 6, 7)
+                const potentialCep = parts.find(p => p && p.replace(/\D/g, '').length === 8 && /^\d{5}-?\d{3}$/.test(p));
+                const zipCode = potentialCep ? potentialCep.replace(/\D/g, '') : null;
+
+                if (phone && phone.length >= 10) {
+                    // Lazy Load: Ensure customer exists and update profile
+                    const AuthService = require('./AuthService');
+                    // 1. Get or Create by Phone
+                    const { user } = await AuthService.loginByPhone(phone); // Reuse login logic to find/create
+                    customerId = user.id;
+
+                    // 2. Update Profile with recent info (Name, Pix, CEP)
+                    await AuthService.updateProfile(user.id, {
+                        name: name,
+                        pix_key: pixKey,
+                        zip_code: zipCode
+                    });
+                }
+            } catch (authErr) {
+                console.error('[OrderService] Auto-customer link failed:', authErr.message);
+                // Continue without linking (better than blocking order)
+            }
+        }
 
         // Generate unique order ID
         const order_id = crypto.randomUUID();
@@ -53,12 +89,12 @@ class OrderService {
         const expires_at = new Date(created_at.getTime() + this.expirationMinutes * 60 * 1000);
 
         const result = await query(`
-            INSERT INTO orders (order_id, number, amount, status, created_at, expires_at, buyer_ref, draw_id, referrer_id)
-            VALUES ($1, $2, $3, 'PENDING', $4, $5, $6, $7, $8)
+            INSERT INTO orders (order_id, number, amount, status, created_at, expires_at, buyer_ref, draw_id, referrer_id, customer_id)
+            VALUES ($1, $2, $3, 'PENDING', $4, $5, $6, $7, $8, $9)
             RETURNING *
-        `, [order_id, number, amount, created_at, expires_at, buyer_ref, draw_id, referrer_id]);
+        `, [order_id, number, amount, created_at, expires_at, buyer_ref, draw_id, referrer_id, customerId]);
 
-        Logger.info('ORDER_CREATED', `Order ${order_id} created`, { number, amount, drawId: draw_id });
+        Logger.info('ORDER_CREATED', `Order ${order_id} created`, { number, amount, drawId: draw_id, customerId });
 
         return result.rows[0];
     }
@@ -185,7 +221,7 @@ class OrderService {
                    d.draw_name,
                    wp.amount as prize_paid_amount,
                    wp.payment_method as prize_payment_method,
-                   wp.paid_at as prize_paid_at,
+                   wp.created_at as prize_paid_at,
                    wp.reference as prize_reference
             FROM orders o
             LEFT JOIN payments p ON o.order_id = p.order_id

@@ -15,6 +15,7 @@ const paymentPollingJob = require('./jobs/paymentPollingJob');
 const ticketCleanupJob = require('./jobs/ticketCleanupJob');
 const paymentReconciliationJob = require('./jobs/paymentReconciliationJob');
 const webhookRetryJob = require('./jobs/webhookRetryJob');
+const { startRemarketingJob } = require('./jobs/remarketingJob');
 const { requireAdmin } = require('./middleware/adminAuth');
 
 const compression = require('compression');
@@ -222,9 +223,16 @@ app.use('/api/webhooks', require('./routes/webhooks'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/affiliates', require('./routes/affiliates')); // New Affiliate Route
 app.use('/api/audit', require('./routes/audit')); // Public Audit Route (no auth)
+app.use('/api/auth', require('./routes/auth')); // User Auth Route
+// DISABLED: Scratchcard feature temporarily removed
+// app.use('/api/scratch', require('./routes/scratch')); // Scratchcard System
 
 // Admin Zapão API Routes (stats, payments, winners, draw management)
 app.use('/api/admin', requireAdmin, require('./routes/admin'));
+app.use('/api/marketing', require('./routes/marketing'));
+// DISABLED: Debug routes for production safety
+// app.use('/api/debug', require('./routes/debug')); // Testing only
+
 
 // Public winners endpoint (for popup - no auth needed)
 app.get('/api/public/winners', async (req, res) => {
@@ -337,6 +345,11 @@ async function startServer() {
         ticketCleanupJob.start();
         paymentReconciliationJob.start();
         webhookRetryJob.start();
+        startRemarketingJob(); // Remarketing automations
+
+        // DISABLED: Scratchcard expiration job
+        // const { startScratchcardExpirationJob } = require('./jobs/scratchcardExpirationJob');
+        // startScratchcardExpirationJob();
 
         // Start WhatsApp Bot (Bot Phase 9) - PAUSED
         // const { startBot } = require('./bot');
