@@ -18,7 +18,7 @@ class AmigosVipService {
      * @param {string} userAgent - User agent
      * @returns {object} Purchase details with payment info
      */
-    async createPurchase(phone, name, qty, deviceId = null, ip = null, userAgent = null) {
+    async createPurchase(phone, name, pixKey, zipCode, qty, deviceId = null, ip = null, userAgent = null, affiliateId = null) {
         // Validate quantity
         if (!Number.isInteger(qty) || qty < 1 || qty > 200) {
             throw new Error('Quantidade deve ser entre 1 e 200 números');
@@ -49,10 +49,10 @@ class AmigosVipService {
         // Insert purchase record
         const result = await query(`
             INSERT INTO az_vip_purchases 
-            (id, campaign_id, phone, name, qty, amount, status, created_at, expires_at, ip, user_agent, device_id)
-            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10, $11)
+            (id, campaign_id, phone, name, pix_key, zip_code, qty, amount, status, created_at, expires_at, ip, user_agent, device_id, affiliate_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'PENDING', $9, $10, $11, $12, $13, $14)
             RETURNING *
-        `, [purchaseId, campaign.id, phone, name, qty, amount, createdAt, expiresAt, ip, userAgent, deviceId]);
+        `, [purchaseId, campaign.id, phone, name, pixKey, zipCode, qty, amount, createdAt, expiresAt, ip, userAgent, deviceId, affiliateId]);
 
         const purchase = result.rows[0];
 
@@ -63,12 +63,13 @@ class AmigosVipService {
         });
 
         // Generate PIX payment
-        const { PaymentHub } = require('./PaymentProvider');
-        const paymentHub = new PaymentHub();
+        const { getPaymentProvider } = require('./PaymentProvider');
+        const paymentProvider = getPaymentProvider();
 
-        const paymentData = await paymentHub.generatePix(purchaseId, amount, {
+        const paymentData = await paymentProvider.generatePix(purchaseId, amount, {
             name,
-            phone
+            phone,
+            email: 'cliente@tvzapao.com.br' // Required by some providers
         });
 
         // Update purchase with PIX info
@@ -218,6 +219,23 @@ class AmigosVipService {
         `, [phone]);
 
         return result.rows;
+    }
+
+    /**
+     * Get user profile by phone (from last purchase)
+     * @param {string} phone
+     * @returns {object|null}
+     */
+    async getUserProfile(phone) {
+        const result = await query(`
+            SELECT name, pix_key, zip_code 
+            FROM az_vip_purchases 
+            WHERE phone = $1 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        `, [phone]);
+
+        return result.rows[0] || null;
     }
 
     /**

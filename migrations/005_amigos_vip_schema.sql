@@ -31,5 +31,21 @@ ALTER TABLE az_tickets ADD COLUMN IF NOT EXISTS assigned_purchase_id VARCHAR(50)
 -- Index for finding tickets by purchase
 CREATE INDEX IF NOT EXISTS idx_az_tickets_purchase ON az_tickets(assigned_purchase_id);
 
--- 3. Create payments table linkage for VIP (insert compatibility into existing payments table if needed)
--- Note: The existing 'payments' table uses order_id which should accept our VIP-{uuid} format
+-- 3. VIP Affiliates Table
+CREATE TABLE IF NOT EXISTS az_vip_affiliates (
+    id SERIAL PRIMARY KEY,
+    phone VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    pix_key VARCHAR(100) NOT NULL,
+    zip_code VARCHAR(20) NOT NULL,
+    parent_id INTEGER REFERENCES az_vip_affiliates(id), -- Sub-affiliate logic
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP
+);
+
+-- 4. Link Purchases to Affiliates
+ALTER TABLE az_vip_purchases ADD COLUMN IF NOT EXISTS affiliate_id INTEGER REFERENCES az_vip_affiliates(id);
+
+-- Index for affiliate performance
+CREATE INDEX IF NOT EXISTS idx_az_vip_purchases_affiliate ON az_vip_purchases(affiliate_id);
+

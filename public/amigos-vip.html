@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Amigos do Zapão VIP - Números da Sorte</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <title>Amigos do Zapão VIP</title>
+    <link rel="stylesheet" href="/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script>
 
     <style>
-        /* Amigos do Zapão VIP Styles */
+        /* Shared Styles (Green Theme) */
         :root {
             --az-primary: #00E676;
             --az-dark: #121212;
@@ -18,196 +19,77 @@
             --az-gray: #AAAAAA;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
             background-color: var(--az-dark);
             color: var(--az-text);
             font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow-x: hidden;
         }
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
+        /* --- Landing Page Section --- */
+        .landing-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
             padding: 2rem 1rem;
             text-align: center;
         }
 
-        .logo {
-            width: 140px;
-            margin: 0 auto 1.5rem;
-            filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.5));
-        }
-
-        .title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #00E676 0%, #00B0FF 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .subtitle {
-            color: var(--az-gray);
+        .logo-large {
+            width: 280px;
+            max-width: 80%;
             margin-bottom: 2rem;
-            font-size: 0.95rem;
+            filter: drop-shadow(0 0 30px rgba(0, 230, 118, 0.4));
+            animation: float 3s ease-in-out infinite;
         }
 
-        /* Quantity Selector */
-        .qty-selector {
-            margin: 2rem 0;
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
-        .qty-label {
-            font-size: 1rem;
-            color: var(--az-gray);
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .qty-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.8rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .qty-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(0, 230, 118, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            color: var(--az-text);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .qty-btn:hover {
-            transform: translateY(-2px);
-            border-color: var(--az-primary);
-            background: rgba(0, 230, 118, 0.1);
-        }
-
-        .qty-btn.selected {
-            background: var(--az-primary);
-            color: #000;
-            border-color: var(--az-primary);
-            box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
-        }
-
-        .qty-btn .qty-number {
-            font-size: 1.8rem;
-            font-weight: 800;
-            display: block;
-            margin-bottom: 0.2rem;
-        }
-
-        .qty-btn .qty-price {
-            font-size: 0.85rem;
-            opacity: 0.8;
-        }
-
-        .qty-btn .popular-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #FFD700;
-            color: #000;
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-weight: 700;
-        }
-
-        /* Counter */
-        .qty-counter {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-        }
-
-        .counter-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: 2px solid var(--az-primary);
-            background: transparent;
-            color: var(--az-primary);
+        .hero-title {
             font-size: 1.5rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+            color: #ccc;
         }
 
-        .counter-btn:hover {
-            background: var(--az-primary);
-            color: #000;
-        }
-
-        .counter-input {
-            width: 120px;
-            height: 45px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 700;
-            border: 2px solid rgba(0, 230, 118, 0.3);
-            background: var(--az-card-bg);
-            color: var(--az-text);
-            border-radius: 8px;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .counter-input:focus {
-            outline: none;
-            border-color: var(--az-primary);
-        }
-
-        /* Buy Button */
-        .buy-btn {
-            width: 100%;
-            padding: 1rem;
+        .cta-btn {
             background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
             color: #000;
             border: none;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: 800;
             border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 700;
             cursor: pointer;
-            margin-top: 2rem;
-            box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.5);
             transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 1rem;
+            width: 100%;
+            max-width: 320px;
         }
 
-        .buy-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 30px rgba(0, 230, 118, 0.6);
+        .cta-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 230, 118, 0.8);
         }
 
-        .buy-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Modal Overlay */
+        /* --- Modals (VIP Flow) --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -215,7 +97,9 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.95);
-            z-index: 10000;
+            /* Darker backdrop */
+            backdrop-filter: blur(5px);
+            z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
@@ -227,445 +111,631 @@
         }
 
         .modal {
-            background: #252525;
+            background: #1E1E1E;
+            border: 1px solid #333;
             padding: 2rem;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 420px;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--az-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Quantity Selector UI */
+        .qty-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .qty-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            text-align: center;
+        }
+
+        .qty-option:hover {
+            background: rgba(0, 230, 118, 0.1);
+            border-color: rgba(0, 230, 118, 0.5);
+        }
+
+        .qty-option.selected {
+            background: rgba(0, 230, 118, 0.2);
+            border-color: var(--az-primary);
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+        }
+
+        .qty-val {
+            font-size: 2rem;
+            font-weight: 800;
+            display: block;
+            color: #fff;
+        }
+
+        .qty-price {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .qty-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #FFD700;
+            color: #000;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+        }
+
+        /* Manual Counter */
+        .manual-counter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50px;
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
             border: 1px solid #333;
         }
 
-        .modal h2 {
-            color: var(--az-primary);
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            color: #CCC;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #181818;
-            color: white;
-            font-size: 1rem;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--az-primary);
-        }
-
-        .modal-btn {
-            width: 100%;
-            padding: 0.9rem;
+        .counter-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            color: #fff;
+            font-size: 1.2rem;
             cursor: pointer;
-            margin-top: 0.5rem;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s ease;
+            transition: 0.2s;
         }
 
-        .modal-btn-primary {
+        .counter-btn:hover {
             background: var(--az-primary);
             color: #000;
         }
 
-        .modal-btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid #444;
-            color: var(--az-gray);
+        .counter-display {
+            width: 80px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: none;
+            border: none;
+            color: #fff;
         }
 
-        .modal-btn:hover {
-            transform: translateY(-2px);
+        /* Form Fields */
+        .input-group {
+            margin-bottom: 1rem;
         }
 
-        /* PIX Section */
-        .pix-section {
+        .input-label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .custom-input {
+            width: 100%;
+            background: #121212;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .custom-input:focus {
+            outline: none;
+            border-color: var(--az-primary);
+            box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.2);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--az-primary);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* PIX QR */
+        .pix-container {
             text-align: center;
         }
 
-        .pix-qr {
-            max-width: 250px;
-            margin: 1rem auto;
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 1rem;
+            display: block;
             border-radius: 8px;
         }
 
-        .pix-code {
-            width: 100%;
-            height: 80px;
-            background: #181818;
-            border: 1px solid #444;
+        .copy-field {
+            background: #000;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 0.8rem;
             border-radius: 8px;
-            color: var(--az-text);
-            padding: 10px;
-            font-size: 0.75rem;
-            resize: none;
             font-family: monospace;
+            width: 100%;
+            margin-bottom: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* Number Cards (Reveal) */
-        .numbers-grid {
+        /* Success Reveal */
+        .reveal-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 0.6rem;
-            margin: 2rem 0;
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
 
-        .number-card {
-            background: var(--az-card-bg);
-            border: 2px solid rgba(0, 230, 118, 0.3);
+        .reveal-card {
+            background: #111;
+            border: 1px solid var(--az-primary);
+            color: var(--az-primary);
             border-radius: 8px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            font-weight: bold;
-            color: var(--az-primary);
-            animation: popIn 0.5s ease-out forwards;
+            font-weight: 700;
+            font-size: 0.9rem;
+            animation: popIn 0.4s ease-out backwards;
         }
 
         @keyframes popIn {
-            0% {
+            from {
+                transform: scale(0);
                 opacity: 0;
-                transform: scale(0) rotate(-180deg);
             }
 
-            60% {
-                transform: scale(1.15) rotate(10deg);
-            }
-
-            100% {
+            to {
+                transform: scale(1);
                 opacity: 1;
-                transform: scale(1) rotate(0);
             }
         }
 
         .hidden {
-            display: none !important;
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid rgba(0, 230, 118, 0.1);
-            border-top-color: var(--az-primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            display: none;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <!-- Logo -->
-        <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão VIP" class="logo">
 
-        <h1 class="title">Amigos do Zapão VIP</h1>
-        <p class="subtitle">Compre seus números da sorte aleatórios e concorra a prêmios!</p>
+    <!-- 1. Landing Page (The "Home") -->
+    <div class="landing-container" id="landingPage">
+        <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão" class="logo-large">
 
-        <!-- Quantity Selector -->
-        <div class="qty-selector">
-            <label class="qty-label">Selecione a quantidade que deseja comprar</label>
+        <h2 class="hero-title">Resgate números da sorte extras!</h2>
+        <p style="color: #888; margin-bottom: 2rem; max-width: 400px; font-size: 1.1rem; line-height: 1.6;">
+            Compre seus números da sorte e concorra a prêmios! <br>
+            <span style="color: var(--az-primary); font-weight: 700;">Quanto mais números maior sua chance!</span>
+        </p>
 
-            <div class="qty-buttons">
-                <button class="qty-btn" onclick="selectQty(1)">
-                    <span class="qty-number">+1</span>
-                    <span class="qty-price">R$ 1,00</span>
-                </button>
-                <button class="qty-btn" onclick="selectQty(5)">
-                    <span class="popular-badge">⭐ Popular</span>
-                    <span class="qty-number">+5</span>
-                    <span class="qty-price">R$ 5,00</span>
-                </button>
-                <button class="qty-btn" onclick="selectQty(10)">
-                    <span class="qty-number">+10</span>
-                    <span class="qty-price">R$ 10,00</span>
-                </button>
-                <button class="qty-btn" onclick="selectQty(20)">
-                    <span class="qty-number">+20</span>
-                    <span class="qty-price">R$ 20,00</span>
-                </button>
-            </div>
-
-            <div class="qty-counter">
-                <button class="counter-btn" onclick="changeQty(-1)">−</button>
-                <input type="number" id="qtyInput" class="counter-input" value="1" min="1" max="200"
-                    oninput="updateQtyFromInput()">
-                <button class="counter-btn" onclick="changeQty(1)">+</button>
-            </div>
-        </div>
-
-        <button class="buy-btn" id="buyBtn" onclick="startPurchase()">
-            Comprar <span id="buyQty">1</span> número(s) - R$ <span id="buyPrice">1,00</span>
+        <button class="cta-btn" onclick="openVipFlow()">
+            RESGATAR NÚMEROS
         </button>
+
+        <a href="/amigos-do-zapao" style="margin-top: 1.5rem; color: #666; text-decoration: none; font-size: 0.9rem;">
+            Voltar para versão gratuita
+        </a>
     </div>
 
-    <!-- Login Modal -->
-    <div class="modal-overlay" id="loginModal">
+    <!-- 2. Purchase Flow Modal (Wraps the entire VIP logic) -->
+    <div class="modal-overlay" id="vipModal">
         <div class="modal">
-            <h2>Seus Dados</h2>
-            <form id="loginForm" onsubmit="submitLogin(event)">
-                <div class="form-group">
-                    <label>WhatsApp (com DDD)</label>
-                    <input type="tel" id="phoneInput" class="form-control" required placeholder="(11) 99999-9999"
-                        oninput="maskPhone(this)">
-                </div>
-                <div class="form-group">
-                    <label>Nome Completo</label>
-                    <input type="text" id="nameInput" class="form-control" required minlength="3">
-                </div>
-                <button type="submit" class="modal-btn modal-btn-primary" id="loginSubmitBtn">Continuar</button>
-                <button type="button" class="modal-btn modal-btn-secondary" onclick="closeModal('loginModal')">
-                    Cancelar
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Payment Modal -->
-    <div class="modal-overlay" id="paymentModal">
-        <div class="modal">
-            <h2>Pagamento PIX</h2>
-            <div id="paymentContent">
-                <div class="spinner"></div>
-                <p style="text-align: center; color: var(--az-gray);">Gerando QR Code...</p>
+            <div class="modal-header">
+                <h3 class="modal-title">Quantos números?</h3>
+                <button class="close-btn" onclick="closeVipFlow()">&times;</button>
             </div>
-        </div>
-    </div>
 
-    <!-- Success Modal -->
-    <div class="modal-overlay" id="successModal">
-        <div class="modal">
-            <h2>🎉 Parabéns!</h2>
-            <p style="text-align: center; color: var(--az-gray); margin-bottom: 1rem;">
-                Esses são seus números da sorte:
-            </p>
-            <div class="numbers-grid" id="numbersGrid"></div>
-            <button class="modal-btn modal-btn-primary" onclick="window.location.reload()">
-                Comprar Mais
-            </button>
+            <!-- Step 1: Quantity -->
+            <div id="stepQty">
+                <div class="qty-grid">
+                    <div class="qty-option" onclick="selectPreset(5)">
+                        <span class="qty-badge">POPULAR</span>
+                        <span class="qty-val">+5</span>
+                        <span class="qty-price">R$ 5,00</span>
+                    </div>
+                    <div class="qty-option" onclick="selectPreset(10)">
+                        <span class="qty-val">+10</span>
+                        <span class="qty-price">R$ 10,00</span>
+                    </div>
+                    <div class="qty-option" onclick="selectPreset(20)">
+                        <span class="qty-val">+20</span>
+                        <span class="qty-price">R$ 20,00</span>
+                    </div>
+                    <div class="qty-option" onclick="selectPreset(50)">
+                        <span class="qty-val">+50</span>
+                        <span class="qty-price">R$ 50,00</span>
+                    </div>
+                </div>
+
+                <div class="manual-counter">
+                    <button class="counter-btn" onclick="changeQty(-1)">-</button>
+                    <input type="number" id="qtyInput" class="counter-display" value="1" min="1" max="200"
+                        onchange="updateTotal()">
+                    <button class="counter-btn" onclick="changeQty(1)">+</button>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <span style="color: #888;">Total a pagar:</span>
+                    <br>
+                    <span style="font-size: 1.5rem; font-weight: 700; color: var(--az-primary);" id="totalDisplay">R$
+                        1,00</span>
+                </div>
+
+                <button class="action-btn" onclick="goToLogin()">Continuar</button>
+            </div>
+
+            <!-- Step 2: User Details (With Auto-Complete) -->
+            <div id="stepLogin" class="hidden">
+
+                <div id="welcomeBackMsg" class="hidden"
+                    style="margin-bottom: 1rem; background: rgba(0,230,118,0.1); padding: 1rem; border-radius: 8px;">
+                    <p style="margin: 0; color: #fff;">👋 Olá, <strong id="userName">Cliente</strong>!</p>
+                    <p style="margin: 0; font-size: 0.8rem; color: #aaa;">Seus dados já estão preenchidos.</p>
+                </div>
+
+                <div id="instructionMsg">
+                    <p style="color: #aaa; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                        Informe seu telefone para continuar.
+                    </p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">WhatsApp</label>
+                    <input type="tel" id="phoneInput" class="custom-input" placeholder="(11) 99999-9999"
+                        oninput="maskPhone(this)" onblur="checkUser()">
+                </div>
+
+                <div id="extraFields" class="hidden">
+                    <div class="input-group">
+                        <label class="input-label">Nome Completo</label>
+                        <input type="text" id="nameInput" class="custom-input" placeholder="Seu nome">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Chave PIX (CPF/Email/Tel)</label>
+                        <input type="text" id="pixInput" class="custom-input" placeholder="Para receber prêmios">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">CEP</label>
+                        <input type="text" id="cepInput" class="custom-input" placeholder="00000-000"
+                            oninput="maskCep(this)">
+                    </div>
+                </div>
+
+                <button class="action-btn" id="payBtn" onclick="processOrder()" disabled>
+                    Pagar Agora
+                </button>
+                <button onclick="backToQty()"
+                    style="background:none; border:none; color:#666; width:100%; margin-top:1rem; cursor:pointer;">Voltar</button>
+            </div>
+
+            <!-- Step 3: Payment (PIX) -->
+            <div id="stepPayment" class="hidden">
+                <div class="pix-container">
+                    <p style="color: #ccc; margin-bottom: 1rem;">Escaneie o QR Code ou copie a chave:</p>
+                    <img id="pixQrImg" src="" class="qr-placeholder">
+
+                    <input type="text" id="pixPaste" class="copy-field" readonly>
+
+                    <button class="action-btn" onclick="copyPixCode()">Copiar Código PIX</button>
+
+                    <div style="margin-top: 1.5rem;">
+                        <i class="fas fa-spinner fa-spin" style="color: var(--az-primary); font-size: 1.5rem;"></i>
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">Aguardando pagamento...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Success -->
+            <div id="stepSuccess" class="hidden">
+                <div style="text-align: center;">
+                    <i class="fas fa-check-circle"
+                        style="color: var(--az-primary); font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #fff; margin-bottom: 0.5rem;">Pagamento Confirmado!</h3>
+                    <p style="color: #888; margin-bottom: 1.5rem;">Aqui estão seus números da sorte:</p>
+
+                    <div class="reveal-grid" id="numbersContainer">
+                        <!-- Numbers injected here -->
+                    </div>
+
+                    <button class="action-btn" onclick="location.reload()" style="margin-top: 2rem;">
+                        Comprar Mais
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        let selectedQty = 1;
-        let currentPurchaseId = null;
-        let pollingInterval = null;
+        // State
+        let currentQty = 1;
+        let purchaseId = null;
+        let pollTimer = null;
 
-        // Update quantity
-        function selectQty(qty) {
-            selectedQty = qty;
+        // URL Ref Check
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) localStorage.setItem('vip_referrer', ref);
+
+        // UI Helpers
+        function openVipFlow() {
+            document.getElementById('vipModal').classList.add('active');
+            document.querySelector('.modal-title').innerText = "Quantos números?";
+            showStep('stepQty');
+        }
+
+        function closeVipFlow() {
+            document.getElementById('vipModal').classList.remove('active');
+            if (pollTimer) clearInterval(pollTimer);
+        }
+
+        function showStep(stepId) {
+            ['stepQty', 'stepLogin', 'stepPayment', 'stepSuccess'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(stepId).classList.remove('hidden');
+        }
+
+        // Qty Logic
+        function selectPreset(qty) {
+            currentQty = qty;
             document.getElementById('qtyInput').value = qty;
-            updateUI();
+            updateTotal();
+
+            // Visual feedback
+            document.querySelectorAll('.qty-option').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
         }
 
         function changeQty(delta) {
-            const input = document.getElementById('qtyInput');
-            let newVal = parseInt(input.value) + delta;
-            newVal = Math.max(1, Math.min(200, newVal));
-            input.value = newVal;
-            selectedQty = newVal;
-            updateUI();
+            let newVal = parseInt(document.getElementById('qtyInput').value) + delta;
+            if (newVal < 1) newVal = 1;
+            if (newVal > 200) newVal = 200;
+
+            currentQty = newVal;
+            document.getElementById('qtyInput').value = newVal;
+            updateTotal();
         }
 
-        function updateQtyFromInput() {
-            const input = document.getElementById('qtyInput');
-            let val = parseInt(input.value) || 1;
-            val = Math.max(1, Math.min(200, val));
-            input.value = val;
-            selectedQty = val;
-            updateUI();
+        function updateTotal() {
+            document.getElementById('totalDisplay').innerText = `R$ ${(currentQty * 1.00).toFixed(2).replace('.', ',')}`;
         }
 
-        function updateUI() {
-            document.getElementById('buyQty').textContent = selectedQty;
-            document.getElementById('buyPrice').textContent = (selectedQty * 1.00).toFixed(2).replace('.', ',');
-
-            // Update button selection
-            document.querySelectorAll('.qty-btn').forEach(btn => btn.classList.remove('selected'));
-            const matchingBtn = Array.from(document.querySelectorAll('.qty-btn'))
-                .find(btn => btn.textContent.includes(`+${selectedQty}`));
-            if (matchingBtn) {
-                matchingBtn.classList.add('selected');
-            }
+        function goToLogin() {
+            showStep('stepLogin');
+            document.querySelector('.modal-title').innerText = "Seus Dados";
+            setTimeout(() => document.getElementById('phoneInput').focus(), 100);
         }
 
-        // Phone mask
+        function backToQty() {
+            showStep('stepQty');
+            document.querySelector('.modal-title').innerText = "Quantos números?";
+        }
+
+        // Phone Mask & User Check
         function maskPhone(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (value.length <= 10) {
-                value = value.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-            } else {
-                value = value.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+            let v = input.value.replace(/\D/g, '');
+            v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
+            v = v.replace(/(\d)(\d{4})$/, '$1-$2');
+            input.value = v;
+
+            // Enable check if valid length
+            const clean = v.replace(/\D/g, '');
+            if (clean.length >= 10) {
+                checkUser(clean);
             }
-            input.value = value;
         }
 
-        // Start purchase flow
-        function startPurchase() {
-            showModal('loginModal');
+        function maskCep(input) {
+            let v = input.value.replace(/\D/g, '');
+            v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+            input.value = v;
         }
 
-        // Submit login
-        async function submitLogin(e) {
-            e.preventDefault();
+        async function checkUser(phoneClean) {
+            if (!phoneClean) phoneClean = document.getElementById('phoneInput').value.replace(/\D/g, '');
+            if (phoneClean.length < 10) return;
 
-            const phone = document.getElementById('phoneInput').value.replace(/\D/g, '');
-            const name = document.getElementById('nameInput').value.trim();
-
-            if (!phone || !name) {
-                alert('Preencha todos os campos');
-                return;
-            }
-
-            const btn = document.getElementById('loginSubmitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Processando...';
+            // Show fields
+            document.getElementById('extraFields').classList.remove('hidden');
+            document.getElementById('payBtn').disabled = false;
 
             try {
-                const response = await fetch('/api/amigos-vip/create-order', {
+                // Try to find previous profile to auto-fill
+                const res = await fetch(`/api/amigos-vip/profile/${phoneClean}`);
+                const data = await res.json();
+
+                if (data.name) {
+                    document.getElementById('nameInput').value = data.name;
+                    document.getElementById('pixInput').value = data.pix_key || '';
+                    document.getElementById('cepInput').value = data.zip_code || '';
+
+                    // Recognized User UX
+                    document.getElementById('welcomeBackMsg').classList.remove('hidden');
+                    document.getElementById('instructionMsg').classList.add('hidden');
+                    document.getElementById('userName').innerText = data.name.split(' ')[0];
+
+                    // We check hidden for extraFields: if recognized, keep hidden, just populate input values
+                    // Show valid button
+
+                } else {
+                    // New User -> Show all fields
+                    document.getElementById('extraFields').classList.remove('hidden');
+                    document.getElementById('welcomeBackMsg').classList.add('hidden');
+                    document.getElementById('instructionMsg').classList.remove('hidden');
+                }
+
+                document.getElementById('payBtn').disabled = false;
+
+            } catch (e) { console.log(e); }
+        }
+
+        // Validations
+        function validateForm() {
+            const name = document.getElementById('nameInput').value.trim();
+            const pix = document.getElementById('pixInput').value.trim();
+            const cep = document.getElementById('cepInput').value.trim();
+
+            if (!name || !pix || !cep) {
+                alert("Por favor, preencha todos os campos (Nome, PIX e CEP).");
+                return false;
+            }
+            return true;
+        }
+
+        // Process Order
+        async function processOrder() {
+            const phone = document.getElementById('phoneInput').value;
+            const name = document.getElementById('nameInput').value;
+            const pix = document.getElementById('pixInput').value;
+            const cep = document.getElementById('cepInput').value;
+
+            if (!validateForm()) return;
+
+            const btn = document.getElementById('payBtn');
+            btn.disabled = true;
+            btn.innerText = "Processando...";
+
+            try {
+                const referrer = localStorage.getItem('vip_referrer');
+
+                const res = await fetch('/api/amigos-vip/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        phone,
-                        name,
-                        qty: selectedQty,
-                        device_id: localStorage.getItem('device_id') || generateDeviceId()
+                        phone, name, pixKey: pix, zipCode: cep, qty: currentQty,
+                        referrer: referrer // Send referrer
                     })
                 });
 
-                const data = await response.json();
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erro ao criar pedido');
-                }
+                purchaseId = data.purchase_id;
 
-                currentPurchaseId = data.purchase_id;
+                // Show PIX
+                document.getElementById('pixQrImg').src = `data:image/jpeg;base64,${data.payment.qr_code_base64}`;
+                document.getElementById('pixPaste').value = data.payment.qr_code;
 
-                // Close login, show payment
-                closeModal('loginModal');
-                showPaymentModal(data);
+                showStep('stepPayment');
+                document.querySelector('.modal-title').innerText = "Pagamento PIX";
 
-            } catch (error) {
-                alert(error.message);
+                // Start polling
+                startPolling();
+
+            } catch (e) {
+                alert("Erro: " + e.message);
                 btn.disabled = false;
-                btn.textContent = 'Continuar';
+                btn.innerText = "Pagar Agora";
             }
         }
 
-        // Show payment modal
-        function showPaymentModal(data) {
-            const modal = document.getElementById('paymentModal');
-            const content = document.getElementById('paymentContent');
-
-            const qrCode = data.payment.qr_code_base64;
-            const pixCode = data.payment.qr_code;
-
-            content.innerHTML = `
-                <p style="text-align: center; margin-bottom: 1rem;">
-                    <strong>Valor:</strong> R$ ${data.amount.toFixed(2).replace('.', ',')}
-                </p>
-                <img src="data:image/png;base64,${qrCode}" class="pix-qr" alt="QR Code PIX">
-                <p style="text-align: center; margin: 1rem 0; font-size: 0.85rem; color: var(--az-gray);">
-                    Ou copie o código PIX:
-                </p>
-                <textarea class="pix-code" readonly>${pixCode}</textarea>
-                <button class="modal-btn modal-btn-primary" onclick="copyPix('${pixCode}')">
-                    Copiar Código PIX
-                </button>
-                <p style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--az-gray);">
-                    Aguardando confirmação do pagamento...
-                </p>
-                <div class="spinner"></div>
-            `;
-
-            showModal('paymentModal');
-            startPolling();
+        function copyPixCode() {
+            const el = document.getElementById('pixPaste');
+            el.select();
+            document.execCommand('copy');
+            alert("Código PIX copiado!");
         }
 
-        // Copy PIX code
-        function copyPix(code) {
-            navigator.clipboard.writeText(code);
-            alert('Código PIX copiado!');
-        }
-
-        // Start polling for payment
         function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-
-            pollingInterval = setInterval(async () => {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(async () => {
                 try {
-                    const response = await fetch(`/api/amigos-vip/purchase-status/${currentPurchaseId}`);
-                    const data = await response.json();
+                    const res = await fetch(`/api/amigos-vip/purchase-status/${purchaseId}`);
+                    const data = await res.json();
 
                     if (data.status === 'PAID') {
-                        clearInterval(pollingInterval);
-                        closeModal('paymentModal');
+                        clearInterval(pollTimer);
                         showSuccess(data.numbers);
                     }
-                } catch (error) {
-                    console.error('Polling error:', error);
-                }
-            }, 3000); // Check every 3 seconds
+                } catch (e) { }
+            }, 3000);
         }
 
-        // Show success
         function showSuccess(numbers) {
-            const grid = document.getElementById('numbersGrid');
-            grid.innerHTML = numbers.map(num =>
-                `<div class="number-card">${String(num).padStart(4, '0')}</div>`
-            ).join('');
-            showModal('successModal');
+            showStep('stepSuccess');
+            document.querySelector('.modal-title').innerText = "Parabéns!";
+
+            const container = document.getElementById('numbersContainer');
+            container.innerHTML = '';
+
+            numbers.forEach((num, i) => {
+                const div = document.createElement('div');
+                div.className = 'reveal-card';
+                div.innerText = String(num).padStart(4, '0');
+                div.style.animationDelay = `${i * 0.1}s`;
+                container.appendChild(div);
+            });
         }
 
-        // Modal helpers
-        function showModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        // Generate device ID
-        function generateDeviceId() {
-            const id = 'dev-' + Math.random().toString(36).substr(2, 16);
-            localStorage.setItem('device_id', id);
-            return id;
-        }
-
-        // Initialize
-        updateUI();
     </script>
 </body>
 

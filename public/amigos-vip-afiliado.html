@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afiliados - Amigos do Zapão VIP</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #00E676;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: #1E1E1E;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            background: #121212;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #00E676;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #00E676;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .link-box {
+            background: #000;
+            padding: 1rem;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            margin-top: 1rem;
+            border: 1px solid #333;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <img src="/images/amigos-logo-new.png" alt="Logo" style="width: 120px; margin-bottom: 1rem;">
+        <h1>Área de Afiliados VIP</h1>
+
+        <!-- Login / Search Step -->
+        <div id="stepLogin" class="card">
+            <h3>Acessar Painel</h3>
+            <p style="color: #aaa; margin-bottom: 1rem;">Digite seu WhatsApp para entrar ou se cadastrar.</p>
+            <input type="tel" id="phoneInput" placeholder="(11) 99999-9999" oninput="maskPhone(this)">
+            <button onclick="checkAffiliate()">Continuar</button>
+        </div>
+
+        <!-- Registration Step -->
+        <div id="stepRegister" class="card hidden">
+            <h3>Cadastro de Afiliado</h3>
+            <p style="color: #aaa; margin-bottom: 1rem;">Complete seus dados para receber comissões.</p>
+
+            <div class="input-group">
+                <label class="input-label">Nome Completo</label>
+                <input type="text" id="regName" placeholder="Seu nome">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Chave PIX (Para receber)</label>
+                <input type="text" id="regPix" placeholder="CPF, Email ou Telefone">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">CEP</label>
+                <input type="text" id="regCep" placeholder="00000-000" oninput="maskCep(this)">
+            </div>
+
+            <button onclick="register()">Finalizar Cadastro</button>
+        </div>
+
+        <!-- Dashboard Step -->
+        <div id="stepDashboard" class="hidden">
+            <div class="card">
+                <h3>👋 Olá, <span id="dashName">User</span></h3>
+                <p style="color: #aaa;">Divulgue seu link e ganhe comissões!</p>
+
+                <div class="link-box" id="affLink" onclick="copyLink()">
+                    https://tvzapao.com.br/amigos-vip?ref=...
+                </div>
+                <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Toque no link para copiar</p>
+            </div>
+
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-val" id="valSales">0</div>
+                    <div class="stat-label">Vendas</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val" id="valRevenue">R$ 0,00</div>
+                    <div class="stat-label">Comissão Gerada</div>
+                </div>
+                <!-- Future: Sub-affiliates -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPhone = '';
+
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, '');
+            v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
+            v = v.replace(/(\d)(\d{4})$/, '$1-$2');
+            input.value = v;
+        }
+
+        function maskCep(input) {
+            let v = input.value.replace(/\D/g, '');
+            v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+            input.value = v;
+        }
+
+        async function checkAffiliate() {
+            const phone = document.getElementById('phoneInput').value;
+            currentPhone = phone.replace(/\D/g, '');
+
+            if (currentPhone.length < 10) return alert('Telefone inválido');
+
+            try {
+                const res = await fetch(`/api/amigos-vip/affiliates/check/${currentPhone}`);
+                const data = await res.json();
+
+                document.getElementById('stepLogin').classList.add('hidden');
+
+                if (data.is_affiliate) {
+                    loadDashboard(data.data);
+                } else {
+                    document.getElementById('stepRegister').classList.remove('hidden');
+                    // Pre-fill if we have basic profile info from purchases
+                    try {
+                        const profRes = await fetch(`/api/amigos-vip/profile/${currentPhone}`);
+                        const profData = await profRes.json();
+                        if (profData.name) document.getElementById('regName').value = profData.name;
+                        if (profData.pix_key) document.getElementById('regPix').value = profData.pix_key;
+                        if (profData.zip_code) document.getElementById('regCep').value = profData.zip_code;
+                    } catch (e) { }
+                }
+            } catch (e) {
+                alert('Erro ao verificar: ' + e.message);
+                document.getElementById('stepLogin').classList.remove('hidden');
+            }
+        }
+
+        async function register() {
+            const name = document.getElementById('regName').value;
+            const pix = document.getElementById('regPix').value;
+            const cep = document.getElementById('regCep').value;
+
+            if (!name || !pix || !cep) return alert('Carregue todos os dados');
+
+            // Check for parent ref in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const parentPhone = urlParams.get('ref'); // if referring another affiliate
+
+            try {
+                const res = await fetch('/api/amigos-vip/affiliates/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentPhone,
+                        name,
+                        pix_key: pix,
+                        zip_code: cep,
+                        parent_phone: parentPhone
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    loadDashboard(data.data);
+                    document.getElementById('stepRegister').classList.add('hidden');
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            } catch (e) {
+                alert('Erro ao cadastrar');
+            }
+        }
+
+        async function loadDashboard(user) {
+            document.getElementById('stepDashboard').classList.remove('hidden');
+            document.getElementById('dashName').innerText = user.name.split(' ')[0];
+
+            const link = `${window.location.origin}/amigos-vip?ref=${user.phone}`;
+            document.getElementById('affLink').innerText = link;
+
+            // Load Stats
+            try {
+                const res = await fetch(`/api/amigos-vip/affiliates/stats/${user.phone}`);
+                const stats = await res.json();
+
+                document.getElementById('valSales').innerText = stats.sales_count || 0;
+                // Simple 20% commission calc for display example
+                const commission = (parseFloat(stats.total_revenue) * 0.20).toFixed(2);
+                document.getElementById('valRevenue').innerText = `R$ ${commission.replace('.', ',')}`;
+            } catch (e) { }
+        }
+
+        function copyLink() {
+            const range = document.createRange();
+            range.selectNode(document.getElementById('affLink'));
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            alert('Link copiado!');
+        }
+    </script>
+</body>
+
+</html>

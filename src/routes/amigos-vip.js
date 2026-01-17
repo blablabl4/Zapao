@@ -9,7 +9,7 @@ const { getRequestInfo } = require('../utils/http');
  */
 router.post('/create-order', async (req, res) => {
     try {
-        const { phone, name, qty, device_id } = req.body;
+        const { phone, name, pixKey, zipCode, qty, device_id, referrer } = req.body;
 
         // Validation
         if (!phone || !name || !qty) {
@@ -31,14 +31,30 @@ router.post('/create-order', async (req, res) => {
         // Get request info
         const { ip, userAgent } = getRequestInfo(req);
 
+        // Resolve affiliate if referrer provided
+        let affiliateId = null;
+        if (referrer) {
+            const cleanReferrer = referrer.replace(/\D/g, '');
+            // Simple lookup - could be optimized
+            const { query } = require('../database/db');
+            const affRes = await query('SELECT id FROM az_vip_affiliates WHERE phone = $1', [cleanReferrer]);
+            if (affRes.rows.length > 0) {
+                affiliateId = affRes.rows[0].id;
+                console.log(`[AmigosVIP] Attribution: ${cleanReferrer} -> ${affiliateId}`);
+            }
+        }
+
         // Create purchase
         const result = await AmigosVipService.createPurchase(
             cleanPhone,
             name,
+            pixKey,
+            zipCode,
             qtyNum,
             device_id,
             ip,
-            userAgent
+            userAgent,
+            affiliateId
         );
 
         res.json(result);
@@ -138,6 +154,20 @@ router.get('/settings', async (req, res) => {
     } catch (error) {
         console.error('[AmigosVIP] Settings error:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/amigos-vip/profile/:phone
+ * Get user profile for auto-fill
+ */
+router.get('/profile/:phone', async (req, res) => {
+    try {
+        const { phone } = req.params;
+        const profile = await AmigosVipService.getUserProfile(phone);
+        res.json(profile || { found: false });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 

@@ -194,6 +194,9 @@ app.get('/amigos-do-zapao', (req, res) => {
 app.get('/amigos-vip', (req, res) => {
     res.sendFile('amigos-vip.html', { root: path.join(__dirname, '../public') });
 });
+app.get('/amigos-vip/afiliado', (req, res) => {
+    res.sendFile('amigos-vip-afiliado.html', { root: path.join(__dirname, '../public') });
+});
 
 // Admin Amigos Manager
 app.get('/admin/amigos', requireAdmin, (req, res) => {
@@ -209,6 +212,7 @@ app.get('/admin/amigos-vip', requireAdmin, (req, res) => {
 app.use('/api/amigos', require('./routes/amigos'));
 // Amigos VIP (Paid Version) - Independent module
 app.use('/api/amigos-vip', require('./routes/amigos-vip'));
+app.use('/api/amigos-vip/affiliates', require('./routes/amigos-vip-affiliates'));
 // BOLÃO ROUTES REMOVED (Project Archived)
 app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
 
@@ -242,6 +246,13 @@ app.use('/api/auth', require('./routes/auth')); // User Auth Route
 // Admin Zapão API Routes (stats, payments, winners, draw management)
 app.use('/api/admin', requireAdmin, require('./routes/admin'));
 app.use('/api/marketing', require('./routes/marketing'));
+// Hub Distribution Route
+app.use('/api/hub', require('./routes/hub'));
+
+// Public Hub Page
+app.get('/hub', (req, res) => {
+    res.sendFile('hub.html', { root: path.join(__dirname, '../public') });
+});
 // DISABLED: Debug routes for production safety
 // app.use('/api/debug', require('./routes/debug')); // Testing only
 

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grupo VIP - Sorteios e Ofertas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 0.2s;
+        }
+
+        .modal-exit {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .modal-exit-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Main Container -->
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+
+        <!-- Banner Image -->
+        <div class="relative h-48 bg-gray-200">
+            <img src="/uploads/hub-banner.jpg" id="bannerImg" class="w-full h-full object-cover"
+                onerror="this.src='https://placehold.co/600x400?text=Grupo+VIP'">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                <h1 class="text-white text-2xl font-bold">Entre para o Grupo VIP</h1>
+            </div>
+        </div>
+
+        <div class="p-6 text-center space-y-6">
+            <p class="text-gray-600">
+                Receba novidades, ofertas exclusivas e participe de sorteios incríveis em primeira mão!
+            </p>
+
+            <!-- Action Button -->
+            <button onclick="openModal()"
+                class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center text-lg animate-pulse">
+                <i class="fab fa-whatsapp text-2xl mr-3"></i>
+                PARTICIPAR AGORA
+            </button>
+
+            <p class="text-xs text-gray-400">100% Gratuito e Seguro</p>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm m-4 shadow-2xl transform transition-all duration-300 scale-95"
+            id="modalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Cadastro Rápido</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="joinForm" onsubmit="handleJoin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                    <input type="text" id="name" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 outline-none"
+                        placeholder="Seu nome">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                    <input type="tel" id="phone" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 outline-none"
+                        placeholder="(00) 00000-0000">
+                </div>
+
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    ENTRAR NO GRUPO
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal / Dashboard -->
+    <div id="successModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm m-4 text-center">
+            <div
+                class="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Tudo Pronto!</h3>
+            <p class="text-gray-600 mb-6">Você será redirecionado para o grupo em instantes.</p>
+
+            <a id="groupLink" href="#" target="_blank"
+                class="block w-full bg-green-500 text-white font-bold py-3 rounded-lg mb-4">
+                <i class="fab fa-whatsapp mr-2"></i> Abrir Grupo
+            </a>
+
+            <div class="bg-gray-50 rounded-lg p-4 text-left border border-gray-200">
+                <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Seu Link de Divulgação</p>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="affiliateLink" readonly
+                        class="w-full bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 select-all">
+                    <button onclick="copyLink()" class="text-blue-600 hover:text-blue-800"><i
+                            class="far fa-copy"></i></button>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1">Compartilhe e ganhe prêmios!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+    <script>
+        // Check for referral
+        const urlParams = new URLSearchParams(window.location.search);
+        const refToken = urlParams.get('ref') || localStorage.getItem('hub_ref');
+        if (urlParams.get('ref')) {
+            localStorage.setItem('hub_ref', urlParams.get('ref'));
+        }
+
+        // Mask
+        const phoneInput = document.getElementById('phone');
+
+        // Simple input format logic or use library if available
+        phoneInput.addEventListener('input', function (e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+
+        function openModal() {
+            const m = document.getElementById('modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.remove('opacity-0'), 10);
+        }
+
+        function closeModal() {
+            const m = document.getElementById('modal');
+            m.classList.add('opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        }
+
+        async function handleJoin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = 'Processando...';
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+
+            try {
+                const res = await fetch('/api/hub/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, referrer: refToken })
+                });
+
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // Determine affiliate link
+                const affLink = window.location.origin + '/hub?ref=' + data.lead.affiliate_token;
+
+                // Show Success
+                closeModal();
+                document.getElementById('successModal').classList.remove('hidden');
+                document.getElementById('groupLink').href = data.group_link;
+                document.getElementById('affiliateLink').value = affLink;
+
+                // Auto redirect after 3s
+                // setTimeout(() => window.location.href = data.group_link, 3000);
+
+            } catch (err) {
+                alert('Erro: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'ENTRAR NO GRUPO';
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/hub/config');
+                const config = await res.json();
+
+                if (config.banner_url) {
+                    document.getElementById('bannerImg').src = config.banner_url;
+                }
+
+                if (config.title) {
+                    document.querySelector('h1').textContent = config.title;
+                }
+
+                if (!config.active) {
+                    document.querySelector('button').disabled = true;
+                    document.querySelector('button').textContent = 'Campanha Encerrada';
+                    document.querySelector('button').classList.add('bg-gray-400');
+                    document.querySelector('button').classList.remove('bg-green-500', 'hover:bg-green-600', 'animate-pulse');
+                }
+            } catch (e) {
+                console.error('Erro ao carregar config:', e);
+            }
+        }
+
+        // Initialize
+        loadConfig();
+
+        function copyLink() {
+            const copyText = document.getElementById("affiliateLink");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Link copiado!");
+        }
+    </script>
+</body>
+
+</html>
