@@ -144,6 +144,13 @@
         const refToken = urlParams.get('ref') || localStorage.getItem('hub_ref');
         if (urlParams.get('ref')) {
             localStorage.setItem('hub_ref', urlParams.get('ref'));
+
+            // Track the click
+            fetch('/api/hub/track-click', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: urlParams.get('ref') })
+            }).catch(() => { });
         }
 
         // Mask

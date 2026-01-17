@@ -97,17 +97,34 @@ class GroupHubService {
     }
 
     /**
-     * Get current active banner/campaign info
+     * Get current active banner/campaign info from database
      */
     static async getConfig() {
-        // Implementation for dynamic banner could go here
-        // For now returning static or mock
-        return {
-            active: true,
-            banner_url: '/images/hub-banner.jpg',
-            title: 'Entre para o Grupo VIP',
-            description: 'Receba ofertas exclusivas e participe de sorteios!'
-        };
+        try {
+            const result = await query(`SELECT key, value FROM hub_config`);
+            const config = {
+                active: true,
+                banner_url: null,
+                title: 'Entre para o Grupo VIP',
+                description: 'Receba ofertas exclusivas e participe de sorteios!'
+            };
+
+            for (const row of result.rows) {
+                if (row.key === 'banner_url') config.banner_url = row.value;
+                if (row.key === 'title') config.title = row.value;
+                if (row.key === 'active') config.active = row.value === 'true';
+            }
+
+            return config;
+        } catch (e) {
+            // If table doesn't exist, return defaults
+            return {
+                active: true,
+                banner_url: null,
+                title: 'Entre para o Grupo VIP',
+                description: 'Receba ofertas exclusivas e participe de sorteios!'
+            };
+        }
     }
 
     /**

@@ -248,6 +248,7 @@ app.use('/api/admin', requireAdmin, require('./routes/admin'));
 app.use('/api/marketing', require('./routes/marketing'));
 // Hub Distribution Route
 app.use('/api/hub', require('./routes/hub'));
+app.use('/api/admin/hub', requireAdmin, require('./routes/hubAdmin'));
 
 // Public Hub Page
 app.get('/hub', (req, res) => {

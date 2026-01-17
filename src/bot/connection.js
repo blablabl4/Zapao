@@ -2,6 +2,11 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers
 const pino = require('pino');
 const path = require('path');
 const fs = require('fs');
+const GroupMonitor = require('./groupMonitor');
+
+// Global state for QR code (accessible from admin panel)
+global.botQR = null;
+global.botStatus = 'disconnected'; // 'disconnected', 'qr_ready', 'connected'
 
 async function connectToWhatsApp() {
     console.log('[Bot] Iniciando conexão...');
@@ -24,14 +29,19 @@ async function connectToWhatsApp() {
     });
 
     // Connection Logic
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            console.log('[Bot] QR Code gerado.');
+            console.log('[Bot] QR Code gerado. Escaneie pelo painel admin ou logs.');
+            global.botQR = qr;
+            global.botStatus = 'qr_ready';
         }
 
         if (connection === 'close') {
+            global.botStatus = 'disconnected';
+            global.botQR = null;
+
             const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log(`[Bot] Conexão fechada: ${lastDisconnect?.error}. Reconectando: ${shouldReconnect}`);
 
@@ -42,6 +52,17 @@ async function connectToWhatsApp() {
             }
         } else if (connection === 'open') {
             console.log('[Bot] CONEXÃO ESTABELECIDA COM SUCESSO! 🤖✅');
+            global.botStatus = 'connected';
+            global.botQR = null;
+
+            // Start Group Monitor
+            try {
+                const monitor = new GroupMonitor(sock);
+                await monitor.start();
+                global.groupMonitor = monitor;
+            } catch (e) {
+                console.error('[Bot] Error starting group monitor:', e.message);
+            }
         }
     });
 

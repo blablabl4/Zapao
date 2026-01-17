@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const GroupHubService = require('../services/GroupHubService');
 const { requireAdmin } = require('../middleware/adminAuth');
+const { query } = require('../database/db');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const fs = require('fs');
@@ -15,6 +16,27 @@ router.get('/config', async (req, res) => {
         res.json(config);
     } catch (e) {
         res.status(500).json({ error: e.message });
+    }
+});
+
+// Track Click (when someone visits /hub?ref=TOKEN)
+router.post('/track-click', async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.json({ tracked: false });
+
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+        const userAgent = req.headers['user-agent'] || 'unknown';
+
+        await query(
+            `INSERT INTO hub_clicks (affiliate_token, ip_address, user_agent) VALUES ($1, $2, $3)`,
+            [token, ip.split(',')[0], userAgent.substring(0, 500)]
+        );
+
+        res.json({ tracked: true });
+    } catch (e) {
+        console.error('Click track error:', e.message);
+        res.json({ tracked: false });
     }
 });
 
