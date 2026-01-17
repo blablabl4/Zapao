@@ -91,6 +91,29 @@ class PaymentService {
                 throw new Error('Missing order_id in payload');
             }
 
+            // === VIP ORDER DETECTION (Independent Module) ===
+            // Check if this is a VIP purchase (ID starts with "VIP-")
+            if (order_id.startsWith('VIP-')) {
+                Logger.info('WEBHOOK_VIP_DETECTED', `Processing VIP purchase ${order_id}`, { amount_paid, eventId });
+
+                const AmigosVipService = require('./AmigosVipService');
+                const result = await AmigosVipService.processPayment(order_id, amount_paid);
+
+                // Mark webhook as processed
+                await query('UPDATE webhook_events SET status = $1, processed_at = $2 WHERE id = $3',
+                    ['PROCESSED', new Date(), eventId]);
+
+                Logger.info('WEBHOOK_VIP_COMPLETE', `VIP purchase processed successfully`, null);
+
+                return {
+                    success: true,
+                    message: 'VIP purchase processed',
+                    purchase_id: order_id,
+                    numbers: result.numbers
+                };
+            }
+
+            // === REGULAR ORDER PROCESSING (Zapão da Sorte) ===
             // Check if order_id contains multiple IDs (bulk purchase)
             const orderIds = order_id.includes(',') ? order_id.split(',') : [order_id];
 

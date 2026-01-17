@@ -34,15 +34,33 @@ router.get('/affiliates', async (req, res) => {
                 affiliates: stats
             };
         } else {
-            // Historical accumulated mode (ALL draws)
-            stats = await getAffiliateStatsHistorical();
+            // NEW DEFAULT: Try to find the LATEST ACTIVE draw (check various statuses)
+            const activeDrawRes = await query("SELECT * FROM draws WHERE status IN ('ACTIVE', 'OPEN', 'active', 'open') ORDER BY id DESC LIMIT 1");
 
-            responseData = {
-                mode: 'historical',
-                draw_id: null,
-                total_affiliates: stats.length,
-                affiliates: stats
-            };
+            if (activeDrawRes.rows.length > 0) {
+                // Found active draw, show its stats by default
+                const targetDraw = activeDrawRes.rows[0];
+                stats = await getAffiliateStatsWithUniqueClients(targetDraw.id);
+
+                responseData = {
+                    mode: 'current_active',
+                    draw_id: targetDraw.id,
+                    draw_name: targetDraw.draw_name,
+                    draw_status: targetDraw.status,
+                    total_affiliates: stats.length,
+                    affiliates: stats
+                };
+            } else {
+                // No active draw, fallback to historical accumulated mode
+                stats = await getAffiliateStatsHistorical();
+
+                responseData = {
+                    mode: 'historical',
+                    draw_id: null,
+                    total_affiliates: stats.length,
+                    affiliates: stats
+                };
+            }
         }
 
         res.json(responseData);

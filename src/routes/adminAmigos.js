@@ -344,4 +344,76 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+// === VIP ROUTES (Paid Version) ===
+const AmigosVipService = require('../services/AmigosVipService');
+
+router.get('/vip/stats', async (req, res) => {
+    try {
+        const campaign = await AmigosService.getActiveCampaign();
+        if (!campaign) {
+            return res.json({ total_purchases: 0, total_paid: 0, total_revenue: 0, available_numbers: 0 });
+        }
+
+        const result = await query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE status = 'PAID') as total_paid,
+                COUNT(*) FILTER (WHERE status = 'PENDING') as total_pending,
+                COUNT(*) as total_purchases,
+                COALESCE(SUM(amount) FILTER (WHERE status = 'PAID'), 0) as total_revenue,
+                COALESCE(SUM(qty) FILTER (WHERE status = 'PAID'), 0) as total_numbers_sold
+            FROM az_vip_purchases
+            WHERE campaign_id = $1
+        `, [campaign.id]);
+
+        const available = await AmigosVipService.getAvailableCount(campaign.id);
+
+        res.json({
+            ...result.rows[0],
+            available_numbers: available
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/vip/purchases', async (req, res) => {
+    try {
+        const { limit = 100, status } = req.query;
+
+        let queryStr = `
+            SELECT 
+                p.id,
+                p.phone,
+                p.name,
+                p.qty,
+                p.amount,
+                p.status,
+                p.created_at,
+                c.name as campaign_name,
+                ARRAY_AGG(t.number ORDER BY t.number) FILTER (WHERE t.number IS NOT NULL) as numbers
+            FROM az_vip_purchases p
+            LEFT JOIN az_campaigns c ON p.campaign_id = c.id
+            LEFT JOIN az_tickets t ON t.assigned_purchase_id = p.id
+        `;
+
+        const params = [];
+        if (status) {
+            queryStr += ` WHERE p.status = $1`;
+            params.push(status);
+        }
+
+        queryStr += `
+            GROUP BY p.id, p.phone, p.name, p.qty, p.amount, p.status, p.created_at, c.name
+            ORDER BY p.created_at DESC
+            LIMIT $${params.length + 1}
+        `;
+        params.push(limit);
+
+        const result = await query(queryStr, params);
+        res.json(result.rows);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 module.exports = router;

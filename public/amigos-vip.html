@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Amigos do Zapão VIP - Números da Sorte</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Amigos do Zapão VIP Styles */
+        :root {
+            --az-primary: #00E676;
+            --az-dark: #121212;
+            --az-card-bg: #1E1E1E;
+            --az-text: #FFFFFF;
+            --az-gray: #AAAAAA;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--az-dark);
+            color: var(--az-text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .logo {
+            width: 140px;
+            margin: 0 auto 1.5rem;
+            filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.5));
+        }
+
+        .title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #00E676 0%, #00B0FF 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--az-gray);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        /* Quantity Selector */
+        .qty-selector {
+            margin: 2rem 0;
+        }
+
+        .qty-label {
+            font-size: 1rem;
+            color: var(--az-gray);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .qty-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .qty-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 230, 118, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--az-text);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .qty-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--az-primary);
+            background: rgba(0, 230, 118, 0.1);
+        }
+
+        .qty-btn.selected {
+            background: var(--az-primary);
+            color: #000;
+            border-color: var(--az-primary);
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
+        }
+
+        .qty-btn .qty-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .qty-btn .qty-price {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .qty-btn .popular-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FFD700;
+            color: #000;
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        /* Counter */
+        .qty-counter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+
+        .counter-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--az-primary);
+            background: transparent;
+            color: var(--az-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .counter-btn:hover {
+            background: var(--az-primary);
+            color: #000;
+        }
+
+        .counter-input {
+            width: 120px;
+            height: 45px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: 2px solid rgba(0, 230, 118, 0.3);
+            background: var(--az-card-bg);
+            color: var(--az-text);
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .counter-input:focus {
+            outline: none;
+            border-color: var(--az-primary);
+        }
+
+        /* Buy Button */
+        .buy-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 2rem;
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .buy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 230, 118, 0.6);
+        }
+
+        .buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #252525;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+        }
+
+        .modal h2 {
+            color: var(--az-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            color: #CCC;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #181818;
+            color: white;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--az-primary);
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-primary {
+            background: var(--az-primary);
+            color: #000;
+        }
+
+        .modal-btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #444;
+            color: var(--az-gray);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* PIX Section */
+        .pix-section {
+            text-align: center;
+        }
+
+        .pix-qr {
+            max-width: 250px;
+            margin: 1rem auto;
+            border-radius: 8px;
+        }
+
+        .pix-code {
+            width: 100%;
+            height: 80px;
+            background: #181818;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: var(--az-text);
+            padding: 10px;
+            font-size: 0.75rem;
+            resize: none;
+            font-family: monospace;
+        }
+
+        /* Number Cards (Reveal) */
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.6rem;
+            margin: 2rem 0;
+        }
+
+        .number-card {
+            background: var(--az-card-bg);
+            border: 2px solid rgba(0, 230, 118, 0.3);
+            border-radius: 8px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--az-primary);
+            animation: popIn 0.5s ease-out forwards;
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+
+            60% {
+                transform: scale(1.15) rotate(10deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(0, 230, 118, 0.1);
+            border-top-color: var(--az-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Logo -->
+        <img src="/images/amigos-logo-new.png" alt="Amigos do Zapão VIP" class="logo">
+
+        <h1 class="title">Amigos do Zapão VIP</h1>
+        <p class="subtitle">Compre seus números da sorte aleatórios e concorra a prêmios!</p>
+
+        <!-- Quantity Selector -->
+        <div class="qty-selector">
+            <label class="qty-label">Selecione a quantidade que deseja comprar</label>
+
+            <div class="qty-buttons">
+                <button class="qty-btn" onclick="selectQty(1)">
+                    <span class="qty-number">+1</span>
+                    <span class="qty-price">R$ 1,00</span>
+                </button>
+                <button class="qty-btn" onclick="selectQty(5)">
+                    <span class="popular-badge">⭐ Popular</span>
+                    <span class="qty-number">+5</span>
+                    <span class="qty-price">R$ 5,00</span>
+                </button>
+                <button class="qty-btn" onclick="selectQty(10)">
+                    <span class="qty-number">+10</span>
+                    <span class="qty-price">R$ 10,00</span>
+                </button>
+                <button class="qty-btn" onclick="selectQty(20)">
+                    <span class="qty-number">+20</span>
+                    <span class="qty-price">R$ 20,00</span>
+                </button>
+            </div>
+
+            <div class="qty-counter">
+                <button class="counter-btn" onclick="changeQty(-1)">−</button>
+                <input type="number" id="qtyInput" class="counter-input" value="1" min="1" max="200"
+                    oninput="updateQtyFromInput()">
+                <button class="counter-btn" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+
+        <button class="buy-btn" id="buyBtn" onclick="startPurchase()">
+            Comprar <span id="buyQty">1</span> número(s) - R$ <span id="buyPrice">1,00</span>
+        </button>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <h2>Seus Dados</h2>
+            <form id="loginForm" onsubmit="submitLogin(event)">
+                <div class="form-group">
+                    <label>WhatsApp (com DDD)</label>
+                    <input type="tel" id="phoneInput" class="form-control" required placeholder="(11) 99999-9999"
+                        oninput="maskPhone(this)">
+                </div>
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="nameInput" class="form-control" required minlength="3">
+                </div>
+                <button type="submit" class="modal-btn modal-btn-primary" id="loginSubmitBtn">Continuar</button>
+                <button type="button" class="modal-btn modal-btn-secondary" onclick="closeModal('loginModal')">
+                    Cancelar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+            <h2>Pagamento PIX</h2>
+            <div id="paymentContent">
+                <div class="spinner"></div>
+                <p style="text-align: center; color: var(--az-gray);">Gerando QR Code...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <h2>🎉 Parabéns!</h2>
+            <p style="text-align: center; color: var(--az-gray); margin-bottom: 1rem;">
+                Esses são seus números da sorte:
+            </p>
+            <div class="numbers-grid" id="numbersGrid"></div>
+            <button class="modal-btn modal-btn-primary" onclick="window.location.reload()">
+                Comprar Mais
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedQty = 1;
+        let currentPurchaseId = null;
+        let pollingInterval = null;
+
+        // Update quantity
+        function selectQty(qty) {
+            selectedQty = qty;
+            document.getElementById('qtyInput').value = qty;
+            updateUI();
+        }
+
+        function changeQty(delta) {
+            const input = document.getElementById('qtyInput');
+            let newVal = parseInt(input.value) + delta;
+            newVal = Math.max(1, Math.min(200, newVal));
+            input.value = newVal;
+            selectedQty = newVal;
+            updateUI();
+        }
+
+        function updateQtyFromInput() {
+            const input = document.getElementById('qtyInput');
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, Math.min(200, val));
+            input.value = val;
+            selectedQty = val;
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('buyQty').textContent = selectedQty;
+            document.getElementById('buyPrice').textContent = (selectedQty * 1.00).toFixed(2).replace('.', ',');
+
+            // Update button selection
+            document.querySelectorAll('.qty-btn').forEach(btn => btn.classList.remove('selected'));
+            const matchingBtn = Array.from(document.querySelectorAll('.qty-btn'))
+                .find(btn => btn.textContent.includes(`+${selectedQty}`));
+            if (matchingBtn) {
+                matchingBtn.classList.add('selected');
+            }
+        }
+
+        // Phone mask
+        function maskPhone(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length <= 10) {
+                value = value.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+            } else {
+                value = value.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+            }
+            input.value = value;
+        }
+
+        // Start purchase flow
+        function startPurchase() {
+            showModal('loginModal');
+        }
+
+        // Submit login
+        async function submitLogin(e) {
+            e.preventDefault();
+
+            const phone = document.getElementById('phoneInput').value.replace(/\D/g, '');
+            const name = document.getElementById('nameInput').value.trim();
+
+            if (!phone || !name) {
+                alert('Preencha todos os campos');
+                return;
+            }
+
+            const btn = document.getElementById('loginSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Processando...';
+
+            try {
+                const response = await fetch('/api/amigos-vip/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone,
+                        name,
+                        qty: selectedQty,
+                        device_id: localStorage.getItem('device_id') || generateDeviceId()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erro ao criar pedido');
+                }
+
+                currentPurchaseId = data.purchase_id;
+
+                // Close login, show payment
+                closeModal('loginModal');
+                showPaymentModal(data);
+
+            } catch (error) {
+                alert(error.message);
+                btn.disabled = false;
+                btn.textContent = 'Continuar';
+            }
+        }
+
+        // Show payment modal
+        function showPaymentModal(data) {
+            const modal = document.getElementById('paymentModal');
+            const content = document.getElementById('paymentContent');
+
+            const qrCode = data.payment.qr_code_base64;
+            const pixCode = data.payment.qr_code;
+
+            content.innerHTML = `
+                <p style="text-align: center; margin-bottom: 1rem;">
+                    <strong>Valor:</strong> R$ ${data.amount.toFixed(2).replace('.', ',')}
+                </p>
+                <img src="data:image/png;base64,${qrCode}" class="pix-qr" alt="QR Code PIX">
+                <p style="text-align: center; margin: 1rem 0; font-size: 0.85rem; color: var(--az-gray);">
+                    Ou copie o código PIX:
+                </p>
+                <textarea class="pix-code" readonly>${pixCode}</textarea>
+                <button class="modal-btn modal-btn-primary" onclick="copyPix('${pixCode}')">
+                    Copiar Código PIX
+                </button>
+                <p style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--az-gray);">
+                    Aguardando confirmação do pagamento...
+                </p>
+                <div class="spinner"></div>
+            `;
+
+            showModal('paymentModal');
+            startPolling();
+        }
+
+        // Copy PIX code
+        function copyPix(code) {
+            navigator.clipboard.writeText(code);
+            alert('Código PIX copiado!');
+        }
+
+        // Start polling for payment
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/amigos-vip/purchase-status/${currentPurchaseId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'PAID') {
+                        clearInterval(pollingInterval);
+                        closeModal('paymentModal');
+                        showSuccess(data.numbers);
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 3000); // Check every 3 seconds
+        }
+
+        // Show success
+        function showSuccess(numbers) {
+            const grid = document.getElementById('numbersGrid');
+            grid.innerHTML = numbers.map(num =>
+                `<div class="number-card">${String(num).padStart(4, '0')}</div>`
+            ).join('');
+            showModal('successModal');
+        }
+
+        // Modal helpers
+        function showModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Generate device ID
+        function generateDeviceId() {
+            const id = 'dev-' + Math.random().toString(36).substr(2, 16);
+            localStorage.setItem('device_id', id);
+            return id;
+        }
+
+        // Initialize
+        updateUI();
+    </script>
+</body>
+
+</html>

@@ -190,13 +190,25 @@ app.get('/amigos-do-zapao', (req, res) => {
     res.sendFile('amigos-do-zapao.html', { root: path.join(__dirname, '../public') });
 });
 
+// Amigos do Zapão VIP (Paid Version) - Independent page
+app.get('/amigos-vip', (req, res) => {
+    res.sendFile('amigos-vip.html', { root: path.join(__dirname, '../public') });
+});
+
 // Admin Amigos Manager
 app.get('/admin/amigos', requireAdmin, (req, res) => {
     res.sendFile('admin-amigos.html', { root: path.join(__dirname, '../public') });
 });
 
+// Admin Amigos VIP (Paid Version Stats)
+app.get('/admin/amigos-vip', requireAdmin, (req, res) => {
+    res.sendFile('admin-amigos-vip.html', { root: path.join(__dirname, '../public') });
+});
+
 // === ACTIVE API ROUTES ===
 app.use('/api/amigos', require('./routes/amigos'));
+// Amigos VIP (Paid Version) - Independent module
+app.use('/api/amigos-vip', require('./routes/amigos-vip'));
 // BOLÃO ROUTES REMOVED (Project Archived)
 app.use('/api/admin/amigos', requireAdmin, require('./routes/adminAmigos'));
 

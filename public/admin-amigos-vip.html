@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Amigos VIP</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #00E676 0%, #00B0FF 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 230, 118, 0.2);
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00E676;
+        }
+
+        table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            overflow: hidden;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(0, 230, 118, 0.1);
+            color: #00E676;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-paid {
+            background: rgba(0, 230, 118, 0.2);
+            color: #00E676;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+        }
+
+        .status-expired {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+        }
+
+        .numbers-preview {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .filter-bar {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        select {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            color: #fff;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #aaa;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: #00E676;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 230, 118, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/admin" class="back-btn">← Voltar ao Hub</a>
+
+        <h1>📊 Amigos do Zapão VIP - Painel Admin</h1>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">Total de Compras Pagas</div>
+                <div class="stat-value" id="statPaid">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pendentes</div>
+                <div class="stat-value" id="statPending" style="color: #FFC107;">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Receita Total</div>
+                <div class="stat-value" id="statRevenue">R$ -</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Números Disponíveis</div>
+                <div class="stat-value" id="statAvailable" style="color: #00B0FF;">-</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <select id="statusFilter" onchange="loadPurchases()">
+                <option value="">Todos os Status</option>
+                <option value="PAID">Pagos</option>
+                <option value="PENDING">Pendentes</option>
+                <option value="EXPIRED">Expirados</option>
+            </select>
+        </div>
+
+        <!-- Purchases Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Qtd</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Números</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody id="purchasesTable">
+                <tr>
+                    <td colspan="8" class="loading">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/amigos/vip/stats');
+                const data = await response.json();
+
+                document.getElementById('statPaid').textContent = data.total_paid || 0;
+                document.getElementById('statPending').textContent = data.total_pending || 0;
+                document.getElementById('statRevenue').textContent =
+                    'R$ ' + parseFloat(data.total_revenue || 0).toFixed(2).replace('.', ',');
+                document.getElementById('statAvailable').textContent = data.available_numbers || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadPurchases() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const tbody = document.getElementById('purchasesTable');
+
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">Carregando...</td></tr>';
+
+            try {
+                const url = `/api/admin/amigos/vip/purchases?limit=100${statusFilter ? '&status=' + statusFilter : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #aaa;">Nenhuma compra encontrada</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(purchase => {
+                    const statusClass = purchase.status === 'PAID' ? 'status-paid' :
+                        purchase.status === 'PENDING' ? 'status-pending' : 'status-expired';
+
+                    const numbersPreview = purchase.numbers && purchase.numbers.length > 0
+                        ? purchase.numbers.slice(0, 5).map(n => String(n).padStart(4, '0')).join(', ') +
+                        (purchase.numbers.length > 5 ? '...' : '')
+                        : '-';
+
+                    const date = new Date(purchase.created_at).toLocaleString('pt-BR');
+
+                    return `
+                        <tr>
+                            <td><small>${purchase.id.substring(0, 8)}...</small></td>
+                            <td>${purchase.name || '-'}</td>
+                            <td><small>${purchase.phone || '-'}</small></td>
+                            <td><strong>${purchase.qty}</strong></td>
+                            <td>R$ ${parseFloat(purchase.amount).toFixed(2).replace('.', ',')}</td>
+                            <td><span class="status-badge ${statusClass}">${purchase.status}</span></td>
+                            <td><span class="numbers-preview">${numbersPreview}</span></td>
+                            <td><small>${date}</small></td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading purchases:', error);
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #f44;">Erro ao carregar dados</td></tr>';
+            }
+        }
+
+        // Load data on page load
+        loadStats();
+        loadPurchases();
+
+        // Auto-refresh every 10 seconds
+        setInterval(() => {
+            loadStats();
+            loadPurchases();
+        }, 10000);
+    </script>
+</body>
+
+</html>

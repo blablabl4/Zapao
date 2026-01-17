@@ -519,15 +519,12 @@
                                 <th>Telefone</th>
                                 <th style="text-align: center;">Tickets</th>
                                 <th style="text-align: center;">Clientes Únicos</th>
-                                <th style="text-align: right;">Comissão Total</th>
-                                <th style="text-align: right;">Total Pago</th>
-                                <th style="text-align: right;">Saldo Atual</th>
-                                <th style="text-align: center;">Ações</th>
+                                <th style="text-align: right;">Comissão (Rifa Atual)</th>
                             </tr>
                         </thead>
                         <tbody id="affiliatesTableBody">
                             <tr>
-                                <td colspan="8"
+                                <td colspan="5"
                                     style="text-align: center; padding: 20px; color: var(--text-secondary);">
                                     Carregando dados...
                                 </td>
@@ -576,6 +573,8 @@
                 </div>
             </div>
         </div>
+
+
 
         <!-- TABLE SECTION: HISTORY -->
         <div id="view-history" style="display: none;">
@@ -657,9 +656,7 @@
                 <i class="fas fa-play" style="margin-right: 8px;"></i> Girar Roleta
             </button>
 
-            <p style="margin-top: 20px; font-size: 0.8rem; color: #444;">
-                * Sorteio meramente ilustrativo. Não altera o estado da rifa.
-            </p>
+
         </div>
     </div>
 
@@ -679,31 +676,17 @@
 
                 const affiliates = data.affiliates || [];
                 if (affiliates.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;">Nenhum afiliado ainda.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum afiliado ainda.</td></tr>`;
                     return;
                 }
 
                 let html = '';
                 affiliates.forEach(aff => {
-                    const commission = parseFloat(aff.total_commission || 0);
-                    const paidAmount = parseFloat(aff.paid_amount || 0);
-                    const balance = parseFloat(aff.balance || 0);
+                    const commission = parseFloat(aff.net_commission || aff.total_commission || 0); // Use proper property
 
                     const commissionFormatted = commission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                    const paidFormatted = paidAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                    const balanceFormatted = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-                    const canWithdraw = aff.can_withdraw || false;
-
-                    // Badge de status do saldo
-                    const balanceClass = canWithdraw ? 'badge-success' : 'badge-blocked';
-                    const balanceIcon = canWithdraw ? '✅' : '🔒';
-
-                    // Botão de pagar
-                    const cleanPhone = aff.phone.replace(/\D/g, '');
-                    const payButton = balance > 0
-                        ? `<button class="btn btn-sm btn-gold" onclick="openPaymentModal('${cleanPhone}', '${aff.name.replace(/'/g, "\\'")}', ${balance})" style="padding: 4px 12px; font-size: 0.85rem;">💰 Pagar</button>`
-                        : `<span style="color: var(--text-secondary); font-size: 0.75rem;">Sem saldo</span>`;
+                    // Removed Payment/Balance/Action logic as requested
 
                     html += `
                         <tr>
@@ -712,13 +695,6 @@
                             <td style="text-align:center;">${aff.ticket_count}</td>
                             <td style="text-align:center; color:#4ade80;">${aff.unique_clients}</td>
                             <td style="text-align:right; color:#4ade80; font-weight: 600;">${commissionFormatted}</td>
-                            <td style="text-align:right; color:#fb923c;">${paidFormatted}</td>
-                            <td style="text-align:right;">
-                                <span class="${balanceClass}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
-                                    ${balanceIcon} ${balanceFormatted}
-                                </span>
-                            </td>
-                            <td style="text-align:center;">${payButton}</td>
                         </tr>
                     `;
                 });
@@ -1072,6 +1048,66 @@
         </div>
     </div>
 
+    <!-- Campaign Modal -->
+    <div id="campaignModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+        <div
+            style="background: #1a1a1a; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; border: 2px solid var(--gold);">
+            <h2 style="margin: 0 0 20px 0; color: var(--gold);">📣 Nova Campanha</h2>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #e0e0e0;">Título*</label>
+                <input type="text" id="campTitle" placeholder="Ex: Sorteio em 1 Hora!"
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #555; background: #2a2a2a; color: #fff; font-size: 16px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #e0e0e0;">Mensagem*</label>
+                <textarea id="campBody" rows="3" placeholder="Ex: Corra que ainda dá tempo de participar..."
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #555; background: #2a2a2a; color: #fff; vertical-align: top;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; color: #e0e0e0;">Imagem (Ícone)*</label>
+                    <select id="campIcon"
+                        style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #555; background: #2a2a2a; color: #fff;">
+                        <option value="/icon-192x192.png">Logo Padrão</option>
+                        <option value="/img/money-bag.png">Saco de Dinheiro</option>
+                        <option value="/img/alarm.png">Alarme / Timer</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; color: #e0e0e0;">Link de Destino</label>
+                    <input type="text" id="campUrl" value="/" placeholder="/"
+                        style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #555; background: #2a2a2a; color: #fff;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; color: #e0e0e0;">Agendamento</label>
+                <select id="campSchedule" onchange="toggleScheduleInput()"
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #555; background: #2a2a2a; color: #fff;">
+                    <option value="now">Enviar Agora (Imediato)</option>
+                    <option value="later">Agendar para depois</option>
+                </select>
+                <input type="datetime-local" id="campScheduleTime"
+                    style="width: 100%; margin-top: 10px; display: none; padding: 10px; border-radius: 6px; background: #fff; color: #000;">
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeCampaignModal()" class="btn btn-secondary">Cancelar</button>
+                <button onclick="saveCampaign()" class="btn btn-gold">Criar Campanha</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleScheduleInput() {
+            const val = document.getElementById('campSchedule').value;
+            document.getElementById('campScheduleTime').style.display = val === 'later' ? 'block' : 'none';
+        }
+    </script>
 </body>
 
 </html>
