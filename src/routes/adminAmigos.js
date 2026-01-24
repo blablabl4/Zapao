@@ -112,6 +112,28 @@ router.post('/campaign/tickets', async (req, res) => {
     }
 });
 
+router.post('/campaign/finish', async (req, res) => {
+    try {
+        const { campaignId } = req.body;
+        console.log('[AdminAmigos] Finishing campaign:', campaignId);
+
+        let targetId = campaignId;
+        if (!targetId) {
+            const campaign = await AmigosService.getActiveCampaign();
+            if (!campaign) return res.status(400).json({ error: 'Nenhuma campanha ativa' });
+            targetId = campaign.id;
+        }
+
+        const result = await AmigosService.finishCampaign(targetId);
+        res.json({
+            success: true,
+            message: 'Campanha finalizada com sucesso! O sorteio foi encerrado.'
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.post('/campaign/reset', async (req, res) => {
     try {
         const { campaignId } = req.body;

@@ -962,8 +962,46 @@
                     updateDisplay(winnerNum);
                     document.getElementById('numCenter').classList.add('winner');
                     document.getElementById('drawStatus').textContent = `Vencedor: #${winnerNum}`;
-                    document.getElementById('btnSpin').disabled = false;
-                    document.getElementById('btnSpin').textContent = 'GIRAR NOVAMENTE';
+
+                    // SHOW FINISH BUTTONS
+                    const btnSpin = document.getElementById('btnSpin');
+                    btnSpin.style.display = 'none'; // Hide spin button
+
+                    // Create Action Container
+                    let actionDiv = document.getElementById('drawActions');
+                    if (!actionDiv) {
+                        actionDiv = document.createElement('div');
+                        actionDiv.id = 'drawActions';
+                        actionDiv.style.marginTop = '20px';
+                        actionDiv.style.display = 'flex';
+                        actionDiv.style.gap = '10px';
+                        actionDiv.style.justifyContent = 'center';
+                        document.querySelector('.az-modal').appendChild(actionDiv);
+                    }
+                    actionDiv.innerHTML = ''; // Clear prev
+
+                    // 1. Girar Novamente (Small)
+                    const btnAgain = document.createElement('button');
+                    btnAgain.className = 'btn btn-outline';
+                    btnAgain.innerText = '🔄 Girar Novamente';
+                    btnAgain.onclick = () => {
+                        actionDiv.remove();
+                        btnSpin.style.display = 'inline-flex';
+                        btnSpin.disabled = false;
+                        btnSpin.textContent = 'GIRAR NOVAMENTE';
+                        document.getElementById('numCenter').classList.remove('winner');
+                        isSpinning = false;
+                    };
+
+                    // 2. FINALIZAR (Big Red)
+                    const btnFinish = document.createElement('button');
+                    btnFinish.className = 'btn btn-danger';
+                    btnFinish.innerHTML = '🏁 FINALIZAR SORTEIO';
+                    btnFinish.onclick = finishDraw;
+
+                    actionDiv.appendChild(btnAgain);
+                    actionDiv.appendChild(btnFinish);
+
                     isSpinning = false;
                     return;
                 }
@@ -983,6 +1021,52 @@
                 // No, the loop above snaps to winnerNum at the very end regardless of position.
                 // It's a "magic jump" but usually unnoticeable at 0.1 speed if configured well.
             }, 4000);
+        }
+
+        async function finishDraw() {
+            if (!confirm('Tem certeza que deseja FINALIZAR este sorteio?\nIsso vai desativar a campanha e limpar a tela para um novo sorteio.')) return;
+
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/finish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    alert('Sorteio finalizado com sucesso! 🏁');
+                    closeDraw();
+                    // Reset UI
+                    document.getElementById('campName').value = '';
+                    document.getElementById('startNum').value = '';
+                    document.getElementById('endNum').value = '';
+                    document.getElementById('isActive').checked = false;
+                    document.getElementById('houseWinnerToggle').checked = false;
+                    document.getElementById('houseWinnerInfo').style.display = 'none';
+                    currentCampaignId = null;
+
+                    // Switch to Config tab
+                    switchTab('config');
+
+                    // Remove action div if exists
+                    const actionDiv = document.getElementById('drawActions');
+                    if (actionDiv) actionDiv.remove();
+
+                    // Reset spin button
+                    const btnSpin = document.getElementById('btnSpin');
+                    btnSpin.style.display = 'inline-flex';
+                    btnSpin.disabled = false;
+                    btnSpin.textContent = 'INICIAR SORTEIO 🎲';
+                    document.getElementById('numCenter').classList.remove('winner');
+                    document.getElementById('drawStatus').textContent = 'Aguardando início...';
+
+                } else {
+                    alert('Erro: ' + (json.error || 'Falha desconhecida'));
+                }
+            } catch (e) {
+                alert('Erro na requisição: ' + e.message);
+            }
         }
 
         // --- ADMINS & PROMOS (Minimal Loaders for UX) ---

@@ -512,6 +512,38 @@ class AmigosService {
         } finally {
             client.release();
         }
+
+    /**
+     * Finish Campaign (Deactivate)
+     */
+    async finishCampaign(campaignId) {
+            const client = await getClient();
+            try {
+                await client.query('BEGIN');
+
+                // 1. Deactivate
+                await client.query(`
+                UPDATE az_campaigns 
+                SET is_active = false, 
+                    house_winner_active = false,
+                    updated_at = NOW()
+                WHERE id = $1
+            `, [campaignId]);
+
+                // 2. Clear house reserved tickets (just in case)
+                // Ideally we keep them as is for history, but status 'HOUSE_RESERVED' is fine to stay.
+                // But to be clean we might want to ensure no pending mechanics are left.
+                // Leaving them as HOUSE_RESERVED is fine for history.
+
+                await client.query('COMMIT');
+                this.invalidateCache();
+                return { success: true };
+            } catch (e) {
+                await client.query('ROLLBACK');
+                throw e;
+            } finally {
+                client.release();
+            }
+        }
     }
-}
 module.exports = new AmigosService();
