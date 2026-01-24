@@ -53,19 +53,31 @@ router.post('/campaign', async (req, res) => {
         const { name, start_number, end_number, config } = req.body;
         let campaign = await AmigosService.getActiveCampaign();
 
+        // 1. Create or Update Campaign
         if (campaign) {
             campaign = await AmigosAdminService.updateCampaign(campaign.id, {
                 name, start_number, end_number, base_qty_config: config,
-                is_active: req.body.is_active // Add this
+                is_active: req.body.is_active
             });
         } else {
             campaign = await AmigosAdminService.createCampaign({
                 name, start_number, end_number, base_qty_config: config,
-                is_active: req.body.is_active // Add this
+                is_active: req.body.is_active
             });
         }
-        res.json(campaign);
+
+        // 2. Auto-Generate Tickets (Sync)
+        console.log('[AdminAmigos] Auto-generating tickets for campaign:', campaign.id);
+        const ticketResult = await AmigosService.populateTickets(campaign.id);
+        console.log('[AdminAmigos] Tickets synced:', ticketResult);
+
+        res.json({
+            ...campaign,
+            ticket_sync: ticketResult
+        });
+
     } catch (e) {
+        console.error('Save campaign error:', e);
         res.status(500).json({ error: e.message });
     }
 });

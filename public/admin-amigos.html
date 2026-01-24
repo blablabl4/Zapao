@@ -613,11 +613,6 @@
                     <button type="submit" class="btn" style="width: 100%;">Salvar Configurações</button>
                 </form>
             </div>
-            <div class="card">
-                <h2>Geração de Tickets</h2>
-                <button onclick="generateTickets()" class="btn btn-outline">Gerar/Atualizar Tickets</button>
-            </div>
-
             <!-- WHITELIST SECTION -->
             <div class="card">
                 <h2>Lista de Convidados (Whitelist)</h2>
@@ -851,26 +846,41 @@
 
         async function saveCampaign(e) {
             e.preventDefault();
-            // Basic save logic (omitted complex parts for brevity but maintaining structure)
-            const data = {
+            const id = document.getElementById('isActive').checked;
+            const body = {
                 name: document.getElementById('campName').value,
-                start_number: document.getElementById('startNum').value,
-                end_number: document.getElementById('endNum').value,
-                is_active: document.getElementById('isActive').checked,
+                start_number: parseInt(document.getElementById('startNum').value),
+                end_number: parseInt(document.getElementById('endNum').value),
+                is_active: id,
                 config: {}
             };
+
             try {
-                await fetch('/api/admin/amigos/campaign', {
+                const res = await fetch('/api/admin/amigos/campaign', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(body)
                 });
-                showDialog('Salvo com sucesso!', 'Pronto');
-                loadCampaign();
-            } catch (e) { showDialog('Erro ao salvar'); }
-        }
+                const json = await res.json();
 
-        async function generateTickets() {
+                if (res.ok) {
+                    let msg = 'Campanha salva com sucesso!';
+
+                    // Add Ticket Sync Info if available (Auto-Generated)
+                    if (json.ticket_sync) {
+                        const ts = json.ticket_sync;
+                        msg += `\n\n🎟️ Tickets Sincronizados:\n• Total: ${ts.total}\n• Criados: ${ts.inserted}\n• Removidos: ${ts.deleted}`;
+                    }
+
+                    alert(msg);
+                    loadKPIs(); // Refresh stats immediately
+                } else {
+                    alert('Erro: ' + json.error);
+                }
+            } catch (e) {
+                alert('Erro de conexão: ' + e.message);
+            }
+        } async function generateTickets() {
             showDialog('Processando...', 'Aguarde');
             await fetch('/api/admin/amigos/campaign/tickets', { method: 'POST' });
             showDialog('Tickets gerados!', 'Sucesso');
