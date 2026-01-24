@@ -910,273 +910,273 @@
             } catch (e) {
                 alert('Erro de conexão: ' + e.message);
             }
-            // Dead code removed
+        }
 
-            // --- HOUSE WINNER LOGIC ---
-            async function toggleHouseWinner(checkbox) {
-                if (!currentCampaignId) return;
-                const active = checkbox.checked;
+        // --- HOUSE WINNER LOGIC ---
+        async function toggleHouseWinner(checkbox) {
+            if (!currentCampaignId) return;
+            const active = checkbox.checked;
 
-                // UI optimistic update
-                const info = document.getElementById('houseWinnerInfo');
-                if (!active) info.style.display = 'none';
+            // UI optimistic update
+            const info = document.getElementById('houseWinnerInfo');
+            if (!active) info.style.display = 'none';
 
-                try {
-                    const res = await fetch('/api/admin/amigos/campaign/house-winner', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ campaignId: currentCampaignId, active })
-                    });
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/house-winner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId, active })
+                });
 
-                    const json = await res.json();
+                const json = await res.json();
 
-                    if (active) {
-                        if (json.number) {
-                            info.style.display = 'block';
-                            document.getElementById('houseReservedNumber').textContent = json.number;
-                            document.getElementById('houseReservedName').textContent = json.name;
-                        } else {
-                            // Error enabling
-                            checkbox.checked = false;
-                            showDialog('Erro ao ativar: ' + (json.error || 'Desconhecido'));
-                        }
+                if (active) {
+                    if (json.number) {
+                        info.style.display = 'block';
+                        document.getElementById('houseReservedNumber').textContent = json.number;
+                        document.getElementById('houseReservedName').textContent = json.name;
                     } else {
-                        info.style.display = 'none';
+                        // Error enabling
+                        checkbox.checked = false;
+                        showDialog('Erro ao ativar: ' + (json.error || 'Desconhecido'));
                     }
-                } catch (e) {
-                    checkbox.checked = !active; // Revert
-                    showDialog('Erro na requisição: ' + e.message);
+                } else {
+                    info.style.display = 'none';
                 }
+            } catch (e) {
+                checkbox.checked = !active; // Revert
+                showDialog('Erro na requisição: ' + e.message);
+            }
+        }
+
+        // --- DRAW LOGIC (HORIZONTAL) ---
+        let isSpinning = false;
+        let animationFrameId = null;
+        let currentIndex = 0;
+        const TOTAL_VIRTUAL = 1000; // Large number for loop effect
+
+        function getAdjacent(idx) {
+            // Mock infinite strip logic
+            return {
+                left: (idx - 1 + 1000) % 1000, // Just visual numbers
+                center: idx % 1000,
+                right: (idx + 1) % 1000
+            };
+        }
+
+        function updateDisplay(num) {
+            document.getElementById('numLeft').textContent = String((num - 1 + 100) % 100).padStart(2, '0');
+            document.getElementById('numCenter').textContent = String(num).padStart(2, '0');
+            document.getElementById('numRight').textContent = String((num + 1) % 100).padStart(2, '0');
+        }
+
+        // We need 'real' numbers from DB ideally. 
+        // For simplicity, we just spin 00-99 visually then snap to winner.
+
+        function openDraw() {
+            if (!currentCampaignId) return;
+            document.getElementById('drawModal').style.display = 'flex';
+            document.getElementById('drawStatus').textContent = 'Aguardando...';
+            document.getElementById('btnSpin').disabled = false;
+            document.getElementById('btnSpin').textContent = 'INICIAR SORTEIO 🎲';
+            document.getElementById('numCenter').classList.remove('winner');
+            updateDisplay(0);
+        }
+
+        function closeDraw() {
+            document.getElementById('drawModal').style.display = 'none';
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            isSpinning = false;
+        }
+
+        async function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            document.getElementById('btnSpin').disabled = true;
+            document.getElementById('drawStatus').textContent = 'Sorteando...';
+
+            // 1. Fetch Winner First
+            let winnerNum = 0;
+            try {
+                const res = await fetch(`/api/admin/amigos/draw/winner/${currentCampaignId}`);
+                const data = await res.json();
+                if (data.ticket_number) winnerNum = parseInt(data.ticket_number);
+                else throw new Error('Falha ao obter ganhador');
+            } catch (e) {
+                alert('Erro ao sortear: ' + e.message);
+                closeDraw();
+                return;
             }
 
-            // --- DRAW LOGIC (HORIZONTAL) ---
-            let isSpinning = false;
-            let animationFrameId = null;
-            let currentIndex = 0;
-            const TOTAL_VIRTUAL = 1000; // Large number for loop effect
+            // 2. Visual Spin Loop
+            let speed = 0;
+            let maxSpeed = 1.5;
+            let position = 0;
+            let stopping = false;
 
-            function getAdjacent(idx) {
-                // Mock infinite strip logic
-                return {
-                    left: (idx - 1 + 1000) % 1000, // Just visual numbers
-                    center: idx % 1000,
-                    right: (idx + 1) % 1000
-                };
-            }
+            function loop() {
+                if (!stopping) {
+                    if (speed < maxSpeed) speed += 0.02;
+                } else {
+                    // Decelerate
+                    speed *= 0.98;
+                }
 
-            function updateDisplay(num) {
-                document.getElementById('numLeft').textContent = String((num - 1 + 100) % 100).padStart(2, '0');
-                document.getElementById('numCenter').textContent = String(num).padStart(2, '0');
-                document.getElementById('numRight').textContent = String((num + 1) % 100).padStart(2, '0');
-            }
+                position += speed;
+                updateDisplay(Math.floor(position)); // Visual update
 
-            // We need 'real' numbers from DB ideally. 
-            // For simplicity, we just spin 00-99 visually then snap to winner.
+                if (stopping && speed < 0.1) {
+                    // Stop exactly on winner
+                    updateDisplay(winnerNum);
+                    document.getElementById('numCenter').classList.add('winner');
+                    document.getElementById('drawStatus').textContent = `Vencedor: #${winnerNum}`;
 
-            function openDraw() {
-                if (!currentCampaignId) return;
-                document.getElementById('drawModal').style.display = 'flex';
-                document.getElementById('drawStatus').textContent = 'Aguardando...';
-                document.getElementById('btnSpin').disabled = false;
-                document.getElementById('btnSpin').textContent = 'INICIAR SORTEIO 🎲';
-                document.getElementById('numCenter').classList.remove('winner');
-                updateDisplay(0);
-            }
+                    // SHOW FINISH BUTTONS
+                    const btnSpin = document.getElementById('btnSpin');
+                    btnSpin.style.display = 'none'; // Hide spin button
 
-            function closeDraw() {
-                document.getElementById('drawModal').style.display = 'none';
-                if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                isSpinning = false;
-            }
+                    // Create Action Container
+                    let actionDiv = document.getElementById('drawActions');
+                    if (!actionDiv) {
+                        actionDiv = document.createElement('div');
+                        actionDiv.id = 'drawActions';
+                        actionDiv.style.marginTop = '20px';
+                        actionDiv.style.display = 'flex';
+                        actionDiv.style.gap = '10px';
+                        actionDiv.style.justifyContent = 'center';
+                        document.querySelector('.az-modal').appendChild(actionDiv);
+                    }
+                    actionDiv.innerHTML = ''; // Clear prev
 
-            async function startSpin() {
-                if (isSpinning) return;
-                isSpinning = true;
-                document.getElementById('btnSpin').disabled = true;
-                document.getElementById('drawStatus').textContent = 'Sorteando...';
+                    // 1. Girar Novamente (Small)
+                    const btnAgain = document.createElement('button');
+                    btnAgain.className = 'btn btn-outline';
+                    btnAgain.innerText = '🔄 Girar Novamente';
+                    btnAgain.onclick = () => {
+                        actionDiv.remove();
+                        btnSpin.style.display = 'inline-flex';
+                        btnSpin.disabled = false;
+                        btnSpin.textContent = 'GIRAR NOVAMENTE';
+                        document.getElementById('numCenter').classList.remove('winner');
+                        isSpinning = false;
+                    };
 
-                // 1. Fetch Winner First
-                let winnerNum = 0;
-                try {
-                    const res = await fetch(`/api/admin/amigos/draw/winner/${currentCampaignId}`);
-                    const data = await res.json();
-                    if (data.ticket_number) winnerNum = parseInt(data.ticket_number);
-                    else throw new Error('Falha ao obter ganhador');
-                } catch (e) {
-                    alert('Erro ao sortear: ' + e.message);
-                    closeDraw();
+                    // 2. FINALIZAR (Big Red)
+                    const btnFinish = document.createElement('button');
+                    btnFinish.className = 'btn btn-danger';
+                    btnFinish.innerHTML = '🏁 FINALIZAR SORTEIO';
+                    btnFinish.onclick = finishDraw;
+
+                    actionDiv.appendChild(btnAgain);
+                    actionDiv.appendChild(btnFinish);
+
+                    isSpinning = false;
                     return;
                 }
 
-                // 2. Visual Spin Loop
-                let speed = 0;
-                let maxSpeed = 1.5;
-                let position = 0;
-                let stopping = false;
-
-                function loop() {
-                    if (!stopping) {
-                        if (speed < maxSpeed) speed += 0.02;
-                    } else {
-                        // Decelerate
-                        speed *= 0.98;
-                    }
-
-                    position += speed;
-                    updateDisplay(Math.floor(position)); // Visual update
-
-                    if (stopping && speed < 0.1) {
-                        // Stop exactly on winner
-                        updateDisplay(winnerNum);
-                        document.getElementById('numCenter').classList.add('winner');
-                        document.getElementById('drawStatus').textContent = `Vencedor: #${winnerNum}`;
-
-                        // SHOW FINISH BUTTONS
-                        const btnSpin = document.getElementById('btnSpin');
-                        btnSpin.style.display = 'none'; // Hide spin button
-
-                        // Create Action Container
-                        let actionDiv = document.getElementById('drawActions');
-                        if (!actionDiv) {
-                            actionDiv = document.createElement('div');
-                            actionDiv.id = 'drawActions';
-                            actionDiv.style.marginTop = '20px';
-                            actionDiv.style.display = 'flex';
-                            actionDiv.style.gap = '10px';
-                            actionDiv.style.justifyContent = 'center';
-                            document.querySelector('.az-modal').appendChild(actionDiv);
-                        }
-                        actionDiv.innerHTML = ''; // Clear prev
-
-                        // 1. Girar Novamente (Small)
-                        const btnAgain = document.createElement('button');
-                        btnAgain.className = 'btn btn-outline';
-                        btnAgain.innerText = '🔄 Girar Novamente';
-                        btnAgain.onclick = () => {
-                            actionDiv.remove();
-                            btnSpin.style.display = 'inline-flex';
-                            btnSpin.disabled = false;
-                            btnSpin.textContent = 'GIRAR NOVAMENTE';
-                            document.getElementById('numCenter').classList.remove('winner');
-                            isSpinning = false;
-                        };
-
-                        // 2. FINALIZAR (Big Red)
-                        const btnFinish = document.createElement('button');
-                        btnFinish.className = 'btn btn-danger';
-                        btnFinish.innerHTML = '🏁 FINALIZAR SORTEIO';
-                        btnFinish.onclick = finishDraw;
-
-                        actionDiv.appendChild(btnAgain);
-                        actionDiv.appendChild(btnFinish);
-
-                        isSpinning = false;
-                        return;
-                    }
-
-                    // When to start stopping? After specific time
-                    animationFrameId = requestAnimationFrame(loop);
-                }
-
-                loop();
-
-                // 3. Stop Trigger
-                setTimeout(() => {
-                    stopping = true;
-                    // We fake the visual stopping logic here for simplicity
-                    // Real implementation would calculate distance to target.
-                    // Here we just snap at end of deceleration in the loop above? 
-                    // No, the loop above snaps to winnerNum at the very end regardless of position.
-                    // It's a "magic jump" but usually unnoticeable at 0.1 speed if configured well.
-                }, 4000);
+                // When to start stopping? After specific time
+                animationFrameId = requestAnimationFrame(loop);
             }
 
-            async function finishDraw() {
-                if (!confirm('Tem certeza que deseja FINALIZAR este sorteio?\nIsso vai desativar a campanha e limpar a tela para um novo sorteio.')) return;
+            loop();
 
-                try {
-                    const res = await fetch('/api/admin/amigos/campaign/finish', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ campaignId: currentCampaignId })
-                    });
-                    const json = await res.json();
+            // 3. Stop Trigger
+            setTimeout(() => {
+                stopping = true;
+                // We fake the visual stopping logic here for simplicity
+                // Real implementation would calculate distance to target.
+                // Here we just snap at end of deceleration in the loop above? 
+                // No, the loop above snaps to winnerNum at the very end regardless of position.
+                // It's a "magic jump" but usually unnoticeable at 0.1 speed if configured well.
+            }, 4000);
+        }
 
-                    if (json.success) {
-                        alert('Sorteio finalizado com sucesso! 🏁');
-                        closeDraw();
-                        // Reset UI
-                        document.getElementById('campName').value = '';
-                        document.getElementById('startNum').value = '';
-                        document.getElementById('endNum').value = '';
-                        document.getElementById('isActive').checked = false;
-                        document.getElementById('houseWinnerToggle').checked = false;
-                        document.getElementById('houseWinnerInfo').style.display = 'none';
-                        currentCampaignId = null;
+        async function finishDraw() {
+            if (!confirm('Tem certeza que deseja FINALIZAR este sorteio?\nIsso vai desativar a campanha e limpar a tela para um novo sorteio.')) return;
 
-                        // Switch to Config tab
-                        switchTab('config');
-
-                        // Remove action div if exists
-                        const actionDiv = document.getElementById('drawActions');
-                        if (actionDiv) actionDiv.remove();
-
-                        // Reset spin button
-                        const btnSpin = document.getElementById('btnSpin');
-                        btnSpin.style.display = 'inline-flex';
-                        btnSpin.disabled = false;
-                        btnSpin.textContent = 'INICIAR SORTEIO 🎲';
-                        document.getElementById('numCenter').classList.remove('winner');
-                        document.getElementById('drawStatus').textContent = 'Aguardando início...';
-
-                    } else {
-                        alert('Erro: ' + (json.error || 'Falha desconhecida'));
-                    }
-                } catch (e) {
-                    alert('Erro na requisição: ' + e.message);
-                }
-            }
-
-            // --- ADMINS & PROMOS (Minimal Loaders for UX) ---
-            async function loadAdmins() {
-                const res = await fetch('/admin/list');
-                const list = await res.json();
-                document.querySelector('#adminsTable tbody').innerHTML = list.map(a => `<tr><td>${a.name}</td><td>${a.phone}</td><td>-</td></tr>`).join('');
-            }
-
-            async function createPromo(e) {
-                e.preventDefault();
-                await fetch('/api/admin/amigos/promotions', {
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/finish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: document.getElementById('promoName').value,
-                        extra_qty: document.getElementById('promoExtra').value
-                    })
+                    body: JSON.stringify({ campaignId: currentCampaignId })
                 });
-                loadPromos();
-                document.getElementById('promoForm').reset();
-            }
+                const json = await res.json();
 
-            async function loadPromos() {
-                const res = await fetch('/api/admin/amigos/promotions');
-                const list = await res.json();
-                document.querySelector('#promoTable tbody').innerHTML = list.map(p => `<tr><td>${p.name}</td><td>${p.extra_qty}</td><td>-</td><td><button onclick="fetch('/api/admin/amigos/promotions/${p.id}',{method:'DELETE'}).then(loadPromos)">Excluir</button></td></tr>`).join('');
-            }
+                if (json.success) {
+                    alert('Sorteio finalizado com sucesso! 🏁');
+                    closeDraw();
+                    // Reset UI
+                    document.getElementById('campName').value = '';
+                    document.getElementById('startNum').value = '';
+                    document.getElementById('endNum').value = '';
+                    document.getElementById('isActive').checked = false;
+                    document.getElementById('houseWinnerToggle').checked = false;
+                    document.getElementById('houseWinnerInfo').style.display = 'none';
+                    currentCampaignId = null;
 
-            async function searchUser() {
-                const term = document.getElementById('searchTerm').value;
-                try {
-                    const res = await fetch(`/api/admin/amigos/search?term=${term}`);
-                    const json = await res.json();
-                    document.getElementById('searchResult').innerHTML = json.found ? `Encontrado: ${json.participant.name} - ${json.history.length} resgates` : 'Não encontrado';
-                } catch (e) { document.getElementById('searchResult').textContent = 'Erro'; }
-            }
+                    // Switch to Config tab
+                    switchTab('config');
 
-            // Init
-            loadCampaign();
+                    // Remove action div if exists
+                    const actionDiv = document.getElementById('drawActions');
+                    if (actionDiv) actionDiv.remove();
+
+                    // Reset spin button
+                    const btnSpin = document.getElementById('btnSpin');
+                    btnSpin.style.display = 'inline-flex';
+                    btnSpin.disabled = false;
+                    btnSpin.textContent = 'INICIAR SORTEIO 🎲';
+                    document.getElementById('numCenter').classList.remove('winner');
+                    document.getElementById('drawStatus').textContent = 'Aguardando início...';
+
+                } else {
+                    alert('Erro: ' + (json.error || 'Falha desconhecida'));
+                }
+            } catch (e) {
+                alert('Erro na requisição: ' + e.message);
+            }
+        }
+
+        // --- ADMINS & PROMOS (Minimal Loaders for UX) ---
+        async function loadAdmins() {
+            const res = await fetch('/admin/list');
+            const list = await res.json();
+            document.querySelector('#adminsTable tbody').innerHTML = list.map(a => `<tr><td>${a.name}</td><td>${a.phone}</td><td>-</td></tr>`).join('');
+        }
+
+        async function createPromo(e) {
+            e.preventDefault();
+            await fetch('/api/admin/amigos/promotions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: document.getElementById('promoName').value,
+                    extra_qty: document.getElementById('promoExtra').value
+                })
+            });
             loadPromos();
-            loadKPIs();
+            document.getElementById('promoForm').reset();
+        }
+
+        async function loadPromos() {
+            const res = await fetch('/api/admin/amigos/promotions');
+            const list = await res.json();
+            document.querySelector('#promoTable tbody').innerHTML = list.map(p => `<tr><td>${p.name}</td><td>${p.extra_qty}</td><td>-</td><td><button onclick="fetch('/api/admin/amigos/promotions/${p.id}',{method:'DELETE'}).then(loadPromos)">Excluir</button></td></tr>`).join('');
+        }
+
+        async function searchUser() {
+            const term = document.getElementById('searchTerm').value;
+            try {
+                const res = await fetch(`/api/admin/amigos/search?term=${term}`);
+                const json = await res.json();
+                document.getElementById('searchResult').innerHTML = json.found ? `Encontrado: ${json.participant.name} - ${json.history.length} resgates` : 'Não encontrado';
+            } catch (e) { document.getElementById('searchResult').textContent = 'Erro'; }
+        }
+
+        // Init
+        loadCampaign();
+        loadPromos();
+        loadKPIs();
 
     </script>
 </body>
