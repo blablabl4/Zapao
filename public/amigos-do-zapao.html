@@ -15,51 +15,86 @@
             /* HUB LIGHT THEME */
             --az-primary: #10b981;
             /* Hub Green */
+            --az-primary-dark: #059669;
             --az-dark: #f3f4f6;
             /* Light BG */
             --az-card-bg: #ffffff;
             /* White Card */
             --az-text: #1f2937;
             /* Dark Text */
+            --az-text-secondary: #4b5563;
             --az-text-muted: #6b7280;
             --az-blur: 10px;
             --az-border: #e5e7eb;
-        }
 
-        * {
-            box-sizing: border-box;
-        }
-
-        /* Hide scrollbar but allow scroll */
-        html {
-            scrollbar-width: none;
-            /* Firefox */
-        }
-
-        html::-webkit-scrollbar {
-            display: none;
-            /* Chrome, Safari, Edge */
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100%;
-            -ms-overflow-style: none;
-            /* IE */
+            /* Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-blur: blur(12px);
+            --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         body {
             background-color: var(--az-dark);
             color: var(--az-text);
             font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-x: hidden;
+        }
+
+        /* GLASS MORPHISM MODAL OVERRIDES */
+        .az-modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .az-modal {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--modal-shadow);
+            border-radius: 20px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+            max-height: 90vh;
             overflow-y: auto;
+        }
+
+        /* Compact Form Elements */
+        .az-form-group {
+            margin-bottom: 0.8rem;
+            text-align: left;
+        }
+
+        .az-form-label {
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+            color: var(--az-text-secondary);
+            font-weight: 500;
+            display: block;
+        }
+
+        .az-form-control {
+            width: 100%;
+            padding: 10px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .az-form-control:focus {
+            outline: none;
+            border-color: var(--az-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
         }
 
         /* Carousel Slot Animation - CSS fallback */
