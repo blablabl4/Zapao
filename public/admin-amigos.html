@@ -578,11 +578,11 @@
 
         <!-- Navigation -->
         <div class="nav-tabs">
-            <div class="nav-tab active" onclick="switchTab('config')">Configuração</div>
-            <div class="nav-tab" onclick="switchTab('promos')">Promoções</div>
-            <div class="nav-tab" onclick="switchTab('draw')">Sorteio 🎰</div>
-            <div class="nav-tab" onclick="switchTab('search')">Buscar Usuário</div>
-            <div class="nav-tab" onclick="switchTab('admins')">Administradores</div>
+            <div id="nav-config" class="nav-tab active" onclick="switchTab('config')">Configuração</div>
+            <div id="nav-promos" class="nav-tab" onclick="switchTab('promos')">Promoções</div>
+            <div id="nav-draw" class="nav-tab" onclick="switchTab('draw')">Sorteio 🎰</div>
+            <div id="nav-search" class="nav-tab" onclick="switchTab('search')">Buscar Usuário</div>
+            <div id="nav-admins" class="nav-tab" onclick="switchTab('admins')">Administradores</div>
         </div>
 
         <!-- TAB: CONFIG -->
@@ -777,11 +777,17 @@
         let currentCampaignId = null;
 
         // --- TABS & INIT ---
+        // --- TABS & INIT ---
         function switchTab(tab) {
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`.nav-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
-            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            const btn = document.getElementById(`nav-${tab}`);
+            if (btn) btn.classList.add('active');
+
+            const pane = document.getElementById(`tab-${tab}`);
+            if (pane) pane.classList.add('active');
+
             if (tab === 'admins') loadAdmins();
         }
 
@@ -835,16 +841,13 @@
                 const reserved = data.ticket_counts.filter(c => c.status === 'RESERVED').reduce((acc, c) => acc + parseInt(c.count), 0);
                 const distributed = sold + reserved;
 
-                document.querySelector('.card:nth-child(1) h1').textContent = distributed;
+                document.getElementById('kpiTotalNumbers').textContent = distributed;
 
-                // 2. Active Users (Mock for now or derive from tickets distinct users if API provided it, 
-                // but let's just use Distributed count as proxy for now since one user per number is rough approx, 
-                // or if backend doesn't give specific user count yet, leave as '--' or distributed.)
-                // Actually, let's use distributed count for now to show activity.
-                document.querySelector('.card:nth-child(2) h1').textContent = distributed;
+                // 2. Active Users
+                document.getElementById('kpiTotalUsers').textContent = distributed;
 
-                // 3. Redemptions (Promo) - Not in debug yet, leave as '--' or 0
-                document.querySelector('.card:nth-child(3) h1').textContent = data.active_campaign ? 'Ativo' : '-';
+                // 3. Redemptions (Promo)
+                document.getElementById('kpiTotalPromos').textContent = data.active_campaign ? 'Ativo' : '-';
 
             } catch (e) { console.log('Error loading KPIs', e); }
         }
