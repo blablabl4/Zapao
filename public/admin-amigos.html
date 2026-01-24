@@ -617,6 +617,19 @@
                 <h2>Geração de Tickets</h2>
                 <button onclick="generateTickets()" class="btn btn-outline">Gerar/Atualizar Tickets</button>
             </div>
+
+            <!-- WHITELIST SECTION -->
+            <div class="card">
+                <h2>Lista de Convidados (Whitelist)</h2>
+                <p style="color: var(--az-text-muted); font-size: 0.9rem;">
+                    Cole a lista de celulares permitidos (um por linha). O sistema limpará formatação.
+                </p>
+                <div class="form-group">
+                    <textarea id="whitelistInput" class="form-control" rows="5"
+                        placeholder="5511999999999&#10;5511888888888"></textarea>
+                </div>
+                <button onclick="uploadWhitelist()" class="btn">Adicionar à Whitelist</button>
+            </div>
         </div>
 
         <!-- TAB: PROMOS -->
@@ -800,21 +813,40 @@
                     document.getElementById('endNum').value = c.end_number;
                     document.getElementById('isActive').checked = c.is_active;
 
-                    // Load House Winner Toggle State
-                    const toggle = document.getElementById('houseWinnerToggle');
-                    const info = document.getElementById('houseWinnerInfo');
-
+                    // House Winner Status
+                    document.getElementById('houseWinnerToggle').checked = c.house_winner_active;
                     if (c.house_winner_active) {
-                        toggle.checked = true;
-                        info.style.display = 'block';
+                        document.getElementById('houseWinnerInfo').style.display = 'block';
                         document.getElementById('houseReservedNumber').textContent = c.house_winner_number;
                         document.getElementById('houseReservedName').textContent = c.house_winner_name;
-                    } else {
-                        toggle.checked = false;
-                        info.style.display = 'none';
                     }
+                } else {
+                    // No active campaign
+                    document.getElementById('isActive').checked = false;
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error('Error loading campaign', e); }
+        }
+
+        async function uploadWhitelist() {
+            const text = document.getElementById('whitelistInput').value;
+            if (!text.trim()) return alert('Cole alguns números primeiro.');
+
+            try {
+                const res = await fetch('/api/admin/amigos/whitelist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert('Sucesso: ' + json.message);
+                    document.getElementById('whitelistInput').value = '';
+                } else {
+                    alert('Erro: ' + json.error);
+                }
+            } catch (e) {
+                alert('Erro na requisição: ' + e.message);
+            }
         }
 
         async function saveCampaign(e) {

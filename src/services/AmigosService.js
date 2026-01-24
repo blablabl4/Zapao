@@ -424,42 +424,30 @@ class AmigosService {
                 }
             }
 
-            // 2. Check Daily Limit (ONLY IF NOT PROMO)
-            // If it's a PROMO claim, we bypass the daily limit check (independent cycle)
-            // If it's a NORMAL claim, we check the daily limit
-            let nextUnlock = null;
+            // --- NEW SECURITY CHECKS ---
 
-            if (!isPromo) {
-                const lastClaimRes = await client.query(`
-                    SELECT * FROM az_claims WHERE phone = $1 AND type = 'NORMAL' ORDER BY claimed_at DESC LIMIT 1 FOR UPDATE
-                `, [phone]);
+            // 0. Clean Phone
+            const cleanPhone = phone.replace(/\D/g, '');
 
-                if (lastClaimRes.rows.length > 0) {
-                    const prev = lastClaimRes.rows[0];
-                    if (new Date() < new Date(prev.next_unlock_at)) {
-                        throw new Error('Você já resgatou hoje. Volte amanhã!');
-                    }
-                }
-                // Set unlock for tomorrow only for NORMAL claims
-                nextUnlock = this.calculateNextUnlock();
-            } else {
-                // For promo claims, set to NOW() since they don't have a daily unlock cycle
-                // Database requires NOT NULL, so we use NOW() to indicate already unlocked
-                nextUnlock = new Date();
+            // 1. Whitelist Check (Strict)
+            const whiteRes = await client.query('SELECT 1 FROM az_whitelist WHERE phone = $1', [cleanPhone]);
+            if (whiteRes.rowCount === 0) {
+                throw new Error('Seu número não está na lista de convidados para este sorteio.');
             }
 
-            // Recalculate totals
-            const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-            const today = daysMap[new Date().getDay()];
-            const campaign = await this.getActiveCampaign();
-
-            // Fix: Promo claims ONLY give the specific promo extra quantity. Base daily quantity is 0.
-            let baseQty = campaign.base_qty_config[today] || 1;
-            if (isPromo) {
-                baseQty = 0;
+            // 2. Single Participation Check (Strict)
+            const prevClaim = await client.query('SELECT 1 FROM az_claims WHERE campaign_id = $1 AND phone = $2 LIMIT 1', [campaign.id, phone]);
+            if (prevClaim.rowCount > 0) {
+                throw new Error('Você já garantiu seu número da sorte! Apenas 1 por pessoa.');
             }
 
-            const totalQty = baseQty + extraQty;
+            // 3. FORCE QTY = 1 (Ignore any other logic)
+            const baseQty = 1;
+            const extraQty = 0;
+            const totalQty = 1;
+            const nextUnlock = null; // No daily unlock, it's one-time only
+
+            // ---------------------------
 
             // 3. Insert Claim
             const claimRes = await client.query(`
@@ -472,7 +460,7 @@ class AmigosService {
                 isPromo ? 'PROMO' : 'NORMAL',
                 promoId, promoToken,
                 baseQty, extraQty, totalQty,
-                nextUnlock, // Null for promos
+                nextUnlock,
                 ip, ua, deviceId, sessionData.claim_session_id, consent
             ]);
             const claimId = claimRes.rows[0].id;

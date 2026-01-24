@@ -448,4 +448,62 @@ router.get('/vip/purchases', async (req, res) => {
     }
 });
 
+router.post('/whitelist', async (req, res) => {
+    try {
+        const { phones, text } = req.body;
+        let numbersToAdd = [];
+
+        if (Array.isArray(phones)) {
+            numbersToAdd = phones;
+        } else if (text) {
+            // Split by newlines, commas, etc and clean
+            numbersToAdd = text.split(/[\n,;]+/).map(s => s.trim().replace(/\D/g, '')).filter(s => s.length >= 10);
+        }
+
+        if (numbersToAdd.length === 0) {
+            return res.status(400).json({ error: 'Nenhum número válido fornecido.' });
+        }
+
+        // Bulk insert (using ON CONFLICT DO NOTHING)
+        // We can use a loop or construct a big query. Loop is safer for small batches, but slow for huge ones.
+        // Let's use a single query with VALUES.
+
+        const client = await require('../database/db').getClient();
+        try {
+            await client.query('BEGIN');
+
+            // Remove duplicates within the input itself
+            const uniqueNumbers = [...new Set(numbersToAdd)];
+
+            // Chunk it if needed (e.g. 1000 at a time), but let's assume reasonable input size for now (e.g. < 5000)
+            const values = uniqueNumbers.map(n => `('${n}')`).join(',');
+
+            const queryStr = `
+                INSERT INTO az_whitelist (phone) 
+                VALUES ${values}
+                ON CONFLICT (phone) DO NOTHING
+            `;
+
+            const result = await client.query(queryStr);
+            await client.query('COMMIT');
+
+            res.json({
+                success: true,
+                message: `${result.rowCount} números adicionados com sucesso!`,
+                total_processed: uniqueNumbers.length
+            });
+
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
+
+    } catch (e) {
+        console.error('Whitelist upload error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 module.exports = router;
