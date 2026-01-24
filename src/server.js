@@ -254,6 +254,9 @@ app.use('/api/admin/hub', requireAdmin, require('./routes/hubAdmin'));
 app.get('/hub', (req, res) => {
     res.sendFile('hub.html', { root: path.join(__dirname, '../public') });
 });
+app.get('/hub-survey', (req, res) => {
+    res.sendFile('hub-survey.html', { root: path.join(__dirname, '../public') });
+});
 // DISABLED: Debug routes for production safety
 // app.use('/api/debug', require('./routes/debug')); // Testing only
 

@@ -70,6 +70,16 @@ router.post('/campaign', async (req, res) => {
     }
 });
 
+router.post('/campaign/house-winner', async (req, res) => {
+    try {
+        const { campaignId, active } = req.body;
+        const result = await AmigosService.toggleHouseWinner(campaignId, active);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.post('/campaign/tickets', async (req, res) => {
     try {
         const { campaignId } = req.body;

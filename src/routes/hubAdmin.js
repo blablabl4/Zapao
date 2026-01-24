@@ -252,5 +252,238 @@ router.get('/affiliates/ranking', async (req, res) => {
     }
 });
 
-module.exports = router;
+// Analytics: Stats by Period
+router.get('/analytics/period', async (req, res) => {
+    try {
+        const { period = '7d' } = req.query;
+        let interval = '7 days';
+        if (period === '1d') interval = '1 day';
+        if (period === '30d') interval = '30 days';
+        if (period === 'all') interval = '10 years';
 
+        const stats = {};
+
+        // Leads by period
+        const leadsRes = await query(`
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM leads
+            WHERE created_at >= NOW() - INTERVAL '${interval}'
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        `);
+        stats.leads_by_day = leadsRes.rows;
+
+        // Clicks by period
+        try {
+            const clicksRes = await query(`
+                SELECT DATE(created_at) as date, COUNT(*) as count
+                FROM hub_clicks
+                WHERE created_at >= NOW() - INTERVAL '${interval}'
+                GROUP BY DATE(created_at)
+                ORDER BY date ASC
+            `);
+            stats.clicks_by_day = clicksRes.rows;
+        } catch (e) {
+            stats.clicks_by_day = [];
+        }
+
+        // Totals for period
+        const totalLeads = await query(`SELECT COUNT(*) FROM leads WHERE created_at >= NOW() - INTERVAL '${interval}'`);
+        stats.total_leads_period = parseInt(totalLeads.rows[0].count);
+
+        try {
+            const totalClicks = await query(`SELECT COUNT(*) FROM hub_clicks WHERE created_at >= NOW() - INTERVAL '${interval}'`);
+            stats.total_clicks_period = parseInt(totalClicks.rows[0].count);
+        } catch (e) {
+            stats.total_clicks_period = 0;
+        }
+
+        res.json(stats);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Analytics: Per Affiliate Performance
+router.get('/analytics/affiliate/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        // Get affiliate info
+        const affiliateRes = await query(`SELECT * FROM leads WHERE affiliate_token = $1`, [token]);
+        if (affiliateRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Afiliado não encontrado' });
+        }
+        const affiliate = affiliateRes.rows[0];
+
+        // Count referrals
+        const referralsRes = await query(`SELECT COUNT(*) FROM leads WHERE referrer_id = $1`, [affiliate.id]);
+
+        // Count clicks
+        let clicks = 0;
+        try {
+            const clicksRes = await query(`SELECT COUNT(*) FROM hub_clicks WHERE affiliate_token = $1`, [token]);
+            clicks = parseInt(clicksRes.rows[0].count);
+        } catch (e) { }
+
+        // Get referral list
+        const referralListRes = await query(`
+            SELECT name, phone, status, created_at 
+            FROM leads 
+            WHERE referrer_id = $1 
+            ORDER BY created_at DESC
+        `, [affiliate.id]);
+
+        res.json({
+            affiliate: {
+                name: affiliate.name,
+                phone: affiliate.phone,
+                token: affiliate.affiliate_token,
+                created_at: affiliate.created_at
+            },
+            clicks,
+            referrals: parseInt(referralsRes.rows[0].count),
+            conversion_rate: clicks > 0 ? Math.round((parseInt(referralsRes.rows[0].count) / clicks) * 100) : 0,
+            referral_list: referralListRes.rows
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Analytics: Peak Hours
+router.get('/analytics/peak-hours', async (req, res) => {
+    try {
+        // Leads by hour
+        const leadsRes = await query(`
+            SELECT EXTRACT(HOUR FROM created_at) as hour, COUNT(*) as count
+            FROM leads
+            WHERE created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY EXTRACT(HOUR FROM created_at)
+            ORDER BY hour
+        `);
+
+        // Clicks by hour
+        let clicksByHour = [];
+        try {
+            const clicksRes = await query(`
+                SELECT EXTRACT(HOUR FROM created_at) as hour, COUNT(*) as count
+                FROM hub_clicks
+                WHERE created_at >= NOW() - INTERVAL '30 days'
+                GROUP BY EXTRACT(HOUR FROM created_at)
+                ORDER BY hour
+            `);
+            clicksByHour = clicksRes.rows;
+        } catch (e) { }
+
+        res.json({
+            leads_by_hour: leadsRes.rows,
+            clicks_by_hour: clicksByHour
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Analytics: Device Stats
+router.get('/analytics/devices', async (req, res) => {
+    try {
+        let deviceStats = { mobile: 0, desktop: 0, other: 0 };
+
+        try {
+            const result = await query(`SELECT user_agent FROM hub_clicks`);
+            for (const row of result.rows) {
+                const ua = (row.user_agent || '').toLowerCase();
+                if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+                    deviceStats.mobile++;
+                } else if (ua.includes('windows') || ua.includes('macintosh') || ua.includes('linux')) {
+                    deviceStats.desktop++;
+                } else {
+                    deviceStats.other++;
+                }
+            }
+        } catch (e) { }
+
+        const total = deviceStats.mobile + deviceStats.desktop + deviceStats.other;
+        res.json({
+            mobile: deviceStats.mobile,
+            desktop: deviceStats.desktop,
+            other: deviceStats.other,
+            mobile_pct: total > 0 ? Math.round((deviceStats.mobile / total) * 100) : 0,
+            desktop_pct: total > 0 ? Math.round((deviceStats.desktop / total) * 100) : 0
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Analytics: Exit Rate (users who left groups)
+router.get('/analytics/exit-rate', async (req, res) => {
+    try {
+        const totalRes = await query(`SELECT COUNT(*) FROM leads`);
+        const leftRes = await query(`SELECT COUNT(*) FROM leads WHERE status = 'LEFT'`);
+
+        const total = parseInt(totalRes.rows[0].count);
+        const left = parseInt(leftRes.rows[0].count);
+
+        res.json({
+            total_leads: total,
+            left_group: left,
+            exit_rate: total > 0 ? Math.round((left / total) * 100) : 0
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Analytics: Top Affiliates with LTV (Lifetime Value)
+router.get('/analytics/affiliate-ltv', async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT l.id, l.name, l.phone, l.affiliate_token, l.created_at,
+                   COUNT(refs.id) as referral_count,
+                   MIN(refs.created_at) as first_referral,
+                   MAX(refs.created_at) as last_referral
+            FROM leads l
+            LEFT JOIN leads refs ON refs.referrer_id = l.id
+            GROUP BY l.id, l.name, l.phone, l.affiliate_token, l.created_at
+            HAVING COUNT(refs.id) > 0
+            ORDER BY referral_count DESC
+            LIMIT 50
+        `);
+
+        // Add clicks data
+        const affiliatesWithClicks = [];
+        for (const aff of result.rows) {
+            let clicks = 0;
+            try {
+                const clicksRes = await query(`SELECT COUNT(*) FROM hub_clicks WHERE affiliate_token = $1`, [aff.affiliate_token]);
+                clicks = parseInt(clicksRes.rows[0].count);
+            } catch (e) { }
+
+            affiliatesWithClicks.push({
+                ...aff,
+                clicks,
+                conversion_rate: clicks > 0 ? Math.round((aff.referral_count / clicks) * 100) : 0
+            });
+        }
+
+        res.json(affiliatesWithClicks);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Surveys Data
+router.get('/surveys', async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT * FROM hub_surveys ORDER BY created_at DESC
+        `);
+        res.json(result.rows);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+module.exports = router;

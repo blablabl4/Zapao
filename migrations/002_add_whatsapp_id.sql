@@ -1,0 +1,1 @@
+ALTER TABLE whatsapp_groups ADD COLUMN IF NOT EXISTS whatsapp_id VARCHAR(50) UNIQUE;

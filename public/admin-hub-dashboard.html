@@ -25,44 +25,75 @@
 <body class="min-h-screen flex">
 
     <!-- Sidebar -->
-    <aside class="w-64 bg-black border-r border-gray-800 flex flex-col">
-        <div class="p-6">
-            <h1 class="text-2xl font-bold text-yellow-500">Hub Admin</h1>
+    <aside id="sidebar"
+        class="bg-black border-r border-gray-800 flex flex-col transition-all duration-300 w-20 md:w-64 fixed md:relative h-full z-20">
+        <div class="p-6 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-yellow-500 sidebar-text hidden md:block">Hub Admin</h1>
+            <button onclick="toggleSidebar()" class="text-gray-400 hover:text-white focus:outline-none">
+                <i id="sidebar-icon" class="fas fa-bars text-xl"></i>
+            </button>
         </div>
-        <nav class="flex-1 px-4 space-y-2">
-            <a href="#" onclick="showSection('dashboard')"
-                class="block px-4 py-3 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition">
-                <i class="fas fa-chart-line w-6"></i> Dashboard
+        <nav class="flex-1 px-2 space-y-2 overflow-y-auto">
+            <a href="#" id="nav-dashboard" onclick="showSection('dashboard')"
+                class="flex items-center px-4 py-3 rounded-lg bg-blue-600 text-white transition group"
+                title="Dashboard">
+                <i class="fas fa-chart-line w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Dashboard</span>
             </a>
-            <a href="#" onclick="showSection('groups')"
-                class="block px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">
-                <i class="fab fa-whatsapp w-6"></i> Grupos
+            <a href="#" id="nav-groups" onclick="showSection('groups')"
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group"
+                title="Grupos">
+                <i class="fab fa-whatsapp w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Grupos</span>
             </a>
-            <a href="#" onclick="showSection('leads')"
-                class="block px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">
-                <i class="fas fa-users w-6"></i> Leads
+            <a href="#" id="nav-leads" onclick="showSection('leads')"
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group"
+                title="Leads">
+                <i class="fas fa-users w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Leads</span>
             </a>
-            <a href="#" onclick="showSection('affiliates')"
-                class="block px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">
-                <i class="fas fa-trophy w-6"></i> Afiliados
+            <a href="#" id="nav-affiliates" onclick="showSection('affiliates')"
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group"
+                title="Afiliados">
+                <i class="fas fa-trophy w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Afiliados</span>
             </a>
-            <a href="#" onclick="showSection('config')"
-                class="block px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">
-                <i class="fas fa-cog w-6"></i> Configurações
+            <a href="#" id="nav-analytics" onclick="showSection('analytics')"
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group"
+                title="Analytics">
+                <i class="fas fa-chart-bar w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Analytics</span>
             </a>
-            <a href="#" onclick="showSection('bot')"
-                class="block px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">
-                <i class="fas fa-robot w-6"></i> Robô
+            <a href="#" id="nav-surveys" onclick="showSection('surveys')"
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group"
+                title="Pesquisas">
+                <i class="fas fa-poll w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Pesquisas</span>
+            </a>
+            <a href="#" id="nav-config" onclick="showSection('config')"
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group"
+                title="Configurações">
+                <i class="fas fa-cog w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Configurações</span>
+            </a>
+            <a href="#" id="nav-bot" onclick="showSection('bot')"
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group"
+                title="Robô">
+                <i class="fas fa-robot w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Robô</span>
             </a>
             <a href="/admin"
-                class="block px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition mt-8">
-                <i class="fas fa-arrow-left w-6"></i> Voltar
+                class="flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition mt-8 group"
+                title="Voltar">
+                <i class="fas fa-arrow-left w-6 text-center"></i>
+                <span class="ml-3 sidebar-text hidden md:block">Voltar</span>
             </a>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 p-8 overflow-y-auto">
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto ml-20 md:ml-0 transition-all duration-300" id="main-content">
 
         <!-- Dashboard Section -->
         <div id="section-dashboard" class="space-y-6">
@@ -205,6 +236,124 @@
             </div>
         </div>
 
+        <!-- Analytics Section -->
+        <div id="section-analytics" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-3xl font-bold">Analytics Avançado</h2>
+                <select id="analytics-period" onchange="loadAnalytics()"
+                    class="bg-gray-700 text-white px-4 py-2 rounded-lg">
+                    <option value="1d">Hoje</option>
+                    <option value="7d" selected>Últimos 7 dias</option>
+                    <option value="30d">Últimos 30 dias</option>
+                    <option value="all">Todo período</option>
+                </select>
+            </div>
+
+            <!-- Period Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Leads by Day Chart -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Cadastros por Dia</h3>
+                    <canvas id="chart-leads-day" height="200"></canvas>
+                </div>
+                <!-- Clicks by Day Chart -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Cliques por Dia</h3>
+                    <canvas id="chart-clicks-day" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Additional Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Device Stats -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Dispositivos</h3>
+                    <div class="space-y-2" id="device-stats">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">📱 Mobile</span>
+                            <span class="font-bold" id="stat-mobile">0%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">💻 Desktop</span>
+                            <span class="font-bold" id="stat-desktop">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exit Rate -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Taxa de Saída</h3>
+                    <div class="text-center">
+                        <span class="text-4xl font-bold text-red-400" id="stat-exit-rate">0%</span>
+                        <p class="text-gray-500 text-sm mt-2">Saíram do grupo</p>
+                    </div>
+                </div>
+
+                <!-- Peak Hours -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Horários de Pico</h3>
+                    <div class="space-y-1 text-sm" id="peak-hours-list">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Affiliate LTV Table -->
+            <div class="card">
+                <h3 class="text-lg font-bold mb-4">Performance dos Afiliados (LTV)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="border-b border-gray-700">
+                            <tr>
+                                <th class="py-2 px-3">Nome</th>
+                                <th class="py-2 px-3">Cliques</th>
+                                <th class="py-2 px-3">Indicações</th>
+                                <th class="py-2 px-3">Conversão</th>
+                                <th class="py-2 px-3">Primeira</th>
+                                <th class="py-2 px-3">Última</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ltv-table">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Surveys Section -->
+        <div id="section-surveys" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold">Respostas da Pesquisa</h2>
+                    <p class="text-gray-400 mt-1">Total de Respostas Únicas: <span id="survey-count"
+                            class="text-yellow-500 font-bold">0</span></p>
+                </div>
+                <button onclick="exportSurveysToCSV_v2()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-download mr-2"></i> Exportar CSV
+                </button>
+            </div>
+            <div class="card overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b border-gray-700">
+                        <tr>
+                            <th class="py-3 px-4">Data</th>
+                            <th class="py-3 px-4">Nome</th>
+                            <th class="py-3 px-4">WhatsApp</th>
+                            <th class="py-3 px-4">Q1 (Pessoas)</th>
+                            <th class="py-3 px-4">Q2 (Compartilha)</th>
+                            <th class="py-3 px-4">Q3 (Onde)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="surveys-table">
+                        <!-- Injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Config Section -->
         <div id="section-config" class="hidden space-y-6">
             <h2 class="text-3xl font-bold">Configurações do Hub</h2>
@@ -233,32 +382,59 @@
 
     </main>
 
-    <!-- Modal Group -->
+    <!-- Group Modal -->
     <div id="groupModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50">
-        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md">
-            <h3 class="text-xl font-bold mb-4">Novo Grupo</h3>
+        <div class="bg-gray-800 p-8 rounded-xl w-full max-w-md">
+            <h3 class="text-2xl font-bold mb-4" id="modalTitle">Novo Grupo</h3>
             <form onsubmit="handleCreateGroup(event)" class="space-y-4">
-                <input type="text" id="g-name" placeholder="Nome do Grupo"
-                    class="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600" required>
-                <input type="url" id="g-link" placeholder="Link de Convite"
-                    class="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600" required>
-                <input type="number" id="g-cap" placeholder="Capacidade (ex: 250)"
-                    class="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600" value="250">
-                <button type="submit"
-                    class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">Salvar</button>
-                <button type="button" onclick="document.getElementById('groupModal').classList.add('hidden')"
-                    class="w-full text-gray-400 text-sm mt-2">Cancelar</button>
+                <div>
+                    <label class="block text-gray-400 mb-1">Nome</label>
+                    <input type="text" id="g-name" required class="w-full bg-gray-700 rounded px-4 py-2 outline-none">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Link de Convite</label>
+                    <input type="url" id="g-link" required class="w-full bg-gray-700 rounded px-4 py-2 outline-none">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Capacidade</label>
+                    <input type="number" id="g-cap" value="900" required
+                        class="w-full bg-gray-700 rounded px-4 py-2 outline-none">
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button"
+                        onclick="document.getElementById('groupModal').classList.add('hidden'); document.getElementById('groupModal').classList.remove('flex');"
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded">Salvar</button>
+                </div>
             </form>
         </div>
     </div>
 
     <script>
         function showSection(id) {
+            // Hide all sections
             document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
+            // Show target section
             document.getElementById('section-' + id).classList.remove('hidden');
+
+            // Update Navigation Highlighting
+            const navIds = ['nav-dashboard', 'nav-groups', 'nav-leads', 'nav-affiliates', 'nav-analytics', 'nav-surveys', 'nav-config', 'nav-bot'];
+            navIds.forEach(navId => {
+                const el = document.getElementById(navId);
+                if (navId === 'nav-' + id) {
+                    // Active State
+                    el.className = 'flex items-center px-4 py-3 rounded-lg bg-blue-600 text-white transition group';
+                } else {
+                    // Inactive State
+                    el.className = 'flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group';
+                }
+            });
+
             if (id === 'dashboard') loadStats();
             if (id === 'groups') loadGroups();
             if (id === 'bot') checkBotStatus();
+            if (id === 'analytics') loadAnalytics();
+            if (id === 'surveys') loadSurveys();
         }
 
         async function loadStats() {
@@ -287,34 +463,70 @@
             }
         }
 
-        async function loadGroups() {
-            const res = await fetch('/api/admin/hub/groups');
-            const groups = await res.json();
-            const grid = document.getElementById('groups-grid');
-            grid.innerHTML = '';
+        let groupsMap = {};
 
-            groups.forEach(g => {
-                grid.innerHTML += `
-                    <div class="card flex flex-col justify-between h-full">
-                        <div>
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-bold text-lg">${g.name}</h4>
-                                <span class="px-2 py-1 rounded text-xs ${g.active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
-                                    ${g.active ? 'Ativo' : 'Inativo'}
-                                </span>
+        async function loadGroups() {
+            try {
+                const res = await fetch('/api/admin/hub/groups');
+                const groups = await res.json();
+                const grid = document.getElementById('groups-grid');
+                grid.innerHTML = '';
+                groupsMap = {}; // Reset map
+
+                groups.forEach(g => {
+                    groupsMap[g.id] = g; // Store for lookup
+                    grid.innerHTML += `
+                        <div class="card flex flex-col justify-between h-full">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-lg">${g.name}</h4>
+                                    <span class="px-2 py-1 rounded text-xs ${g.active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+                                        ${g.active ? 'Ativo' : 'Inativo'}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate">${g.invite_link}</p>
+                                <div class="mt-4 bg-gray-700 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-blue-500 h-full" style="width: ${(g.current_count / g.capacity) * 100}%"></div>
+                                </div>
+                                <div class="flex justify-between items-center mt-2">
+                                    <p class="text-xs text-gray-500">${g.current_count} / ${g.capacity}</p>
+                                    <button onclick="openEditGroupModal('${g.id}')"
+                                        class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white transition-colors">
+                                        <i class="fas fa-edit mr-1"></i> Editar
+                                    </button>
+                                </div>
                             </div>
-                            <p class="text-sm text-gray-400 truncate">${g.invite_link}</p>
-                            <div class="mt-4 bg-gray-700 h-2 rounded-full overflow-hidden">
-                                <div class="bg-blue-500 h-full" style="width: ${(g.current_count / g.capacity) * 100}%"></div>
-                            </div>
-                            <p class="text-xs text-right mt-1 text-gray-500">${g.current_count} / ${g.capacity}</p>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            } catch (e) {
+                console.error('Erro ao carregar grupos:', e);
+            }
         }
 
+
+
+        let editingGroupId = null;
+
         function openGroupModal() {
+            editingGroupId = null;
+            document.getElementById('modalTitle').innerText = 'Novo Grupo';
+            document.getElementById('g-name').value = '';
+            document.getElementById('g-link').value = '';
+            document.getElementById('g-cap').value = '900';
+            document.getElementById('groupModal').classList.remove('hidden');
+            document.getElementById('groupModal').classList.add('flex');
+        }
+
+        function openEditGroupModal(groupId) {
+            const group = groupsMap[groupId];
+            if (!group) return;
+
+            editingGroupId = group.id;
+            document.getElementById('modalTitle').innerText = 'Editar Grupo';
+            document.getElementById('g-name').value = group.name;
+            document.getElementById('g-link').value = group.invite_link;
+            document.getElementById('g-cap').value = group.capacity;
             document.getElementById('groupModal').classList.remove('hidden');
             document.getElementById('groupModal').classList.add('flex');
         }
@@ -325,14 +537,26 @@
             const link = document.getElementById('g-link').value;
             const cap = document.getElementById('g-cap').value;
 
-            await fetch('/api/admin/hub/groups', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, invite_link: link, capacity: cap })
-            });
+            const url = editingGroupId
+                ? `/api/admin/hub/groups/${editingGroupId}`
+                : '/api/admin/hub/groups';
 
-            document.getElementById('groupModal').classList.add('hidden');
-            loadGroups();
+            const method = editingGroupId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, invite_link: link, capacity: cap, active: true })
+                });
+
+                if (!res.ok) throw new Error('Erro ao salvar grupo');
+
+                document.getElementById('groupModal').classList.add('hidden');
+                loadGroups();
+            } catch (e) {
+                alert(e.message);
+            }
         }
 
         async function checkBotStatus() {
@@ -438,14 +662,14 @@
                                 </div>
                             </div>
                             <div class="mt-4 text-center">
-                                <span class="text-2xl font-bold text-blue-400">${a.referral_count}</span>
-                                <p class="text-xs text-gray-500">indicações</p>
+                                <span class="text-3xl font-bold text-yellow-400">${a.referral_count}</span>
+                                <p class="text-xs text-gray-500">pontos</p>
                             </div>
                         </div>
                     `;
                 });
             } else {
-                grid.innerHTML = '<p class="text-gray-500 col-span-3 text-center">Nenhum afiliado com indicações ainda</p>';
+                grid.innerHTML = '<p class="text-gray-500 col-span-3 text-center">Nenhum participante com pontos ainda</p>';
             }
         }
 
@@ -457,7 +681,103 @@
             if (id === 'groups') loadGroups();
             if (id === 'bot') { checkBotStatus(); refreshQR(); }
             if (id === 'leads') loadLeads();
+            if (id === 'leads') loadLeads();
             if (id === 'affiliates') loadAffiliates();
+            if (id === 'surveys') loadSurveys();
+        }
+
+        // Surveys
+        // Helper to safely parse dates (Safari compatibility)
+        // Helper to safely parse dates (Manual formatting for max compatibility)
+        function safeDate(dateStr) {
+            try {
+                if (!dateStr) return 'Data Inválida';
+
+                let d;
+                if (dateStr instanceof Date) {
+                    d = dateStr;
+                } else {
+                    const s = String(dateStr);
+                    d = new Date(s);
+                    // Invalid? Try ISO fix
+                    if (isNaN(d.getTime())) {
+                        d = new Date(s.replace(' ', 'T'));
+                    }
+                }
+
+                if (isNaN(d.getTime())) return String(dateStr);
+
+                // Manual Format: DD/MM/YYYY HH:mm
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                const hours = String(d.getHours()).padStart(2, '0');
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+
+                return `${day}/${month}/${year} ${hours}:${minutes}`;
+
+            } catch (e) {
+                console.error('Date Error:', e);
+                return String(dateStr);
+            }
+        }
+
+        // Helper to escape HTML for attributes
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Surveys
+        async function loadSurveys() {
+            const table = document.getElementById('surveys-table');
+            try {
+                const res = await fetch('/api/admin/hub/surveys', {
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                });
+
+                if (!res.ok) {
+                    if (res.status === 401 || res.status === 403) {
+                        // Redirect silently handled generally, but alert here for feedback
+                        console.warn('Session expired');
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+                    throw new Error(`Erro HTTP: ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    table.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Nenhuma resposta ainda</td></tr>';
+                    document.getElementById('survey-count').innerText = '0';
+                    return;
+                }
+
+                // Count Unique Phones
+                const uniquePhones = new Set(data.filter(s => s.phone).map(s => s.phone)).size;
+                document.getElementById('survey-count').innerText = uniquePhones;
+
+                table.innerHTML = data.map(s => `
+                    <tr class="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td class="py-3 px-4 text-gray-400">${safeDate(s.created_at)}</td>
+                        <td class="py-3 px-4 font-bold">${s.name || '-'}</td>
+                        <td class="py-3 px-4">${s.phone || '-'}</td>
+                        <td class="py-3 px-4 overflow-hidden text-ellipsis max-w-xs" title="${escapeHtml(s.q1_answer)}">${s.q1_answer || '-'}</td>
+                        <td class="py-3 px-4 overflow-hidden text-ellipsis max-w-xs" title="${escapeHtml(s.q2_answer)}">${s.q2_answer || '-'}</td>
+                        <td class="py-3 px-4 overflow-hidden text-ellipsis max-w-xs" title="${escapeHtml(s.q3_answer)}">${s.q3_answer || '-'}</td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error('Erro ao carregar pesquisas:', err);
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">Erro ao carregar dados: ${err.message}</td></tr>`;
+            }
         }
 
         // Banner Upload
@@ -488,6 +808,261 @@
                 alert('Erro ao fazer upload: ' + err.message);
             }
         });
+
+        // Analytics Functions
+        let leadsChart = null;
+        let clicksChart = null;
+
+        async function loadAnalytics() {
+            const period = document.getElementById('analytics-period').value;
+
+            // Load period stats
+            try {
+                const res = await fetch(`/api/admin/hub/analytics/period?period=${period}`);
+                const data = await res.json();
+
+                // Render Leads Chart
+                const leadsCtx = document.getElementById('chart-leads-day').getContext('2d');
+                if (leadsChart) leadsChart.destroy();
+                leadsChart = new Chart(leadsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: (data.leads_by_day || []).map(d => new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })),
+                        datasets: [{
+                            label: 'Cadastros',
+                            data: (data.leads_by_day || []).map(d => d.count),
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+
+                // Render Clicks Chart
+                const clicksCtx = document.getElementById('chart-clicks-day').getContext('2d');
+                if (clicksChart) clicksChart.destroy();
+                clicksChart = new Chart(clicksCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: (data.clicks_by_day || []).map(d => new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })),
+                        datasets: [{
+                            label: 'Cliques',
+                            data: (data.clicks_by_day || []).map(d => d.count),
+                            backgroundColor: 'rgba(168, 85, 247, 0.5)',
+                            borderColor: 'rgba(168, 85, 247, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            } catch (e) {
+                console.error('Error loading period stats:', e);
+            }
+
+            // Load Device Stats
+            try {
+                const res = await fetch('/api/admin/hub/analytics/devices');
+                const data = await res.json();
+                document.getElementById('stat-mobile').innerText = data.mobile_pct + '%';
+                document.getElementById('stat-desktop').innerText = data.desktop_pct + '%';
+            } catch (e) { }
+
+            // Load Exit Rate
+            try {
+                const res = await fetch('/api/admin/hub/analytics/exit-rate');
+                const data = await res.json();
+                document.getElementById('stat-exit-rate').innerText = data.exit_rate + '%';
+            } catch (e) { }
+
+            // Load Peak Hours
+            try {
+                const res = await fetch('/api/admin/hub/analytics/peak-hours');
+                const data = await res.json();
+                const list = document.getElementById('peak-hours-list');
+
+                // Sort by count and get top 5
+                const sorted = (data.leads_by_hour || []).sort((a, b) => b.count - a.count).slice(0, 5);
+                list.innerHTML = sorted.map(h => `
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">${String(Math.round(h.hour)).padStart(2, '0')}:00</span>
+                        <span class="font-bold">${h.count} cadastros</span>
+                    </div>
+                `).join('');
+            } catch (e) { }
+
+            // Load Affiliate LTV
+            try {
+                const res = await fetch('/api/admin/hub/analytics/affiliate-ltv');
+                const data = await res.json();
+                const table = document.getElementById('ltv-table');
+
+                table.innerHTML = data.slice(0, 20).map(a => {
+                    const first = a.first_referral ? new Date(a.first_referral).toLocaleDateString('pt-BR') : '-';
+                    const last = a.last_referral ? new Date(a.last_referral).toLocaleDateString('pt-BR') : '-';
+                    return `
+                        <tr class="border-b border-gray-800">
+                            <td class="py-2 px-3">${a.name}</td>
+                            <td class="py-2 px-3">${a.clicks}</td>
+                            <td class="py-2 px-3 text-blue-400 font-bold">${a.referral_count}</td>
+                            <td class="py-2 px-3 ${a.conversion_rate >= 50 ? 'text-green-400' : a.conversion_rate >= 20 ? 'text-yellow-400' : 'text-red-400'}">${a.conversion_rate}%</td>
+                            <td class="py-2 px-3 text-gray-500">${first}</td>
+                            <td class="py-2 px-3 text-gray-500">${last}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { }
+        }
+
+
+        // Sidebar Toggle
+        let isSidebarCollapsed = window.innerWidth < 768; // Default to collapsed on mobile
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const texts = document.querySelectorAll('.sidebar-text');
+            const icon = document.getElementById('sidebar-icon');
+
+            isSidebarCollapsed = !isSidebarCollapsed;
+
+            if (isSidebarCollapsed) {
+                // Collapse
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                texts.forEach(el => el.classList.add('hidden'));
+                if (window.innerWidth >= 768) mainContent.classList.add('md:ml-0'); // Reset desktop margin logic if needed, but flex handles reasonable well. 
+                // Actually for fixed sidebar on mobile, main content stays. 
+                // For relative sidebar on desktop, width reduces.
+            } else {
+                // Expand
+                sidebar.classList.remove('w-20');
+                sidebar.classList.add('w-64');
+                texts.forEach(el => el.classList.remove('hidden'));
+            }
+        }
+
+        // CSV Export
+        async function exportSurveysToCSV() {
+            try {
+                const res = await fetch('/api/admin/hub/surveys');
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    alert('Sem dados para exportar.');
+                    return;
+                }
+
+                // Headers
+                const headers = ['Data', 'Nome', 'WhatsApp', 'Q1_Pessoas', 'Q2_Compartilha', 'Q3_Onde'];
+
+                // Rows
+                const rows = data.map(s => [
+                    new Date(s.created_at).toLocaleString('pt-BR'),
+                    `"${s.name || ''}"`, // Quote strings
+                    `"${s.phone || ''}"`,
+                    `"${s.q1_answer || ''}"`,
+                    `"${s.q2_answer || ''}"`,
+                    `"${s.q3_answer || ''}"`
+                ]);
+
+                // Combine
+                const csvContent = [
+                    headers.join(','),
+                    ...rows.map(r => r.join(','))
+                ].join('\n');
+
+                // Create Blob and Download
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'hub_pesquisas.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao exportar CSV: ' + e.message);
+            }
+        }
+
+        // CSV Export V2 (Robust)
+        async function exportSurveysToCSV_v2() {
+            try {
+                const res = await fetch('/api/admin/hub/surveys', {
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+                    cache: 'no-store'
+                });
+
+                if (!res.ok) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+                    throw new Error(`Erro ao buscar dados (${res.status})`);
+                }
+
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    alert('Sem dados para exportar.');
+                    return;
+                }
+
+                // Headers
+                const headers = ['Data', 'Nome', 'WhatsApp', 'Q1_Pessoas', 'Q2_Compartilha', 'Q3_Onde'];
+
+                // Rows with Safe Date
+                const rows = data.map(s => [
+                    `"${safeDate(s.created_at)}"`,
+                    `"${(s.name || '').replace(/"/g, '""')}"`, // Escape quotes
+                    `"${(s.phone || '').replace(/"/g, '""')}"`,
+                    `"${(s.q1_answer || '').replace(/"/g, '""')}"`,
+                    `"${(s.q2_answer || '').replace(/"/g, '""')}"`,
+                    `"${(s.q3_answer || '').replace(/"/g, '""')}"`
+                ]);
+
+                // Combine with Byte Order Mark for Excel UTF-8
+                const csvContent = '\uFEFF' + [
+                    headers.join(','),
+                    ...rows.map(r => r.join(','))
+                ].join('\n');
+
+                // Create Blob
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+                // Download Strategy
+                if (navigator.msSaveBlob) { // IE 10+
+                    navigator.msSaveBlob(blob, 'hub_pesquisas.csv');
+                } else {
+                    const link = document.createElement('a');
+                    // Check if download attribute is supported (most modern browsers including iOS Safari 13+)
+                    // However, we need to be careful with creating multiple anchors
+                    const url = URL.createObjectURL(blob);
+
+                    // Simple forced download for iOS
+                    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                        // On iOS, opening in new tab often works better for Blobs if download attr fails
+                        // But typically download attr works.
+                    }
+
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'hub_pesquisas.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert(`Erro ao exportar CSV: ${e.message}`);
+            }
+        }
 
         // Init
         loadStats();

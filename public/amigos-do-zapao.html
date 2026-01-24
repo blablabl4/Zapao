@@ -12,12 +12,18 @@
     <style>
         /* Amigos do Zapão Specific Styles */
         :root {
-            --az-primary: #00E676;
-            /* WhatsApp Greenish */
-            --az-dark: #121212;
-            --az-card-bg: #1E1E1E;
-            --az-text: #FFFFFF;
+            /* HUB LIGHT THEME */
+            --az-primary: #10b981;
+            /* Hub Green */
+            --az-dark: #f3f4f6;
+            /* Light BG */
+            --az-card-bg: #ffffff;
+            /* White Card */
+            --az-text: #1f2937;
+            /* Dark Text */
+            --az-text-muted: #6b7280;
             --az-blur: 10px;
+            --az-border: #e5e7eb;
         }
 
         * {
@@ -127,7 +133,7 @@
         }
 
         .az-subtitle {
-            color: #AAAAAA;
+            color: var(--az-text-muted);
             font-size: 1rem;
             margin-bottom: 2rem;
         }
@@ -294,7 +300,7 @@
         }
 
         .az-modal {
-            background: #252525;
+            background: #ffffff;
             padding: 0;
             border-radius: 20px;
             width: 90%;
@@ -334,7 +340,7 @@
 
         .az-modal h2 {
             margin-top: 0;
-            color: white;
+            color: var(--az-text);
             margin-bottom: 1.5rem;
             font-size: 1.5rem;
             text-align: center;
@@ -347,7 +353,7 @@
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #CCC;
+            color: var(--az-text-muted);
             font-size: 0.9rem;
         }
 
@@ -355,9 +361,9 @@
             width: 100%;
             padding: 0.8rem;
             border-radius: 8px;
-            border: 1px solid #444;
-            background: #181818;
-            color: white;
+            border: 1px solid var(--az-border);
+            background: #fff;
+            color: var(--az-text);
             font-size: 1rem;
         }
 

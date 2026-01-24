@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa Grupo VIP</title>
+    <!-- Open Graph / Meta Data -->
+    <meta property="og:title" content="Pesquisa Grupo VIP" />
+    <meta property="og:description" content="Sorteio de 10 Mil GRÁTIS 👇" />
+    <meta property="og:image" content="https://www.tvzapao.com.br/uploads/hub-banner.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.tvzapao.com.br/hub-survey" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Main Container -->
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+
+        <!-- Banner Image -->
+        <div class="relative h-48 bg-gray-300">
+            <img src="" id="bannerImg" class="w-full h-full object-cover opacity-0 transition-opacity duration-300"
+                onerror="this.src='https://placehold.co/600x400?text=Pesquisa+VIP'; this.classList.remove('opacity-0');">
+        </div>
+
+        <div class="p-6 text-center space-y-6">
+            <h2 class="text-2xl font-bold text-gray-800">Pesquisa Oficial</h2>
+            <p class="text-gray-600">
+                Responda 3 perguntas rápidas e garanta sua vaga no nosso próximo sorteio gratuito de R$ 10.000,00 no
+                Pix!
+            </p>
+
+            <!-- Action Button -->
+            <button onclick="openWizard()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center text-lg animate-pulse">
+                RESPONDER AGORA
+            </button>
+
+            <p class="text-xs text-gray-400">Levamos menos de 1 minuto</p>
+        </div>
+    </div>
+
+    <!-- Wizard Modal -->
+    <div id="wizardModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm m-4 shadow-2xl relative">
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-6">
+                <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style="width: 25%"></div>
+            </div>
+
+            <!-- Steps -->
+            <form id="surveyForm" onsubmit="handleFinalSubmit(event)">
+
+                <!-- Step 1 -->
+                <div id="step1" class="step-content">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">1. Você conseguiria trazer quantas pessoas para um
+                        sorteio gratuito de R$10.000 no Pix?</h3>
+                    <div class="space-y-3">
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q1" value="0-5" class="w-4 h-4 text-blue-600" required>
+                            <span>0 a 5 pessoas</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q1" value="6-20" class="w-4 h-4 text-blue-600">
+                            <span>6 a 20 pessoas</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q1" value="21-50" class="w-4 h-4 text-blue-600">
+                            <span>21 a 50 pessoas</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q1" value=">50" class="w-4 h-4 text-blue-600">
+                            <span>Mais de 50 pessoas</span>
+                        </label>
+                    </div>
+                    <button type="button" onclick="nextStep(2)"
+                        class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg">Próximo</button>
+                </div>
+
+                <!-- Step 2 -->
+                <div id="step2" class="step-content hidden">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">2. Se eu liberar o link hoje, você compartilha?
+                    </h3>
+                    <div class="space-y-3">
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q2" value="sim_agora" class="w-4 h-4 text-blue-600" required>
+                            <span>Sim, agora</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q2" value="sim_tarde" class="w-4 h-4 text-blue-600">
+                            <span>Sim, mais tarde</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q2" value="depende" class="w-4 h-4 text-blue-600">
+                            <span>Depende das regras</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q2" value="nao" class="w-4 h-4 text-blue-600">
+                            <span>Não compartilho</span>
+                        </label>
+                    </div>
+                    <button type="button" onclick="nextStep(3)"
+                        class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg">Próximo</button>
+                </div>
+
+                <!-- Step 3 -->
+                <div id="step3" class="step-content hidden">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">3. Onde você consegue compartilhar com mais gente?
+                    </h3>
+                    <div class="space-y-3">
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q3" value="status_whatsapp" class="w-4 h-4 text-blue-600"
+                                required>
+                            <span>Status do WhatsApp</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q3" value="grupos_whatsapp" class="w-4 h-4 text-blue-600">
+                            <span>Grupos de WhatsApp</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q3" value="instagram" class="w-4 h-4 text-blue-600">
+                            <span>Instagram</span>
+                        </label>
+                        <label
+                            class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="q3" value="nao" class="w-4 h-4 text-blue-600">
+                            <span>Não compartilho</span>
+                        </label>
+                    </div>
+                    <button type="button" onclick="nextStep(4)"
+                        class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg">Próximo</button>
+                </div>
+
+                <!-- Step 4 (Capture) -->
+                <div id="step4" class="step-content hidden">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Último passo!</h3>
+                    <p class="text-gray-600 mb-4 text-sm">Preencha seus dados para finalizarmos seu cadastro.</p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                            <input type="text" id="name" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="Seu nome">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                            <input type="tel" id="phone" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn"
+                        class="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition">
+                        FINALIZAR E ENTRAR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+    <script>
+        // Init Phone Mask
+        document.addEventListener('DOMContentLoaded', () => {
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function (e) {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+            });
+
+            // Initial Config Load
+            loadConfig();
+        });
+
+        // Banner Config
+        function loadConfig() {
+            fetch('/api/hub/config')
+                .then(res => res.json())
+                .then(config => {
+                    const banner = document.getElementById('bannerImg');
+                    if (config.banner_url) {
+                        banner.src = config.banner_url;
+                        banner.onload = () => banner.classList.remove('opacity-0');
+                    } else {
+                        banner.src = 'https://placehold.co/600x400?text=Pesquisa+VIP';
+                        banner.classList.remove('opacity-0');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('bannerImg').src = 'https://placehold.co/600x400?text=Pesquisa+VIP';
+                    document.getElementById('bannerImg').classList.remove('opacity-0');
+                });
+        }
+
+        // Wizard Logic
+        let answers = {};
+
+        function openWizard() {
+            const modal = document.getElementById('wizardModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function nextStep(step) {
+            // Validate current step
+            const currentStep = step - 1;
+            if (currentStep <= 3) {
+                const radios = document.getElementsByName('q' + currentStep);
+                let selected = false;
+                for (const r of radios) {
+                    if (r.checked) {
+                        selected = true;
+                        answers['q' + currentStep] = r.value;
+                        break;
+                    }
+                }
+                if (!selected) {
+                    alert('Por favor, selecione uma opção.');
+                    return;
+                }
+            }
+
+            // Hide all steps
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+
+            // Show next step
+            document.getElementById('step' + step).classList.remove('hidden');
+
+            // Update Progress
+            const progress = step * 25;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        async function handleFinalSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = 'Enviando...';
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+
+            // Collect all data
+            const payload = {
+                name,
+                phone,
+                q1_answer: answers.q1,
+                q2_answer: answers.q2,
+                q3_answer: answers.q3,
+                referrer: new URLSearchParams(window.location.search).get('ref')
+            };
+
+            try {
+                const res = await fetch('/api/hub/survey', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // Success! Redirect to Group or show link
+                if (data.group_link) {
+                    window.location.href = data.group_link;
+                } else {
+                    alert('Obrigado! Suas respostas foram salvas.');
+                    window.location.reload();
+                }
+
+            } catch (err) {
+                alert('Erro: ' + err.message);
+                btn.disabled = false;
+                btn.innerText = 'FINALIZAR E ENTRAR';
+            }
+        }
+    </script>
+</body>
+
+</html>

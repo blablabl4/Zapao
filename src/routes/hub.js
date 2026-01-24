@@ -115,4 +115,43 @@ router.post('/validate-csv', requireAdmin, upload.single('file'), async (req, re
     }
 });
 
+// Submit Survey
+router.post('/survey', async (req, res) => {
+    try {
+        console.log('[Hub] Survey submit received:', req.body);
+        const { name, phone, q1_answer, q2_answer, q3_answer, referrer } = req.body;
+
+        if (!name || !phone) {
+            console.log('[Hub] Missing name or phone');
+            return res.status(400).json({ error: 'Nome e telefone são obrigatórios' });
+        }
+
+        if (!q1_answer || !q2_answer || !q3_answer) {
+            console.log('[Hub] Missing answers');
+            return res.status(400).json({ error: 'Por favor, responda todas as perguntas da pesquisa.' });
+        }
+
+        // 1. Save Survey Response
+        console.log('[Hub] Inserting survey...');
+        await query(
+            `INSERT INTO hub_surveys (name, phone, q1_answer, q2_answer, q3_answer) VALUES ($1, $2, $3, $4, $5)`,
+            [name, phone, q1_answer, q2_answer, q3_answer]
+        );
+
+        // 2. Register as Lead (Join Group Logic)
+        console.log('[Hub] Joining hub...');
+        const result = await GroupHubService.joinHub({
+            name,
+            phone,
+            referrerToken: referrer
+        });
+        console.log('[Hub] Join result:', result);
+
+        res.json({ success: true, ...result });
+    } catch (e) {
+        console.error('Survey error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 module.exports = router;

@@ -1,4 +1,5 @@
 const { query, getClient } = require('../database/db');
+const { getRandomName } = require('../utils/names');
 
 class AmigosService {
     constructor() {
@@ -42,7 +43,7 @@ class AmigosService {
         // Update cache
         if (campaign) {
             this._campaignCache.data = campaign;
-            this._campaignCache.expiresAt = now + 60 * 1000; // 60s TTL
+            this._campaignCache.expiresAt = now + 5 * 1000; // Reduced TTL to 5s to reflect Admin changes faster
         } else {
             // Negative cache (shorter TTL)
             this._campaignCache.data = null;
@@ -50,6 +51,106 @@ class AmigosService {
         }
 
         return campaign;
+    }
+
+    /**
+     * Toggle House Winner for a campaign
+     * @param {number} campaignId 
+     * @param {boolean} active 
+     */
+    async toggleHouseWinner(campaignId, active) {
+        const client = await getClient();
+        try {
+            await client.query('BEGIN');
+
+            const campRes = await client.query('SELECT * FROM az_campaigns WHERE id = $1', [campaignId]);
+            const camp = campRes.rows[0];
+            if (!camp) throw new Error('Campanha não encontrada');
+
+            if (active) {
+                // ENABLE
+                if (camp.house_winner_active) {
+                    await client.query('COMMIT');
+                    return { message: 'Já estava ativo', number: camp.house_winner_number, name: camp.house_winner_name };
+                }
+
+                // 1. Pick a random available ticket WITHIN RANGE explicitly
+                // We lock a row to avoid concurrency issues
+                const ticketRes = await client.query(`
+                    SELECT id, number FROM az_tickets 
+                    WHERE campaign_id = $1 
+                    AND status = 'AVAILABLE'
+                    AND number >= $2 AND number <= $3
+                    ORDER BY RANDOM()
+                    LIMIT 1
+                    FOR UPDATE
+                `, [campaignId, camp.start_number, camp.end_number]);
+
+                if (ticketRes.rows.length === 0) {
+                    throw new Error('Não há tickets disponíveis para reservar para a casa.');
+                }
+
+                const ticket = ticketRes.rows[0];
+                const houseName = getRandomName();
+
+                // 2. Mark ticket as RESERVED
+                await client.query(`
+                    UPDATE az_tickets 
+                    SET status = 'HOUSE_RESERVED', updated_at = NOW() 
+                    WHERE id = $1
+                `, [ticket.id]);
+
+                // 3. Update Campaign
+                await client.query(`
+                    UPDATE az_campaigns 
+                    SET house_winner_active = true, 
+                        house_winner_number = $1, 
+                        house_winner_name = $2 
+                    WHERE id = $3
+                `, [ticket.number, houseName, campaignId]);
+
+                await client.query('COMMIT');
+                this.invalidateCache();
+                return { active: true, number: ticket.number, name: houseName };
+
+            } else {
+                // DISABLE
+                if (!camp.house_winner_active) {
+                    await client.query('COMMIT');
+                    return { message: 'Já estava inativo' };
+                }
+
+                const houseNumber = camp.house_winner_number;
+
+                // 1. Find the reserved ticket and free it
+                if (houseNumber !== null) {
+                    await client.query(`
+                        UPDATE az_tickets 
+                        SET status = 'AVAILABLE', updated_at = NOW() 
+                        WHERE campaign_id = $1 AND number = $2 AND status = 'HOUSE_RESERVED'
+                    `, [campaignId, houseNumber]);
+                }
+
+                // 2. Update Campaign
+                await client.query(`
+                    UPDATE az_campaigns 
+                    SET house_winner_active = false, 
+                        house_winner_number = NULL, 
+                        house_winner_name = NULL 
+                    WHERE id = $1
+                `, [campaignId]);
+
+                await client.query('COMMIT');
+                this.invalidateCache();
+                return { active: false };
+            }
+
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
     }
 
     /**
