@@ -799,6 +799,21 @@
     </div>
 
     <script>
+        window.onerror = function (msg, url, line) {
+            alert('ERRO TÉCNICO:\n' + msg + '\nLinha: ' + line);
+            // Create visible debug log
+            let d = document.getElementById('debug-log');
+            if (!d) {
+                d = document.createElement('div');
+                d.id = 'debug-log';
+                d.style = "position:fixed;top:0;left:0;background:red;color:white;z-index:99999;font-size:12px;padding:5px;";
+                document.body.appendChild(d);
+            }
+            d.innerHTML += '<br>' + msg;
+            return false;
+        };
+    </script>
+    <script>
         // State
         let claimSessionId = null;
         // Support both /p/TOKEN path and ?p=TOKEN query parameter
@@ -1030,6 +1045,7 @@
         // ---- Flow Functions ----
 
         async function startFlow() {
+            alert('DEBUG: Clicou!');
             const btn = document.getElementById('generateBtn');
             btn.disabled = true;
             btn.textContent = 'Carregando...';
