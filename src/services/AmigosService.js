@@ -91,7 +91,10 @@ class AmigosService {
                 }
 
                 const ticket = ticketRes.rows[0];
-                const houseName = getRandomName();
+                const { getComplexIdentity } = require('../utils/names');
+                const identity = getComplexIdentity();
+                // Format: "Name Surname - Location"
+                const houseName = `${identity.name} - ${identity.location}`;
 
                 // 2. Mark ticket as RESERVED
                 await client.query(`
