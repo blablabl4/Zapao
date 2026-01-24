@@ -671,37 +671,36 @@
                 <div class="story-slide" id="slide1">
                     <div class="story-badge">1</div>
                     <div class="story-header" style="margin-top: 3.5rem;">
-                        <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Compartilhamento
-                            Obrigatório</h2>
-                        <p style="color: #ccc; margin: 0; font-size: 0.9rem;">
-                            1. Publique a mídia abaixo no seu <strong>Status do WhatsApp</strong>.<br>
-                            2. Entre no <strong>Grupo Oficial</strong>.
-                        </p>
+                        <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Etapa Obrigatória</h2>
+                        <div
+                            style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; text-align: left; margin: 1rem 0;">
+                            <p style="color: #fff; margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5;">
+                                1. Entre no <strong>Grupo Oficial</strong> clicando no botão abaixo.
+                            </p>
+                            <p style="color: #fff; margin: 0; font-size: 0.95rem; line-height: 1.5;">
+                                2. Publique a <strong>última mídia enviada no grupo</strong> no seu Status do WhatsApp.
+                            </p>
+                        </div>
                         <p
-                            style="color: #FFD700; font-weight: bold; font-size: 0.8rem; margin-top: 0.5rem; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 8px;">
-                            ⚠️ Faça print do status! Sem o print o prêmio não será validado.
+                            style="color: #FFD700; font-weight: bold; font-size: 0.8rem; margin-top: 0.5rem; padding: 5px; border-radius: 8px;">
+                            ⚠️ O prêmio só será validado se tiver postado!
                         </p>
                     </div>
-                    <!-- Portrait Image Container -->
-                    <div class="story-content-area" style="padding: 0 1rem;">
-                        <div
-                            style="width: 100%; max-width: 280px; aspect-ratio: 9/16; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 20px rgba(0,230,118,0.2); overflow: hidden; margin: 0 auto;">
-                            <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
-                                style="width: 100%; height: 100%; object-fit: cover;">
-                            <video id="sharePreviewVideo"
-                                style="width: 100%; height: 100%; object-fit: cover; display: none;" autoplay loop muted
-                                playsinline></video>
-                        </div>
-                        <div
-                            style="width: 100%; max-width: 320px; padding-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
-                            <button class="az-btn-main" onclick="shareToWhatsApp()"
-                                style="width: 100%; font-size: 0.9rem;">
-                                📤 Compartilhar no Status
-                            </button>
-                            <button class="az-btn-main az-btn-secondary"
-                                onclick="window.open(shareSettings.group_link, '_blank')"
-                                style="width: 100%; font-size: 0.9rem; background: transparent; border: 1px solid var(--az-primary); color: var(--az-primary);">
-                                👥 Ir ao Grupo
+
+                    <div class="story-content-area"
+                        style="padding: 0 1rem; display: flex; flex-direction: column; gap: 15px;">
+                        <button class="az-btn-main" id="btnGroupStep1"
+                            onclick="window.open(shareSettings.group_link, '_blank')"
+                            style="width: 100%; font-size: 1rem; padding: 15px;">
+                            👥 IR AO GRUPO
+                        </button>
+
+                        <div id="step1NextContainer"
+                            style="opacity: 0; transition: opacity 0.5s ease; pointer-events: none;">
+                            <p style="color: #ccc; font-size: 0.8rem; margin-bottom: 5px;">Já postou?</p>
+                            <button class="az-btn-main az-btn-secondary" onclick="nextStory()"
+                                style="width: 100%; font-size: 0.9rem; padding: 10px;">
+                                Próxima Etapa →
                             </button>
                         </div>
                     </div>
@@ -1010,18 +1009,36 @@
         }
 
         // ---- Stories Nav Logic ----
+        // ---- Stories Nav Logic ----
         function updateStories() {
             const track = document.getElementById('storiesTrack');
             track.style.transform = `translateX(-${currentStoryIndex * 25}%)`;
 
-            // Only Manage Next button
+            // Only Manage Next button (Arrow)
             let nextBtn = document.getElementById('storyNextBtn');
             nextBtn.classList.remove('visible'); // default hide
 
-            // Logic for when to show Next arrow
-            if (currentStoryIndex === 0 && step1Done) {
-                nextBtn.classList.add('visible');
-            } else if (currentStoryIndex === 2 && step3Done) { // Form step (1) relies on form button, Success step(3) has no next
+            // Step 1: Wait 5 seconds, then show "Próximo" button inside the slide (NOT the arrow)
+            if (currentStoryIndex === 0) {
+                // If already done, show immediately
+                if (step1Done) {
+                    document.getElementById('step1NextContainer').style.opacity = '1';
+                    document.getElementById('step1NextContainer').style.pointerEvents = 'auto';
+                } else {
+                    // Start Timer
+                    setTimeout(() => {
+                        document.getElementById('step1NextContainer').style.opacity = '1';
+                        document.getElementById('step1NextContainer').style.pointerEvents = 'auto';
+                        step1Done = true; // Mark as "can proceed"
+                    }, 5000);
+                }
+            }
+
+            // Logic for when to show Next arrow (Bottom Right)
+            // Step 1: uses internal button now, so we hide arrow.
+            // Step 2: Form submit
+            // Step 3: Reveal -> Step 4
+            if (currentStoryIndex === 2 && step3Done) {
                 nextBtn.classList.add('visible');
             }
         }
@@ -1132,116 +1149,7 @@
             document.getElementById('soldOutModal').style.display = 'none';
         }
 
-        async function shareToWhatsApp() {
-            const shareBtn = document.querySelector('#slide1 button');
-            const originalText = shareBtn.textContent;
-            shareBtn.textContent = 'Preparando...';
-            shareBtn.disabled = true;
-
-            try {
-                // Determine which media and text to share
-                let mediaUrl = shareSettings.share_image;
-                let shareText = shareSettings.share_text;
-                // User requested to REMOVE automatic link.
-                // let shareUrl = 'https://www.tvzapao.com.br';
-
-                if (promoSettings) {
-                    if (promoSettings.image_url) mediaUrl = promoSettings.image_url;
-                    if (promoSettings.share_text) shareText = promoSettings.share_text;
-                    // FORCE Share URL to be the Promo Link (for OG Image Preview)
-                    // shareUrl = `${window.location.origin}/p/${promoToken}`;
-                }
-
-                const isVideo = mediaUrl && (mediaUrl.match(/\.(mp4|mov|webm|avi)$/i) || mediaUrl.includes('/video/'));
-
-                // Reverted to File Sharing logic. Clipboard toast handles the text drop.
-
-                // Apply Cloudinary optimization
-                const optimizedUrl = optimizeCloudinaryUrl(mediaUrl);
-
-                if (navigator.share) {
-                    try {
-                        let mediaFile = null;
-
-                        if (optimizedUrl) {
-                            try {
-                                const mediaResp = await fetch(optimizedUrl);
-                                const mediaBlob = await mediaResp.blob();
-                                const mimeType = isVideo ? 'video/mp4' : 'image/png';
-                                const fileName = isVideo ? 'promo-video.mp4' : 'promo-image.png';
-                                mediaFile = new File([mediaBlob], fileName, { type: mimeType });
-                            } catch (e) { console.log('Media fetch failed:', e); }
-                        }
-
-                        // Robust share payload
-                        let finalShareText = shareText || '';
-
-                        // If text doesn't have a link, and we have one (shareUrl), append it.
-                        // preventing duplicates if admin already typed it.
-                        // REMOVED PER USER REQUEST
-                        // if (shareUrl && !finalShareText.includes(shareUrl)) {
-                        //    finalShareText = finalShareText ? `${finalShareText}\n\n${shareUrl}` : shareUrl;
-                        // }
-
-                        // WORKAROUND: Copy text to clipboard
-                        if (finalShareText) {
-                            try {
-                                await navigator.clipboard.writeText(finalShareText);
-                                const toast = document.createElement('div');
-                                toast.innerHTML = `
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 1.2rem; margin-bottom: 5px;">📋 <strong>Texto Copiado!</strong></div>
-                                        <div style="font-size: 0.9rem;">Se a legenda não aparecer no WhatsApp,</div>
-                                        <div style="font-size: 0.9rem; color: #FFD700; font-weight: bold;">SEGURE E COLE NA CAIXA DE TEXTO!</div>
-                                    </div>
-                                `;
-                                toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; border-radius: 12px; z-index: 11000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); min-width: 280px;';
-                                document.body.appendChild(toast);
-                                setTimeout(() => toast.remove(), 4000);
-                            } catch (e) { console.log('Clipboard error:', e); }
-                        }
-
-                        // Share
-                        if (mediaFile && navigator.canShare && navigator.canShare({ files: [mediaFile] })) {
-                            await navigator.share({
-                                files: [mediaFile],
-                                text: finalShareText,
-                                title: 'Promoção'
-                            });
-                        } else {
-                            await navigator.share({ text: finalShareText, title: 'Promoção' });
-                        }
-                    } catch (shareErr) {
-                        // Fallback: share without file
-                        // Retry with text only
-                        let finalShareTextFallback = shareText || '';
-                        // REMOVED PER USER REQUEST
-                        // if (shareUrl && !finalShareTextFallback.includes(shareUrl)) {
-                        //    finalShareTextFallback = finalShareTextFallback ? `${finalShareTextFallback}\n\n${shareUrl}` : shareUrl;
-                        // }
-                        await navigator.share({ text: finalShareTextFallback, title: 'Promoção' });
-                    }
-                } else {
-                    const text = encodeURIComponent(shareText);
-                    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-                }
-            } catch (e) {
-                console.log('Share error:', e);
-            } finally {
-                shareBtn.textContent = 'Compartilhado!';
-                shareBtn.classList.add('az-btn-secondary');
-                step1Done = true;
-
-                // USER REQUEST: On first modal (Share), if promo has sponsor link, OPEN IT.
-                if (promoSettings && promoSettings.sponsor_link) {
-                    setTimeout(() => {
-                        window.open(promoSettings.sponsor_link, '_blank');
-                    }, 500);
-                }
-
-                updateStories();
-            }
-        }
+        // Dead code removed (shareToWhatsApp)
 
         function maskPhone(input) {
             let v = input.value.replace(/\D/g, "");
