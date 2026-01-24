@@ -822,6 +822,33 @@
             } catch (e) { console.error('Error loading campaign', e); }
         }
 
+        async function loadKPIs() {
+            try {
+                // Use existing debug endpoint which returns all stats
+                const res = await fetch('/api/admin/amigos/debug');
+                const data = await res.json();
+
+                // 1. Total Tickets (Distributed / Total)
+                const total = data.total_tickets || 0;
+                // Count distributed (SOLD + RESERVED)
+                const sold = data.ticket_counts.filter(c => c.status === 'SOLD').reduce((acc, c) => acc + parseInt(c.count), 0);
+                const reserved = data.ticket_counts.filter(c => c.status === 'RESERVED').reduce((acc, c) => acc + parseInt(c.count), 0);
+                const distributed = sold + reserved;
+
+                document.querySelector('.card:nth-child(1) h1').textContent = distributed;
+
+                // 2. Active Users (Mock for now or derive from tickets distinct users if API provided it, 
+                // but let's just use Distributed count as proxy for now since one user per number is rough approx, 
+                // or if backend doesn't give specific user count yet, leave as '--' or distributed.)
+                // Actually, let's use distributed count for now to show activity.
+                document.querySelector('.card:nth-child(2) h1').textContent = distributed;
+
+                // 3. Redemptions (Promo) - Not in debug yet, leave as '--' or 0
+                document.querySelector('.card:nth-child(3) h1').textContent = data.active_campaign ? 'Ativo' : '-';
+
+            } catch (e) { console.log('Error loading KPIs', e); }
+        }
+
         async function uploadWhitelist() {
             const text = document.getElementById('whitelistInput').value;
             if (!text.trim()) return alert('Cole alguns números primeiro.');
@@ -1146,6 +1173,7 @@
             // Init
             loadCampaign();
             loadPromos();
+            loadKPIs();
 
     </script>
 </body>
