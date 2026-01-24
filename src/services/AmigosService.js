@@ -386,7 +386,7 @@ class AmigosService {
      * Finish Claim
      * Transactional allocation
      */
-    async finishClaim(sessionData, phone, name, consent, promoToken, ip, ua, deviceId) {
+    async finishClaim(sessionData, phone, name, consent, promoToken, ip, ua, deviceId, cep) {
         if (new Date() > new Date(sessionData.expires_at)) {
             throw new Error('Sessão expirada. Recomece.');
         }
@@ -443,7 +443,7 @@ class AmigosService {
 
             // 3. FORCE QTY = 1 (Ignore any other logic)
             const baseQty = 1;
-            const extraQty = 0;
+            extraQty = 0;
             const totalQty = 1;
             const nextUnlock = null; // No daily unlock, it's one-time only
 
@@ -452,8 +452,8 @@ class AmigosService {
             // 3. Insert Claim
             const claimRes = await client.query(`
                 INSERT INTO az_claims 
-                (campaign_id, phone, name, type, promotion_id, promo_token, base_qty, extra_qty, total_qty, next_unlock_at, ip, user_agent, device_id, session_id, lgpd_consent)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                (campaign_id, phone, name, type, promotion_id, promo_token, base_qty, extra_qty, total_qty, next_unlock_at, ip, user_agent, device_id, session_id, lgpd_consent, cep)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 RETURNING id
             `, [
                 campaign.id, phone, name,
@@ -461,7 +461,7 @@ class AmigosService {
                 promoId, promoToken,
                 baseQty, extraQty, totalQty,
                 nextUnlock,
-                ip, ua, deviceId, sessionData.claim_session_id, consent
+                ip, ua, deviceId, sessionData.claim_session_id, consent, cep
             ]);
             const claimId = claimRes.rows[0].id;
 

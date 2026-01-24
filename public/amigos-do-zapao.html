@@ -54,10 +54,10 @@
             background-color: var(--az-dark);
             color: var(--az-text);
             font-family: 'Inter', sans-serif;
-            min-height: 100dvh;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            align-items: center;
             overflow-x: hidden;
             overflow-y: auto;
         }
@@ -635,55 +635,91 @@
                 <!-- SLIDE 1: Share -->
                 <div class="story-slide" id="slide1">
                     <div class="story-badge">1</div>
-                    <div class="story-header">
+                    <div class="story-header" style="margin-top: 3.5rem;">
                         <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Compartilhamento
                             Obrigatório</h2>
-                        <p style="color: #aaa; margin: 0; font-size: 0.9rem;">Compartilhe a publicação abaixo no status
-                            do WhatsApp para resgatar seus números da sorte.</p>
-                        <p style="color: #FFD700; font-weight: bold; font-size: 0.85rem; margin-top: 0.5rem;">⚠️ Faça
-                            print do seu status. Sem o print do seu status o prêmio não será validado. Sem exceções.</p>
+                        <p style="color: #ccc; margin: 0; font-size: 0.9rem;">
+                            1. Publique a mídia abaixo no seu <strong>Status do WhatsApp</strong>.<br>
+                            2. Entre no <strong>Grupo Oficial</strong>.
+                        </p>
+                        <p
+                            style="color: #FFD700; font-weight: bold; font-size: 0.8rem; margin-top: 0.5rem; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 8px;">
+                            ⚠️ Faça print do status! Sem o print o prêmio não será validado.
+                        </p>
                     </div>
                     <!-- Portrait Image Container -->
-                    <div class="story-content-area">
+                    <div class="story-content-area" style="padding: 0 1rem;">
                         <div
-                            style="width: 85%; height: 100%; max-height: 55vh; aspect-ratio: 9/16; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 20px rgba(0,230,118,0.2); overflow: hidden;">
+                            style="width: 100%; max-width: 280px; aspect-ratio: 9/16; border-radius: 12px; border: 2px solid var(--az-primary); box-shadow: 0 4px 20px rgba(0,230,118,0.2); overflow: hidden; margin: 0 auto;">
                             <img src="/images/amigos-logo-new.png" alt="Compartilhe" id="sharePreviewImg"
                                 style="width: 100%; height: 100%; object-fit: cover;">
                             <video id="sharePreviewVideo"
                                 style="width: 100%; height: 100%; object-fit: cover; display: none;" autoplay loop muted
                                 playsinline></video>
                         </div>
-                        <div style="width: 100%; padding-top: 1.5rem;">
+                        <div
+                            style="width: 100%; max-width: 320px; padding-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
                             <button class="az-btn-main" onclick="shareToWhatsApp()"
-                                style="width: 100%;">Compartilhar</button>
+                                style="width: 100%; font-size: 0.9rem;">
+                                📤 Compartilhar no Status
+                            </button>
+                            <button class="az-btn-main az-btn-secondary"
+                                onclick="window.open(shareSettings.group_link, '_blank')"
+                                style="width: 100%; font-size: 0.9rem; background: transparent; border: 1px solid var(--az-primary); color: var(--az-primary);">
+                                👥 Ir ao Grupo
+                            </button>
                         </div>
                     </div>
                 </div>
                 <!-- SLIDE 2: Form -->
                 <div class="story-slide" id="slide2">
                     <div class="story-badge">2</div>
-                    <div class="story-header">
-                        <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 0.5rem;">Seus Dados</h2>
-                        <p style="color: #aaa; margin: 0;">Preencha para gerar números</p>
+                    <div class="story-header" style="margin-top: 3.5rem; margin-bottom: 0.5rem;">
+                        <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.2rem;">Seus Dados</h2>
+                        <p style="color: #aaa; margin: 0; font-size: 0.85rem;">Preencha para gerar números</p>
                     </div>
-                    <div class="story-content-area" style="display: block; width: 100%;">
-                        <form id="claimFormStories" onsubmit="submitClaimStep2(event)">
-                            <div class="form-group"><label>WhatsApp (com DDD)</label><input type="tel" id="phone"
-                                    class="form-control" required placeholder="(11) 99999-9999"
-                                    oninput="maskPhone(this)" onblur="checkExistingUser(this.value)"></div>
-                            <div class="form-group"><label>Nome Completo</label><input type="text" id="name"
-                                    class="form-control" required minlength="3"
-                                    onblur="this.value = capitalizeName(this.value)"></div>
-                            <div class="form-group"><label>Você já compartilhou no status?</label><select
-                                    id="sharedStatus" class="form-control" required>
+                    <div class="story-content-area" style="display: block; width: 100%; padding: 0 1.5rem;">
+                        <form id="claimFormStories" onsubmit="submitClaimStep2(event)" style="text-align: left;">
+
+                            <!-- Compact Fields -->
+                            <div class="az-form-group">
+                                <label class="az-form-label">WhatsApp (com DDD)</label>
+                                <input type="tel" id="phone" class="az-form-control" style="width: 100%;" required
+                                    placeholder="(11) 99999-9999" oninput="maskPhone(this)"
+                                    onblur="checkExistingUser(this.value)">
+                            </div>
+
+                            <div class="az-form-group">
+                                <label class="az-form-label">Nome Completo</label>
+                                <input type="text" id="name" class="az-form-control" style="width: 100%;" required
+                                    minlength="3" onblur="this.value = capitalizeName(this.value)">
+                            </div>
+
+                            <div class="az-form-group">
+                                <label class="az-form-label">CEP (Obrigatório)</label>
+                                <input type="tel" id="cep" class="az-form-control" style="width: 100%;" required
+                                    placeholder="00000-000" maxlength="9" oninput="maskCEP(this)">
+                            </div>
+
+                            <div class="az-form-group">
+                                <label class="az-form-label">Já compartilhou?</label>
+                                <select id="sharedStatus" class="az-form-control" style="width: 100%;" required>
                                     <option value="">Selecione...</option>
                                     <option value="yes">Sim, já compartilhei</option>
                                     <option value="no">Vou compartilhar agora</option>
-                                </select></div>
-                            <div class="checkbox-group"><input type="checkbox" id="lgpdConsent" required><label
-                                    for="lgpdConsent">Aceito os Termos e Política de Privacidade.</label></div>
-                            <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1.5rem;"
-                                id="submitBtnStories">Gerar Números</button>
+                                </select>
+                            </div>
+
+                            <div class="checkbox-group" style="margin-top: 0.5rem;">
+                                <input type="checkbox" id="lgpdConsent" required>
+                                <label for="lgpdConsent" style="font-size: 0.75rem;">Aceito os Termos e Política de
+                                    Privacidade.</label>
+                            </div>
+
+                            <button type="submit" class="az-btn-main" style="width: 100%; margin-top: 1rem;"
+                                id="submitBtnStories">
+                                Gerar Números
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -1172,54 +1208,73 @@
             }
         }
 
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, "");
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 10) {
+                input.value = `(${v.substring(0, 2)}) ${v.substring(2, 7)}-${v.substring(7)}`;
+            } else if (v.length > 5) {
+                input.value = `(${v.substring(0, 2)}) ${v.substring(2, 6)}-${v.substring(6)}`;
+            } else if (v.length > 2) {
+                input.value = `(${v.substring(0, 2)}) ${v.substring(2)}`;
+            } else {
+                input.value = v;
+            }
+        }
+
+        function maskCEP(input) {
+            let v = input.value.replace(/\D/g, "");
+            if (v.length > 8) v = v.substring(0, 8);
+            if (v.length > 5) {
+                input.value = `${v.substring(0, 5)}-${v.substring(5)}`;
+            } else {
+                input.value = v;
+            }
+        }
+
         async function submitClaimStep2(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtnStories');
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'Gerando...';
-
             const phone = document.getElementById('phone').value;
             const name = document.getElementById('name').value;
             const shared = document.getElementById('sharedStatus').value;
-            const consent = document.getElementById('lgpdConsent').checked;
+            const cep = document.getElementById('cep').value; // Get CEP
+
+            if (!phone || phone.length < 14) {
+                return alert('Por favor, preencha um WhatsApp válido (DDD + Número).');
+            }
+            if (!name || name.trim().split(' ').length < 2) {
+                return alert('Digite seu Nome Completo (Nome e Sobrenome).');
+            }
+            if (cep.length < 9) {
+                return alert('Por favor, preencha o CEP completo (00000-000).');
+            }
+            if (!shared) {
+                return alert('Informe se você já compartilhou no status.');
+            }
+
+            btn.classList.add('loading');
+            btn.disabled = true;
 
             try {
-                const res = await fetch('/api/amigos/finish', {
+                // Tracking Consent
+                const consent = document.getElementById('lgpdConsent').checked;
+
+                const res = await fetch('/api/amigos/claim/finish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        claim_session_id: claimSessionId,
-                        phone, name,
-                        shared_status: shared,
-                        promo_token: promoToken,
-                        lgpd_consent: consent,
-                        device_id: deviceId
+                        sessionId: claimSessionId,
+                        phone,
+                        name: name.trim(),
+                        consent,
+                        promoToken: promoToken,
+                        ua: navigator.userAgent,
+                        deviceId: deviceId,
+                        cep: cep // Send CEP
                     })
                 });
 
-                // Check response status first
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    let errorMsg = 'Erro desconhecido';
-                    try {
-                        const errJson = JSON.parse(errorText);
-                        errorMsg = errJson.error || errorMsg;
-                    } catch { errorMsg = errorText || errorMsg; }
-
-                    if (errorMsg.includes('bloqueado')) {
-                        handleBlocked(errorMsg);
-                        return;
-                    }
-                    throw new Error(errorMsg);
-                }
-
-                const result = await res.json();
-
-                localStorage.setItem('az_phone', phone);
-
-                // Move to Reveal Slide
-                currentStoryIndex = 2;
                 updateStories();
                 revealNumbers(result.numbers);
 

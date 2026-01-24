@@ -182,7 +182,7 @@ router.post('/start', validate('startClaim'), async (req, res) => {
 // Validate finishClaim schema
 router.post('/finish', validate('finishClaim'), async (req, res) => {
     try {
-        const { claim_session_id, phone, name, shared_status, promo_token, lgpd_consent, device_id } = req.body;
+        const { claim_session_id, phone, name, shared_status, promo_token, lgpd_consent, device_id, cep } = req.body;
 
         const sessionData = req.session.amigos_claim;
 
@@ -205,7 +205,8 @@ router.post('/finish', validate('finishClaim'), async (req, res) => {
             promo_token,
             info.ip,
             info.ua,
-            device_id || info.deviceId
+            device_id || info.deviceId,
+            cep
         );
 
         // Clear session logic? Maybe keep to prevent replay
