@@ -695,14 +695,7 @@
                             👥 IR AO GRUPO
                         </button>
 
-                        <div id="step1NextContainer"
-                            style="opacity: 0; transition: opacity 0.5s ease; pointer-events: none;">
-                            <p style="color: #ccc; font-size: 0.8rem; margin-bottom: 5px;">Já postou?</p>
-                            <button class="az-btn-main az-btn-secondary" onclick="nextStory()"
-                                style="width: 100%; font-size: 0.9rem; padding: 10px;">
-                                Próxima Etapa →
-                            </button>
-                        </div>
+                        <!-- Container removed -->
                     </div>
                 </div>
                 <!-- SLIDE 2: Form -->
@@ -1014,31 +1007,29 @@
             const track = document.getElementById('storiesTrack');
             track.style.transform = `translateX(-${currentStoryIndex * 25}%)`;
 
-            // Only Manage Next button (Arrow)
+            // Manage Next button (Arrow)
             let nextBtn = document.getElementById('storyNextBtn');
             nextBtn.classList.remove('visible'); // default hide
 
-            // Step 1: Wait 5 seconds, then show "Próximo" button inside the slide (NOT the arrow)
+            // Step 1: Wait 5 seconds, then show ARROW
             if (currentStoryIndex === 0) {
-                // If already done, show immediately
                 if (step1Done) {
-                    document.getElementById('step1NextContainer').style.opacity = '1';
-                    document.getElementById('step1NextContainer').style.pointerEvents = 'auto';
+                    nextBtn.classList.add('visible');
                 } else {
                     // Start Timer
                     setTimeout(() => {
-                        document.getElementById('step1NextContainer').style.opacity = '1';
-                        document.getElementById('step1NextContainer').style.pointerEvents = 'auto';
-                        step1Done = true; // Mark as "can proceed"
+                        step1Done = true;
+                        // Only show if user is still on Step 1
+                        if (currentStoryIndex === 0) {
+                            nextBtn.classList.add('visible');
+                        }
                     }, 5000);
                 }
             }
+            // Step 2: Form (button inside form handles it, no arrow)
 
-            // Logic for when to show Next arrow (Bottom Right)
-            // Step 1: uses internal button now, so we hide arrow.
-            // Step 2: Form submit
-            // Step 3: Reveal -> Step 4
-            if (currentStoryIndex === 2 && step3Done) {
+            // Step 3 (Reveal) & Success are handled differently
+            else if (currentStoryIndex === 2 && step3Done) {
                 nextBtn.classList.add('visible');
             }
         }
