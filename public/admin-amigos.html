@@ -822,8 +822,19 @@
                         document.getElementById('houseReservedName').textContent = c.house_winner_name;
                     }
                 } else {
-                    // No active campaign
+                    // No active campaign - CLEAR EVERYTHING
                     document.getElementById('isActive').checked = false;
+                    document.getElementById('campName').value = '';
+                    document.getElementById('startNum').value = '';
+                    document.getElementById('endNum').value = '';
+
+                    // Clear House Winner
+                    document.getElementById('houseWinnerToggle').checked = false;
+                    document.getElementById('houseWinnerInfo').style.display = 'none';
+                    document.getElementById('houseReservedNumber').textContent = '--';
+                    document.getElementById('houseReservedName').textContent = '--';
+
+                    currentCampaignId = null;
                 }
             } catch (e) { console.error('Error loading campaign', e); }
         }

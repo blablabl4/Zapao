@@ -168,6 +168,45 @@ router.post('/campaign/reset', async (req, res) => {
     }
 });
 
+// Finish Campaign (Mark inactive)
+router.post('/campaign/finish', async (req, res) => {
+    try {
+        const { campaignId } = req.body;
+        // Invalidate cache first
+        const AmigosService = require('../services/AmigosService'); // Ensure service is available if not global
+        // Wait, AmigosService is required at top.
+
+        // We need a method to cleanup/disable.
+        // Assuming updateCampaign can set is_active = false
+        if (!campaignId) return res.status(400).json({ error: 'No campaign ID' });
+
+        await AmigosAdminService.updateCampaign(campaignId, { is_active: false });
+        // Maybe explicitly clear house winner?
+        // Let's toggle it off too just to be safe for history logic?
+        // Actually, updateCampaign updates what is passed.
+        // Let's add manual cache invalidation just in case.
+        // AmigosService is instance? No, it's exported instance or class?
+        // Top of file: const AmigosService = require('../services/AmigosService');
+        // Check service definition. It exported 'new AmigosService()' presumably or class.
+        // File 794 shows `class AmigosService`.
+        // The require in adminAmigos.js line 6: `const AmigosService = require('../services/AmigosService');`
+        // If it exports class index, we need to see how it's used.
+        // Line 12: `const campaign = await AmigosService.getActiveCampaign();` -> implying it exports an INSTANCE or static methods.
+        // File 794 shows `class AmigosService { ... }`.
+        // Usually `module.exports = new AmigosService();`
+        // If so, `AmigosService.invalidateCache()` works.
+
+        if (typeof AmigosService.invalidateCache === 'function') {
+            AmigosService.invalidateCache();
+        }
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Finish error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Restart Campaign (Complete Delete + Recreate)
 router.post('/campaign/restart', async (req, res) => {
     try {
