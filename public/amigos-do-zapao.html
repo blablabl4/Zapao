@@ -667,40 +667,9 @@
             <button class="story-nav-btn" id="storyNextBtn" onclick="nextStory()">❯</button>
 
             <div class="stories-track" id="storiesTrack">
-                <!-- SLIDE 1: Share -->
-                <div class="story-slide" id="slide1">
-                    <div class="story-badge">1</div>
-                    <div class="story-header" style="margin-top: 3.5rem;">
-                        <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Etapa Obrigatória</h2>
-                        <div
-                            style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; text-align: left; margin: 1rem 0;">
-                            <p style="color: #fff; margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5;">
-                                1. Entre no <strong>Grupo Oficial</strong> clicando no botão abaixo.
-                            </p>
-                            <p style="color: #fff; margin: 0; font-size: 0.95rem; line-height: 1.5;">
-                                2. Publique a <strong>última mídia enviada no grupo</strong> no seu Status do WhatsApp.
-                            </p>
-                        </div>
-                        <p
-                            style="color: #FFD700; font-weight: bold; font-size: 0.8rem; margin-top: 0.5rem; padding: 5px; border-radius: 8px;">
-                            ⚠️ O prêmio só será validado se tiver postado!
-                        </p>
-                    </div>
-
-                    <div class="story-content-area"
-                        style="padding: 0 1rem; display: flex; flex-direction: column; gap: 15px;">
-                        <button class="az-btn-main" id="btnGroupStep1"
-                            onclick="window.open(shareSettings.group_link, '_blank')"
-                            style="width: 100%; font-size: 1rem; padding: 15px;">
-                            👥 IR AO GRUPO
-                        </button>
-
-                        <!-- Container removed -->
-                    </div>
-                </div>
-                <!-- SLIDE 2: Form -->
+                <!-- SLIDE 1: Form (Previously Slide 2) -->
                 <div class="story-slide" id="slide2">
-                    <div class="story-badge">2</div>
+                    <div class="story-badge">1</div>
                     <div class="story-header" style="margin-top: 3.5rem; margin-bottom: 0.5rem;">
                         <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.2rem;">Seus Dados</h2>
                         <p style="color: #aaa; margin: 0; font-size: 0.85rem;">Preencha para gerar números</p>
@@ -750,9 +719,9 @@
                         </form>
                     </div>
                 </div>
-                <!-- SLIDE 3: Reveal -->
+                <!-- SLIDE 2: Reveal -->
                 <div class="story-slide" id="slideReveal">
-                    <div class="story-badge">3</div>
+                    <div class="story-badge">2</div>
                     <div class="story-header">
                         <h2 class="az-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Esse são seus números da
                             sorte 🍀</h2>
@@ -765,9 +734,9 @@
                         <p style="color: #666; font-size: 0.8rem; margin-top: 2rem;" id="revealHint"></p>
                     </div>
                 </div>
-                <!-- SLIDE 4: Success -->
+                <!-- SLIDE 3: Success -->
                 <div class="story-slide" id="slideSuccess">
-                    <div class="story-badge">4</div>
+                    <div class="story-badge">3</div>
                     <div class="story-header">
                         <h2 class="az-title" style="font-size: 1.8rem; margin-bottom: 0.5rem;">Último Passo</h2>
                         <p style="color: #aaa; margin: 0;">Números registrados</p>
@@ -862,7 +831,6 @@
         // Stories State
         let currentStoryIndex = 0;
         const totalStories = 4;
-        let step1Done = false;
         let step3Done = false;
 
         async function loadSettings() {
@@ -1011,33 +979,31 @@
             let nextBtn = document.getElementById('storyNextBtn');
             nextBtn.classList.remove('visible'); // default hide
 
-            // Step 1: Wait 5 seconds, then show ARROW
-            if (currentStoryIndex === 0) {
-                if (step1Done) {
-                    nextBtn.classList.add('visible');
-                } else {
-                    // Start Timer
-                    setTimeout(() => {
-                        step1Done = true;
-                        // Only show if user is still on Step 1
-                        if (currentStoryIndex === 0) {
-                            nextBtn.classList.add('visible');
-                        }
-                    }, 5000);
-                }
-            }
-            // Step 2: Form (button inside form handles it, no arrow)
+            // Step 1: Form (Index 0). Controlled by "Gerar Números" button. No Arrow.
 
-            // Step 3 (Reveal) & Success are handled differently
-            else if (currentStoryIndex === 2 && step3Done) {
+            // Step 2: Reveal (Index 1).
+            // Show arrow ONLY when reveal is done.
+            if (currentStoryIndex === 1 && step3Done) { // step3Done variable holds the "reveal finished" state (I'll rename it in mind to 'stepRevealDone' but keeping var name to avoid breaking ref)
                 nextBtn.classList.add('visible');
             }
+
+            // Step 3: Success (Index 2). No next arrow.
         }
 
         function nextStory() {
-            if (currentStoryIndex < totalStories - 1) {
-                if (currentStoryIndex === 1) {
-                    // Form Step
+            // Updated totalStories is effectively 3 visible slides now, but array length might still imply 4 if logic isn't careful.
+            // But CSS translateX uses 25%? If we have fewer slides, we should adjust width or translateX.
+            // Wait, HTML removed 1 slide. So we have 3 slides. 
+            // Width of track? 
+            // If we have 3 slides, translateX should be: 0%, -33.3%, -66.6%?
+            // Or -100%, -200%?
+            // The CSS for `stories-track` usually sets width: 400% if 4 slides.
+            // I should check CSS. Assuming I need to update CSS or JS calculation.
+            // Let's assume JS calculates based on count.
+
+            if (currentStoryIndex < 3) { // Max index 2
+                if (currentStoryIndex === 0) {
+                    // Form Step (Now Index 0)
                     const form = document.getElementById('claimFormStories');
                     if (form.checkValidity()) {
                         document.getElementById('submitBtnStories').click();
@@ -1054,7 +1020,7 @@
         function closeStories() {
             document.getElementById('storiesView').style.display = 'none';
             document.getElementById('home-view').style.display = 'block'; // Show home
-            if (currentStoryIndex === 3) {
+            if (currentStoryIndex === 2) { // Success Step (Index 2)
                 window.location.reload();
             }
         }
@@ -1207,7 +1173,8 @@
                         deviceId: deviceId,
                         cep: cep // Send CEP
                     })
-                });
+                const result = await res.json();
+                    if(!res.ok) throw new Error(result.error || 'Erro ao finalizar');
 
                 updateStories();
                 revealNumbers(result.numbers);
