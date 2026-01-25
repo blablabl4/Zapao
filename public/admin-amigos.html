@@ -587,6 +587,26 @@
 
         <!-- TAB: CONFIG -->
         <div id="tab-config" class="section-content active">
+
+            <!-- CAMPAIGN STATUS CARD (NEW) -->
+            <div class="card" style="background: #1f2937; border: 1px solid #374151; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <h3
+                            style="margin: 0; color: #9ca3af; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
+                            Status do Sistema</h3>
+                        <div id="systemStatusText"
+                            style="font-size: 1.5rem; font-weight: bold; color: #fff; margin-top: 5px;">
+                            Carregando...
+                        </div>
+                    </div>
+                    <div id="systemStatusBadge"
+                        style="padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;">
+                        Checking
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <h2>Configuração da Campanha Atual</h2>
                 <form id="campaignForm" onsubmit="saveCampaign(event)">
@@ -821,6 +841,22 @@
                         document.getElementById('houseReservedNumber').textContent = c.house_winner_number;
                         document.getElementById('houseReservedName').textContent = c.house_winner_name;
                     }
+
+                    // UPDATE STATUS CARD
+                    const statusText = document.getElementById('systemStatusText');
+                    const statusBadge = document.getElementById('systemStatusBadge');
+
+                    statusText.textContent = `Rodada Ativa: ${c.name}`;
+                    statusText.style.color = '#10b981'; // Green text
+
+                    statusBadge.textContent = 'RODANDO 🟢';
+                    statusBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+                    statusBadge.style.color = '#10b981';
+                    statusBadge.style.border = '1px solid #10b981';
+
+                    // Enable Actions
+                    enableCampaignActions(true);
+
                 } else {
                     // No active campaign - CLEAR EVERYTHING
                     document.getElementById('isActive').checked = false;
@@ -835,6 +871,21 @@
                     document.getElementById('houseReservedName').textContent = '--';
 
                     currentCampaignId = null;
+
+                    // UPDATE STATUS CARD (Inactive)
+                    const statusText = document.getElementById('systemStatusText');
+                    const statusBadge = document.getElementById('systemStatusBadge');
+
+                    statusText.textContent = 'Nenhuma Campanha Ativa';
+                    statusText.style.color = '#ef4444'; // Red
+
+                    statusBadge.textContent = 'PARADO 🔴';
+                    statusBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+                    statusBadge.style.color = '#ef4444';
+                    statusBadge.style.border = '1px solid #ef4444';
+
+                    // Disable Actions
+                    enableCampaignActions(false);
                 }
             } catch (e) { console.error('Error loading campaign', e); }
         }
@@ -1257,11 +1308,40 @@
                 } catch (e) { document.getElementById('searchResult').textContent = 'Erro'; }
             }
 
+            function enableCampaignActions(enabled) {
+                const btnWhitelist = document.querySelector('#whitelistSection button'); // Assuming button is inside
+                const inputWhitelist = document.getElementById('whitelistInput');
+
+                // We need to target the buttons more precisely if they don't have IDs
+                // Adding IDs to whitelist elements would be better, but selecting by context works.
+
+                // Whitelist Upload
+                if (inputWhitelist) {
+                    inputWhitelist.disabled = !enabled;
+                    if (!enabled) inputWhitelist.placeholder = "🚫 Nenhuma campanha ativa. Inicie uma para liberar upload.";
+                    else inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";
+                }
+
+                // Whitelist Button - Find the button next to it
+                if (inputWhitelist && inputWhitelist.nextElementSibling) {
+                    const btn = inputWhitelist.nextElementSibling;
+                    if (btn.tagName === 'BUTTON') {
+                        btn.disabled = !enabled;
+                        btn.innerText = enabled ? 'Sincronizar Lista (Quem sai, perde)' : '🚫 Campanha Inativa';
+                    }
+                }
+
+                // Roulette Tab Handling
+                // If disabled, maybe show alert when clicking tab?
+                // For now, let's just disabling the whitelist is key.
+            }
+
             // Init
             loadCampaign();
-            loadPromos();
             loadKPIs();
 
+            // Auto refresh
+            setInterval(loadKPIs, 30000); // Every 30s
     </script>
 </body>
 
