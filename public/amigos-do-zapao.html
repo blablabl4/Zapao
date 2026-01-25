@@ -800,6 +800,37 @@
         </div>
     </div>
 
+    <!-- Whitelist Error Modal -->
+    <div class="az-modal-overlay" id="whitelistModal" style="display: none;">
+        <div class="az-modal" style="max-width: 400px; text-align: center; border: 1px solid #333; padding: 2rem;">
+            <!-- Warning Icon -->
+            <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+
+            <!-- Green Highlight Text -->
+            <h2
+                style="color: #10b981; font-weight: 900; font-size: 1.4rem; margin-bottom: 1rem; text-transform: uppercase;">
+                ENTRE NO GRUPO PARA PARTICIPAR!
+            </h2>
+
+            <!-- Normal Text -->
+            <p style="color: #ccc; font-size: 1rem; margin-bottom: 2rem; line-height: 1.5;">
+                Seu número não está na lista de convidados.
+            </p>
+
+            <!-- Fixed WhatsApp Link Button -->
+            <a href="https://chat.whatsapp.com/KsJ0XbrXvPg8FaNpaslVqc" target="_blank" class="az-btn-main"
+                style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; text-decoration: none; font-weight:bold;">
+                <span>📱</span> ENTRAR NO GRUPO
+            </a>
+
+            <button class="az-btn-main az-btn-secondary"
+                onclick="document.getElementById('whitelistModal').style.display='none'"
+                style="width: 100%; margin-top: 1rem;">
+                Fechar
+            </button>
+        </div>
+    </div>
+
     <script>
         // State
         let claimSessionId = null;
@@ -1195,6 +1226,9 @@
                     showSoldOutModal('sold_out');
                 } else if (msg.includes('resgatou') || msg.includes('hoje') || msg.includes('limite')) {
                     showSoldOutModal('daily_limit');
+                } else if (msg.includes('entre no grupo')) {
+                    // NEW: Specific Whitelist Modal
+                    document.getElementById('whitelistModal').style.display = 'flex';
                 } else {
                     showAlert(err.message, 'Erro');
                 }
