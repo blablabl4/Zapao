@@ -1169,14 +1169,14 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        sessionId: claimSessionId,
+                        claim_session_id: claimSessionId, // Match backend snake_case
                         phone,
                         name: name.trim(),
-                        consent,
-                        promoToken: promoToken,
+                        lgpd_consent: consent, // Match backend key
+                        promo_token: promoToken, // Match backend snake_case
                         ua: navigator.userAgent,
-                        deviceId: deviceId,
-                        cep: cep // Send CEP
+                        device_id: deviceId,
+                        cep: cep
                     })
                 });
 
