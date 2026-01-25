@@ -582,6 +582,7 @@
             <div id="nav-promos" class="nav-tab" onclick="switchTab('promos')">Promoções</div>
             <div id="nav-draw" class="nav-tab" onclick="switchTab('draw')">Sorteio 🎰</div>
             <div id="nav-search" class="nav-tab" onclick="switchTab('search')">Buscar Usuário</div>
+            <div id="nav-distribution" class="nav-tab" onclick="switchTab('distribution')">Distribuição 📊</div>
             <div id="nav-admins" class="nav-tab" onclick="switchTab('admins')">Administradores</div>
         </div>
 
@@ -660,6 +661,28 @@
                                 <th>Extra</th>
                                 <th>Imagem</th>
                                 <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: DISTRIBUTION (NEW) -->
+        <div id="tab-distribution" class="section-content">
+            <div class="card">
+                <h2>Rastreio de Distribuição 📊</h2>
+                <button onclick="loadDistribution()" class="btn btn-outline" style="margin-bottom: 1rem;">🔄 Atualizar
+                    Lista</button>
+                <div class="table-wrapper">
+                    <table id="distributionTable">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Data</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -1310,6 +1333,40 @@
                 const res = await fetch('/api/admin/amigos/promotions');
                 const list = await res.json();
                 document.querySelector('#promoTable tbody').innerHTML = list.map(p => `<tr><td>${p.name}</td><td>${p.extra_qty}</td><td>-</td><td><button onclick="fetch('/api/admin/amigos/promotions/${p.id}',{method:'DELETE'}).then(loadPromos)">Excluir</button></td></tr>`).join('');
+            }
+
+            async function loadDistribution() {
+                if (!currentCampaignId) return;
+                const tbody = document.querySelector('#distributionTable tbody');
+                tbody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+
+                try {
+                    // Reuse existing candidates endpoint which returns [{ticket_number, name, phone, status...}]
+                    const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}`);
+                    const list = await res.json();
+
+                    // Filter only ASSIGNED
+                    const sold = list.filter(i => i.status === 'ASSIGNED');
+
+                    if (sold.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4">Nenhum número distribuído ainda.</td></tr>';
+                        return;
+                    }
+
+                    // Sort by Ticket Number
+                    sold.sort((a, b) => a.number - b.number);
+
+                    tbody.innerHTML = sold.map(i => `
+                        <tr>
+                            <td><strong style="color:var(--az-primary); font-size:1.1rem;">${i.number}</strong></td>
+                            <td>${i.name || '-'}</td>
+                            <td>${i.phone || '-'}</td>
+                             <td>-</td>
+                        </tr>
+                    `).join('');
+                } catch (e) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${e.message}</td></tr>`;
+                }
             }
 
             async function searchUser() {
