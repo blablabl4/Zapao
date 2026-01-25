@@ -511,36 +511,90 @@ router.post('/whitelist', async (req, res) => {
             numbersToAdd = text.split(/[\n,;]+/).map(s => s.trim().replace(/\D/g, '')).filter(s => s.length >= 10);
         }
 
-        if (numbersToAdd.length === 0) {
-            return res.status(400).json({ error: 'Nenhum número válido fornecido.' });
-        }
-
-        // Bulk insert (using ON CONFLICT DO NOTHING)
-        // We can use a loop or construct a big query. Loop is safer for small batches, but slow for huge ones.
-        // Let's use a single query with VALUES.
+        // Allow empty list (clears everyone)
+        // If numbersToAdd is empty, we just clear everything.
 
         const client = await require('../database/db').getClient();
         try {
             await client.query('BEGIN');
 
-            // Remove duplicates within the input itself
+            // 1. Prepare new list values
             const uniqueNumbers = [...new Set(numbersToAdd)];
 
-            // Chunk it if needed (e.g. 1000 at a time), but let's assume reasonable input size for now (e.g. < 5000)
-            const values = uniqueNumbers.map(n => `('${n}')`).join(',');
+            // 2. Identify & Revoke Invalid Claims (The "Prune" Step)
+            // If the list is empty, ALL claims are invalid.
+            // If not empty, find claims NOT IN the new list.
 
-            const queryStr = `
-                INSERT INTO az_whitelist (phone) 
-                VALUES ${values}
-                ON CONFLICT (phone) DO NOTHING
-            `;
+            let revokeQuery = '';
+            let revokeParams = [];
 
-            const result = await client.query(queryStr);
+            if (uniqueNumbers.length > 0) {
+                // We can't pass thousands of params easily in NOT IN ($1, $2...) limit 65535 placeholders
+                // Better approach: Create a temp table or use VALUES
+                // Let's use a Common Table Expression (CTE) or ANY(array) logic if postgres
+
+                // Since we are inside a transaction, let's Truncate whitelist first? 
+                // NO, we need the new list to compare. 
+
+                // Strategy: 
+                // A. Truncate whitelist.
+                // B. Insert new numbers.
+                // C. Delete claims where phone NOT IN (SELECT phone FROM az_whitelist).
+
+                // This is much cleaner and scalable!
+
+                // A. Clear Whitelist
+                await client.query('TRUNCATE TABLE az_whitelist');
+
+                // B. Insert New Numbers
+                const values = uniqueNumbers.map(n => `('${n}')`).join(',');
+                await client.query(`INSERT INTO az_whitelist (phone) VALUES ${values}`);
+
+                // C. Find Claims to Revoke (Phone not in whitelist anymore)
+                const toRevokeRes = await client.query(`
+                    SELECT id FROM az_claims 
+                    WHERE phone NOT IN (SELECT phone FROM az_whitelist)
+                 `);
+
+                const revokeIds = toRevokeRes.rows.map(r => r.id);
+
+                if (revokeIds.length > 0) {
+                    console.log(`[Whitelist] Revoking ${revokeIds.length} claims not in new list...`);
+
+                    // Reset Tickets
+                    await client.query(`
+                        UPDATE az_tickets 
+                        SET status = 'AVAILABLE', assigned_claim_id = NULL 
+                        WHERE assigned_claim_id = ANY($1::int[])
+                     `, [revokeIds]);
+
+                    // Delete Claims
+                    await client.query(`
+                        DELETE FROM az_claims WHERE id = ANY($1::int[])
+                     `, [revokeIds]);
+                }
+
+            } else {
+                // Empty list -> Revoke ALL
+                console.log('[Whitelist] Empty list provided. Revoking ALL claims.');
+                await client.query('TRUNCATE TABLE az_whitelist');
+
+                // Reset All Tickets that are assigned
+                await client.query(`
+                    UPDATE az_tickets 
+                    SET status = 'AVAILABLE', assigned_claim_id = NULL 
+                    WHERE status = 'ASSIGNED'
+                 `);
+
+                // Delete All Claims
+                await client.query('DELETE FROM az_claims');
+            }
+
             await client.query('COMMIT');
 
             res.json({
                 success: true,
-                message: `${result.rowCount} números adicionados com sucesso!`,
+                message: `Lista Sincronizada! ${uniqueNumbers.length} ativos.`,
                 total_processed: uniqueNumbers.length
             });
 
