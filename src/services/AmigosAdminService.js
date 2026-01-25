@@ -383,19 +383,24 @@ class AmigosAdminService {
     }
 
     async getDrawCandidates(campaignId) {
-        // Get 50 random tickets for the visual "Spin" effect
+        // Get 60 random tickets for the visual "Spin" effect
+        // Enforce range strictly to avoid "ghost numbers"
         const res = await query(`
             SELECT t.number as ticket_number, t.status, c.name
             FROM az_tickets t
+            JOIN az_campaigns cam ON t.campaign_id = cam.id
             LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
             WHERE t.campaign_id = $1
+              AND t.number >= cam.start_number 
+              AND t.number <= cam.end_number
             ORDER BY RANDOM()
-            LIMIT 50
+            LIMIT 60
         `, [campaignId]);
 
         return res.rows.map(r => ({
             number: r.ticket_number,
-            label: r.status === 'ASSIGNED' ? (r.name || 'Participante') : 'Livre 🏠'
+            status: r.status,
+            label: r.status === 'ASSIGNED' ? (r.name ? r.name.split(' ')[0] : 'Participante') : 'Livre 🏠'
         }));
     }
 
