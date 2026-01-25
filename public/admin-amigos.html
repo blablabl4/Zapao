@@ -1318,21 +1318,19 @@
             }
 
             function enableCampaignActions(enabled) {
+                // FORCE ENABLE ALWAYS per user request
                 try {
                     const inputWhitelist = document.getElementById('whitelistInput');
-                    // Whitelist Upload Input
                     if (inputWhitelist) {
-                        inputWhitelist.disabled = !enabled;
-                        if (!enabled) inputWhitelist.placeholder = "🚫 Nenhuma campanha ativa. Inicie uma para liberar upload.";
-                        else inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";
+                        inputWhitelist.disabled = false; // Always enabled
+                        inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";
 
-                        // Whitelist Button is in parent div, after the form-group
                         const card = inputWhitelist.closest('.card');
                         if (card) {
                             const btn = card.querySelector('button');
                             if (btn) {
-                                btn.disabled = !enabled;
-                                btn.innerText = enabled ? 'Sincronizar Lista (Quem sai, perde)' : '🚫 Campanha Inativa';
+                                btn.disabled = false; // Always enabled
+                                btn.innerText = 'Sincronizar Lista (Quem sai, perde)';
                             }
                         }
                     }
