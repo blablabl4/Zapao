@@ -1098,7 +1098,7 @@
 
             try {
                 // Pre-fetch candidates
-                const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}`);
+                const res = await fetch(`/api/admin/amigos/draw/candidates/${currentCampaignId}`);
                 candidates = await res.json();
 
                 // Render initial static view (first 5)

@@ -472,7 +472,7 @@ class AmigosService {
             const baseQty = 1;
             extraQty = 0;
             const totalQty = 1;
-            const nextUnlock = null; // No daily unlock, it's one-time only
+            const nextUnlock = new Date(); // Satisfy NOT NULL constraint even if unused
 
             // ---------------------------
 
