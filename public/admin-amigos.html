@@ -827,10 +827,10 @@
             console.log('loadCampaign START');
             try {
                 const res = await fetch('/api/admin/amigos/campaign');
-                if(!res.ok) throw new Error('Fetch failed: ' + res.status);
+                if (!res.ok) throw new Error('Fetch failed: ' + res.status);
                 const c = await res.json();
                 console.log('Campaign loaded:', c);
-                
+
                 // Safe Helper
                 const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
                 const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -1358,11 +1358,33 @@
             }
 
             // Init
-            loadCampaign();
-            loadKPIs();
+            window.addEventListener('DOMContentLoaded', () => {
+                console.log('DOM Ready - Initializing Admin');
 
-            // Auto refresh
-            setInterval(loadKPIs, 30000); // Every 30s
+                // Global Error Trap for UI
+                window.onerror = function (msg, url, line) {
+                    const statusText = document.getElementById('systemStatusText');
+                    if (statusText) {
+                        statusText.textContent = 'CRASH: ' + msg;
+                        statusText.style.color = 'red';
+                    }
+                    console.error('Global Error:', msg);
+                    return false;
+                };
+
+                // Helper to safely call init functions
+                const safeRun = (fn) => { try { fn(); } catch (e) { console.error(e); } };
+
+                // Small delay to ensure everything is settled (optional but safe)
+                setTimeout(() => {
+                    safeRun(loadCampaign);
+                    safeRun(loadKPIs);
+                    safeRun(loadPromos);
+                }, 100);
+
+                // Auto refresh
+                setInterval(() => safeRun(loadKPIs), 30000); // Every 30s
+            });
     </script>
 </body>
 
