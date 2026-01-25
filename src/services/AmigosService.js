@@ -233,21 +233,30 @@ class AmigosService {
             const endNum = parseInt(camp.end_number);
             const total = endNum - startNum + 1;
 
-            console.log('[AmigosService] Generating tickets from', startNum, 'to', endNum);
+            console.log('[AmigosService] Generating tickets from', startNum, 'to', endNum, `(Total: ${total})`);
+
+            if (total > 100000) {
+                throw new Error(`Range muito grande (${total} números). O limite é 100.000 por segurança.`);
+            }
 
             // Create array of numbers
             const numbers = Array.from({ length: total }, (_, i) => startNum + i);
 
             // Fisher-Yates Shuffle (O(N)) - In-place
+            // Only shuffle if total < 50000 to save memory/cpu, otherwise sequential is safer?
+            // Actually shuffle is key for fair distribution of "low/high" numbers if fetched sequentially.
+            // We keep shuffle but log time.
+            console.time('Shuffle');
             for (let i = numbers.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
             }
+            console.timeEnd('Shuffle');
 
             console.log('[AmigosService] Tickets shuffled. Starting bulk insert...');
 
-            // Bulk Insert (chunks of 5000 to be safe with query size limit)
-            const chunkSize = 5000;
+            // Bulk Insert (chunks of 2000 to be safer on Railway free tier RAM)
+            const chunkSize = 2000;
             let insertedCount = 0;
 
             const currentRound = camp.current_round || 1;
