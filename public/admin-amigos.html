@@ -824,10 +824,13 @@
 
         // --- CAMPAIGN LOADER ---
         async function loadCampaign() {
+            console.log('loadCampaign START');
             try {
                 const res = await fetch('/api/admin/amigos/campaign');
+                if(!res.ok) throw new Error('Fetch failed: ' + res.status);
                 const c = await res.json();
-
+                console.log('Campaign loaded:', c);
+                
                 // Safe Helper
                 const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
                 const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };

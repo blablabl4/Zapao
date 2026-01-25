@@ -5,12 +5,21 @@ const { query } = require('../database/db');
 const AmigosAdminService = require('../services/AmigosAdminService');
 const AmigosService = require('../services/AmigosService');
 
-// All routes here should be protected by requireAdmin in server.js
-
+// All routes here should be protected by requireAdmin// GET Current Campaign (Active OR Latest)
 router.get('/campaign', async (req, res) => {
     try {
-        const campaign = await AmigosService.getActiveCampaign();
-        res.json(campaign || {}); // Return empty obj if null to avoid client error
+        // First try to get active
+        let campaign = await AmigosService.getActiveCampaign();
+        
+        // If no active, get the latest one (Draft mode support)
+        if (!campaign) {
+            const result = await query('SELECT * FROM az_campaigns ORDER BY created_at DESC LIMIT 1');
+            if (result.rows.length > 0) {
+                campaign = result.rows[0];
+            }
+        }
+
+        res.json(campaign || {});
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
