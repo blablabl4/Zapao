@@ -1392,6 +1392,15 @@
         }
         animatePlaceholders();
 
+        // Safety Init
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('generateBtn');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Resgatar Número';
+            }
+        });
+
     </script>
 
     <!-- IDSR Footer -->
