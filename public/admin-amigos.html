@@ -827,67 +827,88 @@
             try {
                 const res = await fetch('/api/admin/amigos/campaign');
                 const c = await res.json();
+
+                // Safe Helper
+                const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+                const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+                const setCheck = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+                const setDisplay = (id, val) => { const el = document.getElementById(id); if (el) el.style.display = val; };
+
+                // Get Status Elements (Check existence)
+                const statusText = document.getElementById('systemStatusText');
+                const statusBadge = document.getElementById('systemStatusBadge');
+
                 if (c.id) {
                     currentCampaignId = c.id;
-                    document.getElementById('campName').value = c.name;
-                    document.getElementById('startNum').value = c.start_number;
-                    document.getElementById('endNum').value = c.end_number;
-                    document.getElementById('isActive').checked = c.is_active;
+                    setVal('campName', c.name);
+                    setVal('startNum', c.start_number);
+                    setVal('endNum', c.end_number);
+                    setCheck('isActive', c.is_active);
 
                     // House Winner Status
-                    document.getElementById('houseWinnerToggle').checked = c.house_winner_active;
+                    setCheck('houseWinnerToggle', c.house_winner_active);
                     if (c.house_winner_active) {
-                        document.getElementById('houseWinnerInfo').style.display = 'block';
-                        document.getElementById('houseReservedNumber').textContent = c.house_winner_number;
-                        document.getElementById('houseReservedName').textContent = c.house_winner_name;
+                        setDisplay('houseWinnerInfo', 'block');
+                        setText('houseReservedNumber', c.house_winner_number);
+                        setText('houseReservedName', c.house_winner_name);
+                    } else {
+                        setDisplay('houseWinnerInfo', 'none');
                     }
 
                     // UPDATE STATUS CARD
-                    const statusText = document.getElementById('systemStatusText');
-                    const statusBadge = document.getElementById('systemStatusBadge');
-
-                    statusText.textContent = `Rodada Ativa: ${c.name}`;
-                    statusText.style.color = '#10b981'; // Green text
-
-                    statusBadge.textContent = 'RODANDO 🟢';
-                    statusBadge.style.background = 'rgba(16, 185, 129, 0.2)';
-                    statusBadge.style.color = '#10b981';
-                    statusBadge.style.border = '1px solid #10b981';
+                    if (statusText) {
+                        statusText.textContent = `Rodada Ativa: ${c.name}`;
+                        statusText.style.color = '#10b981'; // Green text
+                    }
+                    if (statusBadge) {
+                        statusBadge.textContent = 'RODANDO 🟢';
+                        statusBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+                        statusBadge.style.color = '#10b981';
+                        statusBadge.style.border = '1px solid #10b981';
+                    }
 
                     // Enable Actions
                     enableCampaignActions(true);
 
                 } else {
                     // No active campaign - CLEAR EVERYTHING
-                    document.getElementById('isActive').checked = false;
-                    document.getElementById('campName').value = '';
-                    document.getElementById('startNum').value = '';
-                    document.getElementById('endNum').value = '';
+                    setCheck('isActive', false);
+                    setVal('campName', '');
+                    setVal('startNum', '');
+                    setVal('endNum', '');
 
                     // Clear House Winner
-                    document.getElementById('houseWinnerToggle').checked = false;
-                    document.getElementById('houseWinnerInfo').style.display = 'none';
-                    document.getElementById('houseReservedNumber').textContent = '--';
-                    document.getElementById('houseReservedName').textContent = '--';
+                    setCheck('houseWinnerToggle', false);
+                    setDisplay('houseWinnerInfo', 'none');
+                    setText('houseReservedNumber', '--');
+                    setText('houseReservedName', '--');
 
                     currentCampaignId = null;
 
                     // UPDATE STATUS CARD (Inactive)
-                    const statusText = document.getElementById('systemStatusText');
-                    const statusBadge = document.getElementById('systemStatusBadge');
-
-                    statusText.textContent = 'Nenhuma Campanha Ativa';
-                    statusText.style.color = '#ef4444'; // Red
-
-                    statusBadge.textContent = 'PARADO 🔴';
-                    statusBadge.style.background = 'rgba(239, 68, 68, 0.2)';
-                    statusBadge.style.color = '#ef4444';
-                    statusBadge.style.border = '1px solid #ef4444';
+                    if (statusText) {
+                        statusText.textContent = 'Nenhuma Campanha Ativa';
+                        statusText.style.color = '#ef4444'; // Red
+                    }
+                    if (statusBadge) {
+                        statusBadge.textContent = 'PARADO 🔴';
+                        statusBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+                        statusBadge.style.color = '#ef4444';
+                        statusBadge.style.border = '1px solid #ef4444';
+                    }
 
                     // Disable Actions
                     enableCampaignActions(false);
                 }
-            } catch (e) { console.error('Error loading campaign', e); }
+            } catch (e) {
+                console.error('Error loading campaign', e);
+                // Show Error on Status Card
+                const statusText = document.getElementById('systemStatusText');
+                if (statusText) {
+                    statusText.textContent = 'Erro ao Carregar: ' + e.message;
+                    statusText.style.color = 'orange';
+                }
+            }
         }
 
         async function loadKPIs() {
@@ -1310,31 +1331,27 @@
             }
 
             function enableCampaignActions(enabled) {
-                const btnWhitelist = document.querySelector('#whitelistSection button'); // Assuming button is inside
-                const inputWhitelist = document.getElementById('whitelistInput');
+                try {
+                    const inputWhitelist = document.getElementById('whitelistInput');
+                    // Whitelist Upload Input
+                    if (inputWhitelist) {
+                        inputWhitelist.disabled = !enabled;
+                        if (!enabled) inputWhitelist.placeholder = "🚫 Nenhuma campanha ativa. Inicie uma para liberar upload.";
+                        else inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";
 
-                // We need to target the buttons more precisely if they don't have IDs
-                // Adding IDs to whitelist elements would be better, but selecting by context works.
-
-                // Whitelist Upload
-                if (inputWhitelist) {
-                    inputWhitelist.disabled = !enabled;
-                    if (!enabled) inputWhitelist.placeholder = "🚫 Nenhuma campanha ativa. Inicie uma para liberar upload.";
-                    else inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";
-                }
-
-                // Whitelist Button - Find the button next to it
-                if (inputWhitelist && inputWhitelist.nextElementSibling) {
-                    const btn = inputWhitelist.nextElementSibling;
-                    if (btn.tagName === 'BUTTON') {
-                        btn.disabled = !enabled;
-                        btn.innerText = enabled ? 'Sincronizar Lista (Quem sai, perde)' : '🚫 Campanha Inativa';
+                        // Whitelist Button is in parent div, after the form-group
+                        const card = inputWhitelist.closest('.card');
+                        if (card) {
+                            const btn = card.querySelector('button');
+                            if (btn) {
+                                btn.disabled = !enabled;
+                                btn.innerText = enabled ? 'Sincronizar Lista (Quem sai, perde)' : '🚫 Campanha Inativa';
+                            }
+                        }
                     }
+                } catch (e) {
+                    console.error('Error in enableCampaignActions:', e);
                 }
-
-                // Roulette Tab Handling
-                // If disabled, maybe show alert when clicking tab?
-                // For now, let's just disabling the whitelist is key.
             }
 
             // Init
