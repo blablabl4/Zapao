@@ -973,8 +973,8 @@
             const id = document.getElementById('isActive').checked;
             const body = {
                 name: document.getElementById('campName').value,
-                start_number: parseInt(document.getElementById('startNum').value),
-                end_number: parseInt(document.getElementById('endNum').value),
+                start_number: parseInt(document.getElementById('startNum').value) || 1, // Default to 1
+                end_number: parseInt(document.getElementById('endNum').value) || 300,   // Default to 300
                 is_active: id,
                 config: {}
             };
