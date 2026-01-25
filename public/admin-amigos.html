@@ -1072,184 +1072,178 @@
         // We need 'real' numbers from DB ideally. 
         // For simplicity, we just spin 00-99 visually then snap to winner.
 
-        function openDraw() {
-            if (!currentCampaignId) return;
-            document.getElementById('drawModal').style.display = 'flex';
-            document.getElementById('drawStatus').textContent = 'Aguardando...';
-            document.getElementById('btnSpin').disabled = false;
-            document.getElementById('btnSpin').textContent = 'INICIAR SORTEIO 🎲';
-            document.getElementById('numCenter').classList.remove('winner');
-            updateDisplay(0);
-        }
+
 
         function closeDraw() {
             document.getElementById('drawModal').style.display = 'none';
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             isSpinning = false;
-            // --- SMOOTH DRAW LOGIC (Reel Animation) ---
-            let reelContainer = null;
-            let candidates = [];
-            let finalWinner = null;
-            let isSpinning = false; // Ensure global state
+        }
 
-            async function openDraw() {
-                if (!currentCampaignId) return;
-                document.getElementById('drawModal').style.display = 'flex';
-                document.getElementById('drawStatus').textContent = 'Carregando tickets...';
-                document.getElementById('btnSpin').disabled = true;
-                document.getElementById('houseWinnerOverlay').classList.remove('active');
+        // --- SMOOTH DRAW LOGIC (Reel Animation) ---
+        let reelContainer = null;
+        let candidates = [];
+        let finalWinner = null;
+        // isSpinning is global
 
-                // Reset View
-                renderReel([]);
+        async function openDraw() {
+            if (!currentCampaignId) return;
+            document.getElementById('drawModal').style.display = 'flex';
+            document.getElementById('drawStatus').textContent = 'Carregando tickets...';
+            document.getElementById('btnSpin').disabled = true;
+            document.getElementById('houseWinnerOverlay').classList.remove('active');
 
-                try {
-                    // Pre-fetch candidates
-                    const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}`);
-                    candidates = await res.json();
+            // Reset View
+            renderReel([]);
 
-                    // Render initial static view (first 5)
-                    renderReel(candidates.slice(0, 5));
+            try {
+                // Pre-fetch candidates
+                const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}`);
+                candidates = await res.json();
 
-                    document.getElementById('drawStatus').textContent = 'Pronto para sortear!';
-                    document.getElementById('btnSpin').disabled = false;
-                    document.getElementById('btnSpin').textContent = 'GIRAR A ROLETA 🎰';
-                } catch (e) {
-                    alert('Erro ao carregar tickets: ' + e.message);
-                    closeDraw();
-                }
+                // Render initial static view (first 5)
+                renderReel(candidates.slice(0, 5));
+
+                document.getElementById('drawStatus').textContent = 'Pronto para sortear!';
+                document.getElementById('btnSpin').disabled = false;
+                document.getElementById('btnSpin').textContent = 'GIRAR A ROLETA 🎰';
+            } catch (e) {
+                alert('Erro ao carregar tickets: ' + e.message);
+                closeDraw();
             }
+        }
 
-            function renderReel(items) {
-                // We use the existing DOM elements but animate them
-                // Actually, for "Fluid" effect, we need a track we can translate
-                const track = document.getElementById('carouselTrack');
-                track.innerHTML = '';
-                track.style.transition = 'none';
-                track.style.transform = 'translateX(0)';
+        function renderReel(items) {
+            // We use the existing DOM elements but animate them
+            // Actually, for "Fluid" effect, we need a track we can translate
+            const track = document.getElementById('carouselTrack');
+            track.innerHTML = '';
+            track.style.transition = 'none';
+            track.style.transform = 'translateX(0)';
 
-                // Create strip
-                items.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = `number-card ${item.status === 'ASSIGNED' ? 'sold' : 'free'}`;
-                    // Styling for free vs sold
-                    if (item.status !== 'ASSIGNED') {
-                        card.style.borderColor = '#ef4444';
-                        card.style.color = '#ef4444';
-                        card.style.background = '#fff0f0';
-                    } else {
-                        card.style.borderColor = '#10b981';
-                        card.style.color = '#10b981';
-                    }
-                    // Simple card content
-                    card.innerHTML = `<div style="text-align:center"><div style="font-size:2rem">${item.number}</div><div style="font-size:0.6rem;opacity:0.7">${item.label || ''}</div></div>`;
-                    track.appendChild(card);
+            // Create strip
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `number-card ${item.status === 'ASSIGNED' ? 'sold' : 'free'}`;
+                // Styling for free vs sold
+                if (item.status !== 'ASSIGNED') {
+                    card.style.borderColor = '#ef4444';
+                    card.style.color = '#ef4444';
+                    card.style.background = '#fff0f0';
+                } else {
+                    card.style.borderColor = '#10b981';
+                    card.style.color = '#10b981';
+                }
+                // Simple card content
+                card.innerHTML = `<div style="text-align:center"><div style="font-size:2rem">${item.number}</div><div style="font-size:0.6rem;opacity:0.7">${item.label || ''}</div></div>`;
+                track.appendChild(card);
+            });
+        }
+
+        async function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+
+            const btn = document.getElementById('btnSpin');
+            btn.disabled = true;
+            document.getElementById('drawStatus').textContent = 'Sorteando...';
+
+            try {
+                // 1. Get Winner from Backend
+                const res = await fetch('/api/admin/amigos/draw/spin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId })
                 });
-            }
+                const winner = await res.json();
+                finalWinner = winner;
 
-            async function spinRoulette() {
-                if (isSpinning) return;
-                isSpinning = true;
+                // 2. Prepare Reel
+                // Sequence: [Current View] + [Random 40] + [Winner] + [Buffer 2]
+                let reelItems = [...candidates.slice(0, 5)]; // Start
 
-                const btn = document.getElementById('btnSpin');
-                btn.disabled = true;
-                document.getElementById('drawStatus').textContent = 'Sorteando...';
+                // Shuffle candidates for middle section (excluding winner if possible to avoid dupes visually close?)
+                // Just random mix
+                const middle = [...candidates].sort(() => Math.random() - 0.5).slice(0, 40);
+                reelItems = [...reelItems, ...middle];
 
-                try {
-                    // 1. Get Winner from Backend
-                    const res = await fetch('/api/admin/amigos/draw/spin', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ campaignId: currentCampaignId })
-                    });
-                    const winner = await res.json();
-                    finalWinner = winner;
+                // Add Winner
+                const winnerItem = {
+                    number: winner.ticket_number,
+                    status: winner.status,
+                    label: winner.status === 'ASSIGNED' ? (winner.name ? winner.name.split(' ')[0] : 'Vendido') : 'CASA 🏠'
+                };
+                reelItems.push(winnerItem);
 
-                    // 2. Prepare Reel
-                    // Sequence: [Current View] + [Random 40] + [Winner] + [Buffer 2]
-                    let reelItems = [...candidates.slice(0, 5)]; // Start
+                // Add buffer
+                reelItems.push({ number: '...', status: 'NONE' }, { number: '...', status: 'NONE' });
 
-                    // Shuffle candidates for middle section (excluding winner if possible to avoid dupes visually close?)
-                    // Just random mix
-                    const middle = [...candidates].sort(() => Math.random() - 0.5).slice(0, 40);
-                    reelItems = [...reelItems, ...middle];
+                renderReel(reelItems);
 
-                    // Add Winner
-                    const winnerItem = {
-                        number: winner.ticket_number,
-                        status: winner.status,
-                        label: winner.status === 'ASSIGNED' ? (winner.name ? winner.name.split(' ')[0] : 'Vendido') : 'CASA 🏠'
-                    };
-                    reelItems.push(winnerItem);
+                // 3. Animate
+                const track = document.getElementById('carouselTrack');
+                const cardWidth = 120; // 90px card + 30px gap
 
-                    // Add buffer
-                    reelItems.push({ number: '...', status: 'NONE' }, { number: '...', status: 'NONE' });
+                // Winner Index = 5 (start) + 40 (middle) = 45th index (0-based)
+                const winnerIndex = 45;
 
-                    renderReel(reelItems);
+                // We want to scroll so winner is CENTERED.
+                // Center of container (approx 400px width?) - Half Card (45)
+                // Let's assume container width is managed by CSS.
+                // Simple math: Shift left by (winnerIndex * cardWidth). Then add half-screen offset.
 
-                    // 3. Animate
-                    const track = document.getElementById('carouselTrack');
-                    const cardWidth = 120; // 90px card + 30px gap
+                // Force Layout
+                track.getBoundingClientRect();
 
-                    // Winner Index = 5 (start) + 40 (middle) = 45th index (0-based)
-                    const winnerIndex = 45;
+                setTimeout(() => {
+                    // CSS Transition for fluid spin
+                    // Shift so item 45 is at X=0 (left edge), then Add 50% width offset
+                    const modalWidth = document.querySelector('.carousel-view').clientWidth;
+                    const scrollAmount = (winnerIndex * cardWidth) - (modalWidth / 2) + (cardWidth / 2);
 
-                    // We want to scroll so winner is CENTERED.
-                    // Center of container (approx 400px width?) - Half Card (45)
-                    // Let's assume container width is managed by CSS.
-                    // Simple math: Shift left by (winnerIndex * cardWidth). Then add half-screen offset.
+                    track.style.transition = 'transform 6s cubic-bezier(0.1, 0.8, 0.1, 1)'; // Smooth ease out
+                    track.style.transform = `translateX(-${scrollAmount}px)`;
+                }, 50);
 
-                    // Force Layout
-                    track.getBoundingClientRect();
+                // 4. Finish
+                setTimeout(() => {
+                    // Highlight Winner
+                    const winnerCard = track.children[winnerIndex];
+                    if (winnerCard) {
+                        winnerCard.classList.add('winner');
+                        winnerCard.style.transform = 'scale(1.3)';
+                        winnerCard.style.zIndex = '100';
+                    }
 
-                    setTimeout(() => {
-                        // CSS Transition for fluid spin
-                        // Shift so item 45 is at X=0 (left edge), then Add 50% width offset
-                        const modalWidth = document.querySelector('.carousel-view').clientWidth;
-                        const scrollAmount = (winnerIndex * cardWidth) - (modalWidth / 2) + (cardWidth / 2);
+                    if (winner.status !== 'ASSIGNED') {
+                        // HOUSE WINNER
+                        document.getElementById('drawStatus').textContent = 'A CASA GANHOU! 🏠';
+                        showHouseWinnerOverlay(winner);
+                    } else {
+                        document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name} (${winner.phone})`;
 
-                        track.style.transition = 'transform 6s cubic-bezier(0.1, 0.8, 0.1, 1)'; // Smooth ease out
-                        track.style.transform = `translateX(-${scrollAmount}px)`;
-                    }, 50);
-
-                    // 4. Finish
-                    setTimeout(() => {
-                        // Highlight Winner
-                        const winnerCard = track.children[winnerIndex];
-                        if (winnerCard) {
-                            winnerCard.classList.add('winner');
-                            winnerCard.style.transform = 'scale(1.3)';
-                            winnerCard.style.zIndex = '100';
+                        // Fire confetti if available
+                        if (window.confetti) {
+                            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
                         }
+                    }
 
-                        if (winner.status !== 'ASSIGNED') {
-                            // HOUSE WINNER
-                            document.getElementById('drawStatus').textContent = 'A CASA GANHOU! 🏠';
-                            showHouseWinnerOverlay(winner);
-                        } else {
-                            document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name} (${winner.phone})`;
-
-                            // Fire confetti if available
-                            if (window.confetti) {
-                                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                            }
-                        }
-
-                        btn.disabled = false;
-                        btn.textContent = 'Sorteio Finalizado';
-                        loadKPIs();
-                        isSpinning = false;
-                    }, 6000); // Match transition time
-
-                } catch (e) {
-                    alert('Erro no sorteio: ' + e.message);
                     btn.disabled = false;
+                    btn.textContent = 'Sorteio Finalizado';
+                    loadKPIs();
                     isSpinning = false;
-                }
-            }
+                }, 6000); // Match transition time
 
-            function showHouseWinnerOverlay(winner) {
-                const overlay = document.getElementById('houseWinnerOverlay');
-                overlay.innerHTML = `
+            } catch (e) {
+                alert('Erro no sorteio: ' + e.message);
+                btn.disabled = false;
+                isSpinning = false;
+            }
+        }
+
+        function showHouseWinnerOverlay(winner) {
+            const overlay = document.getElementById('houseWinnerOverlay');
+            overlay.innerHTML = `
                 <h1 style="font-size:3rem; margin-bottom:1rem">A CASA GANHOU! 🏠</h1>
                 <div style="font-size:6rem; font-weight:bold; background:white; color:red; padding:1rem 2rem; border-radius:20px; margin-bottom:1rem">
                     ${winner.ticket_number}
@@ -1260,104 +1254,104 @@
                     ${!currentCampaignId ? '' : '<button class="btn" style="background:#333; color:white; font-size:1.2rem; padding:1rem 2rem; margin-left:1rem" onclick="finishDraw()">Encerrar Sorteio</button>'}
                 </div>
             `;
-                overlay.classList.add('active');
-            }
+            overlay.classList.add('active');
+        }
 
-            async function finishDraw() {
-                if (!confirm('Tem certeza que deseja FINALIZAR este sorteio?\nIsso vai desativar a campanha e limpar a tela para um novo sorteio.')) return;
+        async function finishDraw() {
+            if (!confirm('Tem certeza que deseja FINALIZAR este sorteio?\nIsso vai desativar a campanha e limpar a tela para um novo sorteio.')) return;
 
-                try {
-                    const res = await fetch('/api/admin/amigos/campaign/finish', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ campaignId: currentCampaignId })
-                    });
-                    const json = await res.json();
-
-                    if (json.success) {
-                        alert('Sorteio finalizado com sucesso! 🏁');
-                        closeDraw();
-                        // Reset UI
-                        document.getElementById('campName').value = '';
-                        document.getElementById('startNum').value = '';
-                        document.getElementById('endNum').value = '';
-                        document.getElementById('isActive').checked = false;
-                        document.getElementById('houseWinnerToggle').checked = false;
-                        document.getElementById('houseWinnerInfo').style.display = 'none';
-                        currentCampaignId = null;
-
-                        // Switch to Config tab
-                        switchTab('config');
-
-                        // Remove action div if exists
-                        const actionDiv = document.getElementById('drawActions');
-                        if (actionDiv) actionDiv.remove();
-
-                        // Reset spin button
-                        const btnSpin = document.getElementById('btnSpin');
-                        btnSpin.style.display = 'inline-flex';
-                        btnSpin.disabled = false;
-                        btnSpin.textContent = 'INICIAR SORTEIO 🎲';
-                        document.getElementById('numCenter').classList.remove('winner');
-                        document.getElementById('drawStatus').textContent = 'Aguardando início...';
-
-                    } else {
-                        alert('Erro: ' + (json.error || 'Falha desconhecida'));
-                    }
-                } catch (e) {
-                    alert('Erro na requisição: ' + e.message);
-                }
-            }
-
-            // --- ADMINS & PROMOS (Minimal Loaders for UX) ---
-            async function loadAdmins() {
-                const res = await fetch('/admin/list');
-                const list = await res.json();
-                document.querySelector('#adminsTable tbody').innerHTML = list.map(a => `<tr><td>${a.name}</td><td>${a.phone}</td><td>-</td></tr>`).join('');
-            }
-
-            async function createPromo(e) {
-                e.preventDefault();
-                await fetch('/api/admin/amigos/promotions', {
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/finish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: document.getElementById('promoName').value,
-                        extra_qty: document.getElementById('promoExtra').value
-                    })
+                    body: JSON.stringify({ campaignId: currentCampaignId })
                 });
-                loadPromos();
-                document.getElementById('promoForm').reset();
-            }
+                const json = await res.json();
 
-            async function loadPromos() {
-                const res = await fetch('/api/admin/amigos/promotions');
+                if (json.success) {
+                    alert('Sorteio finalizado com sucesso! 🏁');
+                    closeDraw();
+                    // Reset UI
+                    document.getElementById('campName').value = '';
+                    document.getElementById('startNum').value = '';
+                    document.getElementById('endNum').value = '';
+                    document.getElementById('isActive').checked = false;
+                    document.getElementById('houseWinnerToggle').checked = false;
+                    document.getElementById('houseWinnerInfo').style.display = 'none';
+                    currentCampaignId = null;
+
+                    // Switch to Config tab
+                    switchTab('config');
+
+                    // Remove action div if exists
+                    const actionDiv = document.getElementById('drawActions');
+                    if (actionDiv) actionDiv.remove();
+
+                    // Reset spin button
+                    const btnSpin = document.getElementById('btnSpin');
+                    btnSpin.style.display = 'inline-flex';
+                    btnSpin.disabled = false;
+                    btnSpin.textContent = 'INICIAR SORTEIO 🎲';
+                    document.getElementById('numCenter').classList.remove('winner');
+                    document.getElementById('drawStatus').textContent = 'Aguardando início...';
+
+                } else {
+                    alert('Erro: ' + (json.error || 'Falha desconhecida'));
+                }
+            } catch (e) {
+                alert('Erro na requisição: ' + e.message);
+            }
+        }
+
+        // --- ADMINS & PROMOS (Minimal Loaders for UX) ---
+        async function loadAdmins() {
+            const res = await fetch('/admin/list');
+            const list = await res.json();
+            document.querySelector('#adminsTable tbody').innerHTML = list.map(a => `<tr><td>${a.name}</td><td>${a.phone}</td><td>-</td></tr>`).join('');
+        }
+
+        async function createPromo(e) {
+            e.preventDefault();
+            await fetch('/api/admin/amigos/promotions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: document.getElementById('promoName').value,
+                    extra_qty: document.getElementById('promoExtra').value
+                })
+            });
+            loadPromos();
+            document.getElementById('promoForm').reset();
+        }
+
+        async function loadPromos() {
+            const res = await fetch('/api/admin/amigos/promotions');
+            const list = await res.json();
+            document.querySelector('#promoTable tbody').innerHTML = list.map(p => `<tr><td>${p.name}</td><td>${p.extra_qty}</td><td>-</td><td><button onclick="fetch('/api/admin/amigos/promotions/${p.id}',{method:'DELETE'}).then(loadPromos)">Excluir</button></td></tr>`).join('');
+        }
+
+        async function loadDistribution() {
+            if (!currentCampaignId) return;
+            const tbody = document.querySelector('#distributionTable tbody');
+            tbody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+
+            try {
+                // Reuse existing candidates endpoint which returns [{ticket_number, name, phone, status...}]
+                const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}`);
                 const list = await res.json();
-                document.querySelector('#promoTable tbody').innerHTML = list.map(p => `<tr><td>${p.name}</td><td>${p.extra_qty}</td><td>-</td><td><button onclick="fetch('/api/admin/amigos/promotions/${p.id}',{method:'DELETE'}).then(loadPromos)">Excluir</button></td></tr>`).join('');
-            }
 
-            async function loadDistribution() {
-                if (!currentCampaignId) return;
-                const tbody = document.querySelector('#distributionTable tbody');
-                tbody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+                // Filter only ASSIGNED
+                const sold = list.filter(i => i.status === 'ASSIGNED');
 
-                try {
-                    // Reuse existing candidates endpoint which returns [{ticket_number, name, phone, status...}]
-                    const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}`);
-                    const list = await res.json();
+                if (sold.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">Nenhum número distribuído ainda.</td></tr>';
+                    return;
+                }
 
-                    // Filter only ASSIGNED
-                    const sold = list.filter(i => i.status === 'ASSIGNED');
+                // Sort by Ticket Number
+                sold.sort((a, b) => a.number - b.number);
 
-                    if (sold.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="4">Nenhum número distribuído ainda.</td></tr>';
-                        return;
-                    }
-
-                    // Sort by Ticket Number
-                    sold.sort((a, b) => a.number - b.number);
-
-                    tbody.innerHTML = sold.map(i => `
+                tbody.innerHTML = sold.map(i => `
                         <tr>
                             <td><strong style="color:var(--az-primary); font-size:1.1rem;">${i.number}</strong></td>
                             <td>${i.name || '-'}</td>
@@ -1365,67 +1359,67 @@
                              <td>-</td>
                         </tr>
                     `).join('');
-                } catch (e) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${e.message}</td></tr>`;
-                }
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${e.message}</td></tr>`;
             }
+        }
 
-            async function searchUser() {
-                const term = document.getElementById('searchTerm').value;
-                try {
-                    const res = await fetch(`/api/admin/amigos/search?term=${term}`);
-                    const json = await res.json();
-                    document.getElementById('searchResult').innerHTML = json.found ? `Encontrado: ${json.participant.name} - ${json.history.length} resgates` : 'Não encontrado';
-                } catch (e) { document.getElementById('searchResult').textContent = 'Erro'; }
-            }
+        async function searchUser() {
+            const term = document.getElementById('searchTerm').value;
+            try {
+                const res = await fetch(`/api/admin/amigos/search?term=${term}`);
+                const json = await res.json();
+                document.getElementById('searchResult').innerHTML = json.found ? `Encontrado: ${json.participant.name} - ${json.history.length} resgates` : 'Não encontrado';
+            } catch (e) { document.getElementById('searchResult').textContent = 'Erro'; }
+        }
 
-            function enableCampaignActions(enabled) {
-                // FORCE ENABLE ALWAYS per user request
-                try {
-                    const inputWhitelist = document.getElementById('whitelistInput');
-                    if (inputWhitelist) {
-                        inputWhitelist.disabled = false; // Always enabled
-                        inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";
+        function enableCampaignActions(enabled) {
+            // FORCE ENABLE ALWAYS per user request
+            try {
+                const inputWhitelist = document.getElementById('whitelistInput');
+                if (inputWhitelist) {
+                    inputWhitelist.disabled = false; // Always enabled
+                    inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";
 
-                        const card = inputWhitelist.closest('.card');
-                        if (card) {
-                            const btn = card.querySelector('button');
-                            if (btn) {
-                                btn.disabled = false; // Always enabled
-                                btn.innerText = 'Sincronizar Lista (Quem sai, perde)';
-                            }
+                    const card = inputWhitelist.closest('.card');
+                    if (card) {
+                        const btn = card.querySelector('button');
+                        if (btn) {
+                            btn.disabled = false; // Always enabled
+                            btn.innerText = 'Sincronizar Lista (Quem sai, perde)';
                         }
                     }
+                }
+            } catch (e) {
+                console.error('Error in enableCampaignActions:', e);
+            }
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Ready - Initializing Admin');
+
+            // Init - SIMPLIFIED
+            console.log('Admin Script Loaded');
+
+            function safeInit() {
+                try {
+                    loadCampaign();
+                    loadKPIs();
+                    loadPromos();
                 } catch (e) {
-                    console.error('Error in enableCampaignActions:', e);
+                    console.error('Init Crash:', e);
+                    // alert('Erro ao iniciar painel: ' + e.message); 
                 }
             }
 
-            // Init
-            window.addEventListener('DOMContentLoaded', () => {
-                console.log('DOM Ready - Initializing Admin');
+            safeInit();
 
-                // Init - SIMPLIFIED
-                console.log('Admin Script Loaded');
-
-                function safeInit() {
-                    try {
-                        loadCampaign();
-                        loadKPIs();
-                        loadPromos();
-                    } catch (e) {
-                        console.error('Init Crash:', e);
-                        // alert('Erro ao iniciar painel: ' + e.message); 
-                    }
-                }
-
-                safeInit();
-
-                // Auto refresh
-                setInterval(() => {
-                    try { loadKPIs(); } catch (e) { }
-                }, 30000);
-            });
+            // Auto refresh
+            setInterval(() => {
+                try { loadKPIs(); } catch (e) { }
+            }, 30000);
+        });
     </script>
 </body>
 
