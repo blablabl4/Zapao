@@ -433,11 +433,17 @@ class AmigosService {
             // 0. Clean Phone
             const cleanPhone = phone.replace(/\D/g, '');
 
-            // 1. Whitelist Check (Strict)
-            const whiteRes = await client.query('SELECT 1 FROM az_whitelist WHERE phone = $1', [cleanPhone]);
-            if (whiteRes.rowCount === 0) {
-                // Must be specific message for UI to potentially handle trigger
-                throw new Error('ENTRE NO GRUPO PARA PARTICIPAR! Seu número não está na lista de convidados.');
+            // 1. Whitelist Check (Strict but OPTIONAL if list is empty)
+            // First check if whitelist has ANY entries
+            const listCheck = await client.query('SELECT 1 FROM az_whitelist LIMIT 1');
+            const isWhitelistActive = listCheck.rowCount > 0;
+
+            if (isWhitelistActive) {
+                const whiteRes = await client.query('SELECT 1 FROM az_whitelist WHERE phone = $1', [cleanPhone]);
+                if (whiteRes.rowCount === 0) {
+                    // Must be specific message for UI to potentially handle trigger
+                    throw new Error('ENTRE NO GRUPO PARA PARTICIPAR! Seu número não está na lista de convidados.');
+                }
             }
 
             // 2. Single Participation Check (Strict)
