@@ -985,7 +985,11 @@
 
         // --- HOUSE WINNER LOGIC ---
         async function toggleHouseWinner(checkbox) {
-            if (!currentCampaignId) return;
+            if (!currentCampaignId) {
+                checkbox.checked = !checkbox.checked; // Undo check
+                alert('⚠️ Nenhuma campanha salva/ativa selecionada. Salve a campanha na aba Configuração primeiro!');
+                return;
+            }
             const active = checkbox.checked;
 
             // UI optimistic update
