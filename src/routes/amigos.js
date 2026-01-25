@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+console.log('✅ [Routes] Amigos Router Loaded');
 const AmigosService = require('../services/AmigosService');
 const AmigosAdminService = require('../services/AmigosAdminService');
 const { asyncHandler, ApiResponse, ErrorTypes } = require('../middleware/errorHandler');

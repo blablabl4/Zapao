@@ -1165,7 +1165,7 @@
                 // Tracking Consent
                 const consent = document.getElementById('lgpdConsent').checked;
 
-                const res = await fetch('/api/amigos/claim/finish', {
+                const res = await fetch('/api/amigos/finish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

@@ -436,13 +436,16 @@ class AmigosService {
             // 1. Whitelist Check (Strict)
             const whiteRes = await client.query('SELECT 1 FROM az_whitelist WHERE phone = $1', [cleanPhone]);
             if (whiteRes.rowCount === 0) {
-                throw new Error('Seu número não está na lista de convidados para este sorteio.');
+                // Must be specific message for UI to potentially handle trigger
+                throw new Error('ENTRE NO GRUPO PARA PARTICIPAR! Seu número não está na lista de convidados.');
             }
 
             // 2. Single Participation Check (Strict)
-            const prevClaim = await client.query('SELECT 1 FROM az_claims WHERE campaign_id = $1 AND phone = $2 LIMIT 1', [campaign.id, phone]);
-            if (prevClaim.rowCount > 0) {
-                throw new Error('Você já garantiu seu número da sorte! Apenas 1 por pessoa.');
+            // 2. Daily Limit Check (UPDATED)
+            // Check if blocked by daily limit
+            const lockStatus = await this.checkLockStatus(phone);
+            if (lockStatus.blocked) {
+                throw new Error('Você já garantiu seu número de hoje! Volte amanhã para pegar mais.');
             }
 
             // 3. FORCE QTY = 1 (Ignore any other logic)
