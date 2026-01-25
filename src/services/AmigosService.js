@@ -443,6 +443,11 @@ class AmigosService {
             const cleanPhone = phone.replace(/\D/g, '');
 
             // 1. Whitelist Check (Strict but OPTIONAL if list is empty)
+            /* 
+               DISABLED TEMPORARILY PER USER REQUEST (Urgent Fix)
+               The system was blocking users even when intended to be open.
+               To re-enable, uncomment this block and ensure list clearing works.
+            
             // First check if whitelist has ANY entries
             const listCheck = await client.query('SELECT 1 FROM az_whitelist LIMIT 1');
             const isWhitelistActive = listCheck.rowCount > 0;
@@ -454,6 +459,7 @@ class AmigosService {
                     throw new Error('ENTRE NO GRUPO PARA PARTICIPAR! Seu número não está na lista de convidados.');
                 }
             }
+            */
 
             // 2. Single Participation Check (Strict)
             // User Request: 1 number per PERSON per RAFFLE (Campaign)
