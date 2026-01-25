@@ -441,11 +441,10 @@ class AmigosService {
             }
 
             // 2. Single Participation Check (Strict)
-            // 2. Daily Limit Check (UPDATED)
-            // Check if blocked by daily limit
-            const lockStatus = await this.checkLockStatus(phone);
-            if (lockStatus.blocked) {
-                throw new Error('Você já garantiu seu número de hoje! Volte amanhã para pegar mais.');
+            // User Request: 1 number per PERSON per RAFFLE (Campaign)
+            const prevClaim = await client.query('SELECT 1 FROM az_claims WHERE campaign_id = $1 AND phone = $2 LIMIT 1', [campaign.id, phone]);
+            if (prevClaim.rowCount > 0) {
+                throw new Error('Você já garantiu seu número da sorte! É permitido apenas 1 número por pessoa neste sorteio.');
             }
 
             // 3. FORCE QTY = 1 (Ignore any other logic)
