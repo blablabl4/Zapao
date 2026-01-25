@@ -588,24 +588,8 @@
         <!-- TAB: CONFIG -->
         <div id="tab-config" class="section-content active">
 
-            <!-- CAMPAIGN STATUS CARD (NEW) -->
-            <div class="card" style="background: #1f2937; border: 1px solid #374151; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <h3
-                            style="margin: 0; color: #9ca3af; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
-                            Status do Sistema</h3>
-                        <div id="systemStatusText"
-                            style="font-size: 1.5rem; font-weight: bold; color: #fff; margin-top: 5px;">
-                            Aguardando...
-                        </div>
-                    </div>
-                    <div id="systemStatusBadge"
-                        style="padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;">
-                        Checking
-                    </div>
-                </div>
-            </div>
+            <!-- Status Card Removed per user request -->
+
 
             <div class="card">
                 <h2>Configuração da Campanha Atual</h2>
@@ -1361,29 +1345,26 @@
             window.addEventListener('DOMContentLoaded', () => {
                 console.log('DOM Ready - Initializing Admin');
 
-                // Global Error Trap for UI
-                window.onerror = function (msg, url, line) {
-                    const statusText = document.getElementById('systemStatusText');
-                    if (statusText) {
-                        statusText.textContent = 'CRASH: ' + msg;
-                        statusText.style.color = 'red';
+                // Init - SIMPLIFIED
+                console.log('Admin Script Loaded');
+
+                function safeInit() {
+                    try {
+                        loadCampaign();
+                        loadKPIs();
+                        loadPromos();
+                    } catch (e) {
+                        console.error('Init Crash:', e);
+                        // alert('Erro ao iniciar painel: ' + e.message); 
                     }
-                    console.error('Global Error:', msg);
-                    return false;
-                };
+                }
 
-                // Helper to safely call init functions
-                const safeRun = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-
-                // Small delay to ensure everything is settled (optional but safe)
-                setTimeout(() => {
-                    safeRun(loadCampaign);
-                    safeRun(loadKPIs);
-                    safeRun(loadPromos);
-                }, 100);
+                safeInit();
 
                 // Auto refresh
-                setInterval(() => safeRun(loadKPIs), 30000); // Every 30s
+                setInterval(() => {
+                    try { loadKPIs(); } catch (e) { }
+                }, 30000);
             });
     </script>
 </body>
