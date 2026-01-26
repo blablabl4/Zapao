@@ -805,7 +805,7 @@
             <div id="drawStatus" style="color: var(--az-text-muted); margin: 20px 0;">Aguardando início...</div>
 
             <button class="btn" id="btnSpin" onclick="startSpin()" style="font-size: 1.1rem; padding: 15px 30px;">
-                INICIAR SORTEIO 🎲
+                INICIAR 🚀
             </button>
         </div>
     </div>
@@ -1162,12 +1162,15 @@
             // Robust Selector
             let track = document.getElementById('carouselTrack');
             if (!track) {
+                console.log('ID not found, trying class...');
                 track = document.querySelector('.carousel-track');
             }
             if (!track) {
+                alert('ERRO CRÍTICO: Elemento da roleta não encontrado! Tente limpar o cache.');
                 console.error('CRITICAL: Carousel Track not found in DOM');
                 return;
             }
+            // console.log('Track found:', track);
 
             track.innerHTML = '';
             track.style.transition = 'none';
