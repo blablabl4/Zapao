@@ -1143,7 +1143,7 @@
 
             try {
                 // Pre-fetch candidates
-                const res = await fetch(`/api/admin/amigos/draw/candidates/${currentCampaignId}`);
+                const res = await fetch(`/api/admin/amigos/draw/candidates/${currentCampaignId}?t=` + Date.now());
                 candidates = await res.json();
 
                 if (!Array.isArray(candidates) || candidates.length === 0) {
