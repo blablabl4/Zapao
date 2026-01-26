@@ -213,6 +213,31 @@ router.post('/draw/spin', async (req, res) => {
     }
 });
 
+// Update campaign round
+router.post('/campaign/round', async (req, res) => {
+    try {
+        const { campaignId, round } = req.body;
+        if (!campaignId || round === undefined) {
+            return res.status(400).json({ error: 'campaignId and round required' });
+        }
+        const updated = await AmigosAdminService.updateRound(campaignId, round);
+        res.json(updated);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Get winners history
+router.get('/winners/:campaignId', async (req, res) => {
+    try {
+        const { campaignId } = req.params;
+        const winners = await AmigosAdminService.getWinnersHistory(campaignId);
+        res.json(winners);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Finish Campaign (Mark inactive)
 
 

@@ -557,6 +557,46 @@ class AmigosAdminService {
             VALUES($1, $2, $3, $4, $5, $6, $7, $8)
                 `, [type, data.promo_id, data.token, data.phone, data.metadata, data.ip, data.ua, data.deviceId]);
     }
+
+    /**
+     * Update campaign round (increment/set)
+     */
+    async updateRound(campaignId, newRound) {
+        const res = await query(`
+            UPDATE az_campaigns 
+            SET current_round = $1, updated_at = NOW()
+            WHERE id = $2
+            RETURNING *
+        `, [newRound, campaignId]);
+
+        // Invalidate cache
+        AmigosService.invalidateCache();
+
+        return res.rows[0];
+    }
+
+    /**
+     * Get winners history for a campaign
+     */
+    async getWinnersHistory(campaignId) {
+        const res = await query(`
+            SELECT 
+                t.number as ticket_number,
+                t.round_number,
+                c.name,
+                c.phone,
+                t.status,
+                t.updated_at as won_at
+            FROM az_tickets t
+            LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
+            WHERE t.campaign_id = $1 
+              AND (t.status = 'WINNER' OR t.status = 'HOUSE_RESERVED')
+            ORDER BY t.round_number DESC, t.updated_at DESC
+            LIMIT 50
+        `, [campaignId]);
+
+        return res.rows;
+    }
 }
 
 module.exports = new AmigosAdminService();

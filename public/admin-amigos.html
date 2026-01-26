@@ -680,6 +680,67 @@
                     </button>
                 </div>
             </div>
+
+            <!-- SYSTEM STATUS CARD -->
+            <div class="card" style="margin-top: 20px;">
+                <h2>📊 Status do Sistema</h2>
+                <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <div
+                        style="text-align: center; padding: 20px; background: #f0fdf4; border-radius: 12px; border: 2px solid var(--az-primary);">
+                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Rodada Atual</div>
+                        <div style="display: flex; align-items: center; gap: 15px; justify-content: center;">
+                            <button onclick="changeRound(-1)" class="btn"
+                                style="padding: 5px 12px; font-size: 1.2rem;">−</button>
+                            <span id="currentRoundDisplay"
+                                style="font-size: 2.5rem; font-weight: 800; color: var(--az-primary);">1</span>
+                            <button onclick="changeRound(1)" class="btn"
+                                style="padding: 5px 12px; font-size: 1.2rem;">+</button>
+                        </div>
+                    </div>
+                    <div
+                        style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid var(--az-border);">
+                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Campanha</div>
+                        <div id="currentCampaignName"
+                            style="font-size: 1.3rem; font-weight: 600; color: var(--az-text);">--</div>
+                        <div id="campaignStatus" style="font-size: 0.85rem; color: #10b981; margin-top: 5px;">● Ativo
+                        </div>
+                    </div>
+                    <div
+                        style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid var(--az-border);">
+                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Range de Números</div>
+                        <div id="currentRangeDisplay"
+                            style="font-size: 1.3rem; font-weight: 600; color: var(--az-text);">1 - 300</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WINNERS HISTORY TABLE -->
+            <div class="card" style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">🏆 Histórico de Ganhadores</h2>
+                    <button onclick="loadWinnersHistory()" class="btn btn-outline" style="padding: 8px 15px;">🔄
+                        Atualizar</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="winnersHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Rodada</th>
+                                <th>Número</th>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Status</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" style="text-align:center; color:#9ca3af;">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- TAB: SEARCH -->
@@ -904,6 +965,79 @@
             document.getElementById('kpiTotalNumbers').innerText = k.totalNumbers || 0;
             document.getElementById('kpiTotalUsers').innerText = k.totalUsers || 0;
             document.getElementById('kpiTotalPromos').innerText = k.totalPromos || 0;
+
+            // Also update status card
+            updateStatusCard();
+        }
+
+        let currentRound = 1;
+
+        async function updateStatusCard() {
+            if (!currentCampaignId) return;
+
+            // Fetch campaign data
+            const res = await fetch('/api/amigos/campaign');
+            const camp = await res.json();
+
+            if (camp) {
+                currentRound = camp.current_round || 1;
+                document.getElementById('currentRoundDisplay').innerText = currentRound;
+                document.getElementById('currentCampaignName').innerText = camp.name || '--';
+                document.getElementById('currentRangeDisplay').innerText = `${camp.start_number || 1} - ${camp.end_number || 300}`;
+                document.getElementById('campaignStatus').innerText = camp.is_active ? '● Ativo' : '○ Inativo';
+                document.getElementById('campaignStatus').style.color = camp.is_active ? '#10b981' : '#9ca3af';
+            }
+
+            // Load winners history
+            loadWinnersHistory();
+        }
+
+        async function changeRound(delta) {
+            const newRound = Math.max(1, currentRound + delta);
+            if (newRound === currentRound) return;
+
+            const res = await fetch('/api/admin/amigos/campaign/round', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ campaignId: currentCampaignId, round: newRound })
+            });
+
+            if (res.ok) {
+                currentRound = newRound;
+                document.getElementById('currentRoundDisplay').innerText = currentRound;
+                showToast(`Rodada atualizada para ${currentRound}`);
+            } else {
+                showToast('Erro ao atualizar rodada', 'error');
+            }
+        }
+
+        async function loadWinnersHistory() {
+            if (!currentCampaignId) return;
+
+            const tbody = document.querySelector('#winnersHistoryTable tbody');
+
+            try {
+                const res = await fetch(`/api/admin/amigos/winners/${currentCampaignId}`);
+                const winners = await res.json();
+
+                if (!winners || winners.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#9ca3af;">Nenhum ganhador ainda</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = winners.map(w => `
+                    <tr>
+                        <td><strong>Rodada ${w.round_number || 1}</strong></td>
+                        <td style="font-weight:700; color:var(--az-primary);">${w.ticket_number}</td>
+                        <td>${w.name || '(Casa)'}</td>
+                        <td>${w.phone || '--'}</td>
+                        <td>${w.status === 'HOUSE_RESERVED' ? '<span style="color:#f59e0b;">🏠 Casa</span>' : '<span style="color:#10b981;">👤 Real</span>'}</td>
+                        <td>${w.won_at ? new Date(w.won_at).toLocaleString('pt-BR') : '--'}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444;">Erro ao carregar</td></tr>';
+            }
         }
 
         function closeDraw() {
