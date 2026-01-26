@@ -1124,12 +1124,23 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ campaignId: currentCampaignId })
                 });
-                const winner = await res.json(); // { number, name, phone, status }
+                const winner = await res.json();
+
+                // CHECK FOR ERROR - No participants found
+                if (!res.ok || winner.error) {
+                    status.textContent = winner.error || 'Erro no sorteio';
+                    status.style.color = '#ef4444';
+                    btn.disabled = false;
+                    btn.textContent = 'TENTAR NOVAMENTE';
+                    isSpinning = false;
+                    alert(winner.message || winner.error || 'Nenhum participante encontrado para sorteio!');
+                    return;
+                }
 
                 // 2. Build CIRCULAR Reel - Complete Range Coverage
                 // Instead of random numbers, create a realistic roulette with ALL campaign numbers
 
-                const winNum = winner.ticket_number || winner.number || '000';
+                const winNum = winner.ticket_number || winner.number;
 
                 // VALIDATION: Ensure range is valid
                 const startNum = Math.max(1, currentCampaignStartNum);

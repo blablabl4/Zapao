@@ -207,8 +207,18 @@ router.post('/draw/spin', async (req, res) => {
     try {
         const { campaignId } = req.body;
         const winner = await AmigosAdminService.drawWinner(campaignId);
+
+        // CRITICAL: Check if winner was found
+        if (!winner || !winner.ticket_number) {
+            return res.status(404).json({
+                error: 'Nenhum participante encontrado para sorteio!',
+                message: 'Não há números distribuídos para pessoas reais nesta campanha.'
+            });
+        }
+
         res.json(winner);
     } catch (e) {
+        console.error('[Draw] Error:', e);
         res.status(500).json({ error: e.message });
     }
 });
