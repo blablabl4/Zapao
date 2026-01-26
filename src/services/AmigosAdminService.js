@@ -388,12 +388,13 @@ class AmigosAdminService {
                 LIMIT 1
             `, [campaignId]);
         } else {
-            // NORMAL FAIR DRAW
+            // NORMAL FAIR DRAW - Only from ASSIGNED tickets (real participants)
+            console.log('[Draw] Fair Draw - Selecting from ASSIGNED tickets only');
             res = await query(`
                 SELECT t.number as ticket_number, t.status, c.name, c.phone
                 FROM az_tickets t
-                LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
-                WHERE t.campaign_id = $1
+                INNER JOIN az_claims c ON t.assigned_claim_id = c.id
+                WHERE t.campaign_id = $1 AND t.status = 'ASSIGNED'
                 ORDER BY RANDOM()
                 LIMIT 1
             `, [campaignId]);
