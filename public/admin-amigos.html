@@ -1232,10 +1232,8 @@
                     let winnerText = '';
 
                     if (winner.name) {
+                        // Show only the name, no phone number
                         winnerText = winner.name;
-                        if (winner.phone && winner.phone.length > 5 && winner.phone !== 'CASA') {
-                            winnerText += ` (${winner.phone})`;
-                        }
                         status.textContent = winnerText;
                         status.style.color = '#10b981';
 
