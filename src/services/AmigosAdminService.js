@@ -386,7 +386,7 @@ class AmigosAdminService {
         // Get 60 random tickets for the visual "Spin" effect
         // Enforce range strictly to avoid "ghost numbers"
         const res = await query(`
-            SELECT t.number as ticket_number, t.status, c.name
+            SELECT t.number as ticket_number, t.status, c.name, c.phone, c.claimed_at
             FROM az_tickets t
             JOIN az_campaigns cam ON t.campaign_id = cam.id
             LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
@@ -400,6 +400,9 @@ class AmigosAdminService {
         return res.rows.map(r => ({
             number: r.ticket_number,
             status: r.status,
+            name: r.name,
+            phone: r.phone,
+            claimed_at: r.claimed_at,
             label: r.status === 'ASSIGNED' ? (r.name ? r.name.split(' ')[0] : 'Participante') : 'Livre 🏠'
         }));
     }

@@ -1412,14 +1412,21 @@
                 // Sort by Ticket Number
                 sold.sort((a, b) => a.number - b.number);
 
-                tbody.innerHTML = sold.map(i => `
+                tbody.innerHTML = sold.map(i => {
+                    // Format Date
+                    const dateStr = i.claimed_at
+                        ? new Date(i.claimed_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                        : '-';
+
+                    return `
                         <tr>
                             <td><strong style="color:var(--az-primary); font-size:1.1rem;">${i.number}</strong></td>
                             <td>${i.name || '-'}</td>
                             <td>${i.phone || '-'}</td>
-                             <td>-</td>
+                             <td>${dateStr}</td>
                         </tr>
-                    `).join('');
+                    `;
+                }).join('');
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${e.message}</td></tr>`;
             }
