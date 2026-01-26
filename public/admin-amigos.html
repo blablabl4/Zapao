@@ -354,6 +354,8 @@
             font-size: 1.1rem;
             font-weight: 600;
             min-height: 27px;
+            text-align: center;
+            /* Center text */
         }
 
         /* Spin Button in Modal */
@@ -422,11 +424,13 @@
 
         .number-card .num {
             font-size: 3.5rem;
-            /* Increased size since no label */
             font-weight: 800;
             color: #1F2937;
             line-height: 1;
             text-shadow: 0 2px 0px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Removed .lbl styles as requested */
@@ -709,7 +713,7 @@
     <div id="drawModal" class="az-modal-overlay">
         <div class="az-modal">
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h3 style="margin:0;">🎰 Sorteio Oficial</h3>
+                <h3 style="margin:0;">Sorteio</h3>
                 <button onclick="closeDraw()"
                     style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
             </div>
@@ -958,8 +962,8 @@
             const track = document.getElementById('carouselTrack');
 
             btn.disabled = true;
-            status.textContent = 'Sorteando...';
-            status.style.color = 'var(--gold)';
+            status.textContent = ''; // Clear status during spin
+            status.style.color = 'var(--az-primary)';
 
             try {
                 // 1. Fetch Result
@@ -1073,7 +1077,7 @@
                     isSpinning = false;
                 };
 
-                const safeTimer = setTimeout(onFinish, 6500);
+                const safeTimer = setTimeout(onFinish, 8500); // Match 8s animation + buffer
                 track.addEventListener('transitionend', () => {
                     clearTimeout(safeTimer);
                     onFinish();
