@@ -499,13 +499,13 @@ class AmigosService {
             ]);
             const claimId = claimRes.rows[0].id;
 
-            // 4. Allocate Tickets
+            // 4. Allocate Tickets (Only from current round)
             const ticketsRes = await client.query(`
                 SELECT id, number FROM az_tickets 
-                WHERE campaign_id = $1 AND status = 'AVAILABLE'
-                LIMIT $2
+                WHERE campaign_id = $1 AND status = 'AVAILABLE' AND round_number = $2
+                LIMIT $3
                 FOR UPDATE SKIP LOCKED
-            `, [campaign.id, totalQty]);
+            `, [campaign.id, currentRound, totalQty]);
 
             if (ticketsRes.rows.length < totalQty) {
                 throw new Error('Tickets esgotados para esta campanha!');
