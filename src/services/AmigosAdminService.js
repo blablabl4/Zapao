@@ -434,7 +434,7 @@ class AmigosAdminService {
             // 5. AUTO-INCREMENT ROUND for next sorteio
             // This allows people to get new numbers after each draw
             await query(`
-                UPDATE az_campaigns SET current_round = current_round + 1, updated_at = NOW()
+                UPDATE az_campaigns SET current_round = current_round + 1
                 WHERE id = $1
             `, [campaignId]);
 
