@@ -939,7 +939,7 @@
                 // 1. Total Tickets (Distributed / Total)
                 const total = data.total_tickets || 0;
                 // Count distributed (SOLD + RESERVED)
-                const sold = data.ticket_counts.filter(c => c.status === 'SOLD').reduce((acc, c) => acc + parseInt(c.count), 0);
+                const sold = data.ticket_counts.filter(c => c.status === 'ASSIGNED').reduce((acc, c) => acc + parseInt(c.count), 0);
                 const reserved = data.ticket_counts.filter(c => c.status === 'RESERVED').reduce((acc, c) => acc + parseInt(c.count), 0);
                 const distributed = sold + reserved;
 
@@ -1143,8 +1143,19 @@
                 const res = await fetch(`/api/admin/amigos/draw/candidates/${currentCampaignId}`);
                 candidates = await res.json();
 
-                // Render initial static view (first 5)
-                renderReel(candidates.slice(0, 5));
+                if (!Array.isArray(candidates) || candidates.length === 0) {
+                    candidates = []; // Ensure empty array
+                    console.log('No candidates found');
+                    // Render placeholder or empty state
+                    renderReel([
+                        { number: '...', label: 'Livre' },
+                        { number: '...', label: 'Livre' },
+                        { number: '...', label: 'Livre' }
+                    ]);
+                } else {
+                    // Render initial static view (first 5)
+                    renderReel(candidates.slice(0, 5));
+                }
 
                 document.getElementById('drawStatus').textContent = 'Pronto para sortear!';
                 document.getElementById('btnSpin').disabled = false;
