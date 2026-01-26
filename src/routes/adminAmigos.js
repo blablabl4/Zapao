@@ -10,7 +10,7 @@ router.get('/campaign', async (req, res) => {
     try {
         // First try to get active
         let campaign = await AmigosService.getActiveCampaign();
-        
+
         // If no active, get the latest one (Draft mode support)
         if (!campaign) {
             const result = await query('SELECT * FROM az_campaigns ORDER BY created_at DESC LIMIT 1');
@@ -172,6 +172,41 @@ router.post('/campaign/reset', async (req, res) => {
             success: true,
             message: `♻️ Distribuição zerada! ${result.claims_deleted} resgates removidos, ${result.tickets_reset} números liberados.`
         });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// FINISH CAMPAIGN LOGIC ABOVE...
+
+// DRAW ENDPOINTS
+router.get('/draw/candidates/:campaignId', async (req, res) => {
+    try {
+        const { campaignId } = req.params;
+        const candidates = await AmigosAdminService.getDrawCandidates(campaignId);
+        res.json(candidates);
+    } catch (e) {
+        console.error('Error fetching candidates:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/draw/candidates', async (req, res) => { // fallback or query param support
+    try {
+        const { campaignId } = req.query;
+        if (!campaignId) return res.json([]);
+        const candidates = await AmigosAdminService.getDrawCandidates(campaignId);
+        res.json(candidates);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/draw/spin', async (req, res) => {
+    try {
+        const { campaignId } = req.body;
+        const winner = await AmigosAdminService.drawWinner(campaignId);
+        res.json(winner);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
