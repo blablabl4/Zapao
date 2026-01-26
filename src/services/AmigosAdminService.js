@@ -366,13 +366,13 @@ class AmigosAdminService {
 
     // === DRAW SYSTEM (Sorteio) ===
 
-const { getComplexIdentity } = require('../utils/names');
-
     async drawWinner(campaignId) {
-    // Draw from ALL tickets (Global Pool)
-    // If status='ASSIGNED', we have a winner.
-    // If status='AVAILABLE'/'RESERVED', the House Wins.
-    const res = await query(`
+        // 1. Get Campaign Info (for Ghost Name)
+        const campRes = await query('SELECT house_winner_name FROM az_campaigns WHERE id = $1', [campaignId]);
+        const ghostName = campRes.rows[0]?.house_winner_name || 'Jogador Fantasma';
+
+        // 2. Draw Ticket (Global Pool)
+        const res = await query(`
             SELECT t.number as ticket_number, t.status, c.name, c.phone
             FROM az_tickets t
             LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
@@ -381,32 +381,32 @@ const { getComplexIdentity } = require('../utils/names');
             LIMIT 1
         `, [campaignId]);
 
-    const winner = res.rows[0];
+        const winner = res.rows[0];
 
-    // GHOST PLAYER LOGIC (Stealth Mode)
-    if (winner && winner.status !== 'ASSIGNED') {
-        const ghost = getComplexIdentity(); // { name, location }
-        winner.name = ghost.name;
-        winner.phone = 'Ghost-System'; // Internal flag if needed, but UI shows name
-        winner.is_ghost = true;
+        // 3. Apply Ghost Logic (Stealth)
+        // If ticket is not assigned, it belongs to the Ghost
+        if (winner && winner.status !== 'ASSIGNED') {
+            winner.name = ghostName; // Use the active round's Ghost Name
+            winner.phone = 'CASA';
+            winner.is_ghost = true;
+        }
+
+        return winner;
     }
-
-    return winner;
-}
 
     async getDrawCandidates(campaignId, limit = 60) {
-    // Limit 0 or null = No Limit (Fetch All)
-    // Default 60 for Roulette visual
+        // Limit 0 or null = No Limit (Fetch All)
+        // Default 60 for Roulette visual
 
-    let limitClause = '';
-    const params = [campaignId];
+        let limitClause = '';
+        const params = [campaignId];
 
-    if (limit && limit > 0) {
-        limitClause = 'LIMIT $2';
-        params.push(limit);
-    }
+        if (limit && limit > 0) {
+            limitClause = 'LIMIT $2';
+            params.push(limit);
+        }
 
-    const res = await query(`
+        const res = await query(`
             SELECT t.number as ticket_number, t.status, c.name, c.phone, c.claimed_at
             FROM az_tickets t
             JOIN az_campaigns cam ON t.campaign_id = cam.id
@@ -418,44 +418,44 @@ const { getComplexIdentity } = require('../utils/names');
             ${limitClause}
         `, params);
 
-    return res.rows.map(r => ({
-        number: r.ticket_number,
-        status: r.status,
-        name: r.name,
-        phone: r.phone,
-        claimed_at: r.claimed_at,
-        label: r.status === 'ASSIGNED' ? (r.name ? r.name.split(' ')[0] : 'Participante') : 'Livre 🏠'
-    }));
-}
+        return res.rows.map(r => ({
+            number: r.ticket_number,
+            status: r.status,
+            name: r.name,
+            phone: r.phone,
+            claimed_at: r.claimed_at,
+            label: r.status === 'ASSIGNED' ? (r.name ? r.name.split(' ')[0] : 'Participante') : 'Livre 🏠'
+        }));
+    }
 
     async getStats(period, campaignId = null) {
-    // period: '24h' or '7d'
-    let timeFilter, interval;
-    if (period === '24h') {
-        timeFilter = "NOW() - INTERVAL '24 hours'";
-        interval = 'hour'; // PostgreSQL trunk
-    } else {
-        timeFilter = "NOW() - INTERVAL '7 days'";
-        interval = 'day';
-    }
+        // period: '24h' or '7d'
+        let timeFilter, interval;
+        if (period === '24h') {
+            timeFilter = "NOW() - INTERVAL '24 hours'";
+            interval = 'hour'; // PostgreSQL trunk
+        } else {
+            timeFilter = "NOW() - INTERVAL '7 days'";
+            interval = 'day';
+        }
 
-    // Get active campaign if not provided
-    if (!campaignId) {
-        const AmigosService = require('./AmigosService');
-        const campaign = await AmigosService.getActiveCampaign();
-        campaignId = campaign?.id;
-    }
+        // Get active campaign if not provided
+        if (!campaignId) {
+            const AmigosService = require('./AmigosService');
+            const campaign = await AmigosService.getActiveCampaign();
+            campaignId = campaign?.id;
+        }
 
-    if (!campaignId) {
-        return {
-            chart: { labels: [], data: [] },
-            stats: { total_numbers: 0, total_users: 0, total_promos: 0 }
-        };
-    }
+        if (!campaignId) {
+            return {
+                chart: { labels: [], data: [] },
+                stats: { total_numbers: 0, total_users: 0, total_promos: 0 }
+            };
+        }
 
-    // 1. Chart Data
-    // Group claims by interval
-    const chartRes = await query(`
+        // 1. Chart Data
+        // Group claims by interval
+        const chartRes = await query(`
             SELECT 
                 DATE_TRUNC($1, claimed_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as time_bucket,
             COUNT(*) as count
@@ -465,50 +465,50 @@ const { getComplexIdentity } = require('../utils/names');
             ORDER BY time_bucket ASC
             `, [interval, campaignId]);
 
-    // Fill gaps if needed, but for MVP simple query is fine
-    // Format labels and data
-    const labels = [];
-    const data = [];
+        // Fill gaps if needed, but for MVP simple query is fine
+        // Format labels and data
+        const labels = [];
+        const data = [];
 
-    chartRes.rows.forEach(r => {
-        const d = new Date(r.time_bucket);
-        // Format label based on interval - convert to local visual
-        if (interval === 'hour') {
-            labels.push(d.getHours() + 'h');
-        } else {
-            // Day: Show "DD/MM (Dia)"
-            const dayStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            const weekDay = d.toLocaleDateString('pt-BR', { weekday: 'short' });
-            labels.push(`${dayStr}(${weekDay})`);
-        }
-        data.push(parseInt(r.count));
-    });
+        chartRes.rows.forEach(r => {
+            const d = new Date(r.time_bucket);
+            // Format label based on interval - convert to local visual
+            if (interval === 'hour') {
+                labels.push(d.getHours() + 'h');
+            } else {
+                // Day: Show "DD/MM (Dia)"
+                const dayStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                const weekDay = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+                labels.push(`${dayStr}(${weekDay})`);
+            }
+            data.push(parseInt(r.count));
+        });
 
-    // 2. Total Distributed Numbers (for this campaign)
-    const totalRes = await query('SELECT COUNT(*) as c FROM az_tickets WHERE status = \'ASSIGNED\' AND campaign_id = $1', [campaignId]);
+        // 2. Total Distributed Numbers (for this campaign)
+        const totalRes = await query('SELECT COUNT(*) as c FROM az_tickets WHERE status = \'ASSIGNED\' AND campaign_id = $1', [campaignId]);
 
-    // 3. Total Participants (Unique Phones in this campaign)
-    const usersRes = await query('SELECT COUNT(DISTINCT phone) as c FROM az_claims WHERE campaign_id = $1', [campaignId]);
+        // 3. Total Participants (Unique Phones in this campaign)
+        const usersRes = await query('SELECT COUNT(DISTINCT phone) as c FROM az_claims WHERE campaign_id = $1', [campaignId]);
 
-    // 4. Redeemed Promo Codes (Stats in this campaign)
-    const promoRes = await query('SELECT COUNT(*) as c FROM az_claims WHERE type = \'PROMO\' AND campaign_id = $1', [campaignId]);
+        // 4. Redeemed Promo Codes (Stats in this campaign)
+        const promoRes = await query('SELECT COUNT(*) as c FROM az_claims WHERE type = \'PROMO\' AND campaign_id = $1', [campaignId]);
 
-    return {
-        chart: { labels, data },
-        stats: {
-            total_numbers: parseInt(totalRes.rows[0].c),
-            total_users: parseInt(usersRes.rows[0].c),
-            total_promos: parseInt(promoRes.rows[0].c)
-        }
-    };
-}
+        return {
+            chart: { labels, data },
+            stats: {
+                total_numbers: parseInt(totalRes.rows[0].c),
+                total_users: parseInt(usersRes.rows[0].c),
+                total_promos: parseInt(promoRes.rows[0].c)
+            }
+        };
+    }
 
     async logEvent(type, data) {
-    await query(`
+        await query(`
             INSERT INTO az_events(type, promotion_id, promo_token, phone, metadata, ip, user_agent, device_id)
             VALUES($1, $2, $3, $4, $5, $6, $7, $8)
                 `, [type, data.promo_id, data.token, data.phone, data.metadata, data.ip, data.ua, data.deviceId]);
-}
+    }
 }
 
 module.exports = new AmigosAdminService();
