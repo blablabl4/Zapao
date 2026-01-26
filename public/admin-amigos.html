@@ -949,10 +949,21 @@
                 const data = await res.json();
 
                 // 1. Total Tickets (Distributed / Total)
+                // 1. Total Tickets (Distributed / Total)
                 const total = data.total_tickets || 0;
+
+                // FILTER BY ACTIVE CAMPAIGN if available
+                const targetCid = data.active_campaign ? data.active_campaign.id : currentCampaignId;
+
                 // Count distributed (SOLD + RESERVED)
-                const sold = data.ticket_counts.filter(c => c.status === 'ASSIGNED').reduce((acc, c) => acc + parseInt(c.count), 0);
-                const reserved = data.ticket_counts.filter(c => c.status === 'RESERVED').reduce((acc, c) => acc + parseInt(c.count), 0);
+                // Filter by campaign_id if we have a target, otherwise show all? 
+                // Better to filter by active campaign to avoid confusion.
+                const relevantCounts = targetCid
+                    ? data.ticket_counts.filter(c => c.campaign_id == targetCid)
+                    : data.ticket_counts;
+
+                const sold = relevantCounts.filter(c => c.status === 'ASSIGNED').reduce((acc, c) => acc + parseInt(c.count), 0);
+                const reserved = relevantCounts.filter(c => c.status === 'RESERVED').reduce((acc, c) => acc + parseInt(c.count), 0);
                 const distributed = sold + reserved;
 
                 document.getElementById('kpiTotalNumbers').textContent = distributed;
