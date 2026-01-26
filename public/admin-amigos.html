@@ -943,13 +943,8 @@
                 card.style.color = '#111827';
                 card.style.borderWidth = '2px';
 
-                // NO LABEL requested. Just number.
-
-                card.innerHTML = `
-                    <div style="text-align:center">
-                        <div class="num">${item.number || '000'}</div>
-                    </div>
-                `;
+                // Card content: just the number, centered via parent flexbox
+                card.innerHTML = `<div class="num">${item.number || '000'}</div>`;
                 track.appendChild(card);
             });
         }
@@ -975,18 +970,41 @@
                 });
                 const winner = await res.json(); // { number, name, phone, status }
 
-                // 2. Build Reel - use campaign range numbers
-                const initialView = Array(5).fill(0).map(() => ({
-                    number: String(Math.floor(Math.random() * (currentCampaignEndNum - currentCampaignStartNum + 1)) + currentCampaignStartNum),
-                    // No label
-                }));
-
-                const middleFrames = Array(80).fill(0).map(() => ({
-                    number: String(Math.floor(Math.random() * (currentCampaignEndNum - currentCampaignStartNum + 1)) + currentCampaignStartNum),
-                    // No label
-                }));
+                // 2. Build CIRCULAR Reel - Complete Range Coverage
+                // Instead of random numbers, create a realistic roulette with ALL campaign numbers
 
                 const winNum = winner.ticket_number || winner.number || '000';
+
+                // Create array with all numbers in range
+                const allNumbers = [];
+                for (let i = currentCampaignStartNum; i <= currentCampaignEndNum; i++) {
+                    allNumbers.push(i);
+                }
+
+                // Shuffle for variety
+                const shuffleArray = (arr) => {
+                    const shuffled = [...arr];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    return shuffled;
+                };
+
+                const shuffled = shuffleArray(allNumbers);
+
+                // Create reel: 2 complete rotations + partial rotation to winner
+                // This ensures we see the full range at least once
+                const fullRotation1 = shuffled.map(n => ({ number: String(n) }));
+                const fullRotation2 = shuffleArray(allNumbers).map(n => ({ number: String(n) }));
+
+                // Add random numbers until we're close to winner position
+                const approachNumbers = [];
+                const approachCount = Math.floor(Math.random() * 20) + 40; // 40-60 more numbers
+                for (let i = 0; i < approachCount; i++) {
+                    const randNum = allNumbers[Math.floor(Math.random() * allNumbers.length)];
+                    approachNumbers.push({ number: String(randNum) });
+                }
 
                 const winnerItem = {
                     number: winNum,
@@ -995,41 +1013,27 @@
                     phone: winner.phone,
                 };
 
-                const finalReel = [...initialView, ...middleFrames, winnerItem];
+                // Final reel: 2 full rotations + approach + winner
+                const finalReel = [...fullRotation1, ...fullRotation2, ...approachNumbers, winnerItem];
 
                 renderReel(finalReel);
 
                 // 3. Scroll Logic (Aligned Center)
-                const winnerIndex = initialView.length + middleFrames.length;
-                const cardWidth = 140; // 120 + 20 gap
+                const winnerIndex = finalReel.length - 1; // Winner is last
+                const cardEffectiveWidth = 140; // 120 width + 20 gap
                 const view = document.querySelector('.carousel-view');
                 const viewWidth = view ? view.clientWidth : 600;
-
-                // Pure Center Calculation FIXED
-                // The track is inside .carousel-view.
-                // We want the winner card center to be at view center.
-                // Scroll = (WinnerIndex * CardWidth) - (ViewWidth / 2) + (CardWidth / 2)
-
-                const cardEffectiveWidth = 140; // 120 width + 20 gap
                 const viewCenter = viewWidth / 2;
 
-                // winnerIndex is the Nth item (0-based)
-                // Distance to START of winner card = winnerIndex * 140
-                // Distance to CENTER of winner card = (winnerIndex * 140) + (120/2)
+                // Distance to CENTER of winner card
                 const distanceToCardCenter = (winnerIndex * cardEffectiveWidth) + 60;
-
-                // We want this point to be at viewCenter.
-                // So we shift left by (distanceToCardCenter - viewCenter)
-
-                // Add a small offset if needed for border/padding? Usually not if calculation is raw.
-                // Let's stick to pure math.
-
                 const scrollX = distanceToCardCenter - viewCenter;
 
                 track.getBoundingClientRect();
 
                 setTimeout(() => {
-                    track.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)'; // Smooth ease-out
+                    // Longer animation with deceleration for realism (8 seconds)
+                    track.style.transition = 'transform 8s cubic-bezier(0.25, 0.1, 0.25, 1)'; // Smooth deceleration
                     track.style.transform = `translateX(-${scrollX}px)`;
                 }, 50);
 
