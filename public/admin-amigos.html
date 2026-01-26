@@ -324,6 +324,9 @@
             /* Force relative positioning for pointers */
             position: relative;
             overflow: hidden;
+            /* Flexbox for perfect vertical centering */
+            display: flex;
+            align-items: center;
         }
 
         #drawModal .carousel-view::before {
@@ -449,9 +452,7 @@
             display: flex;
             gap: 20px;
             align-items: center;
-            height: 100%;
-            padding-top: 25px;
-            /* Push cards down from top */
+            /* Height and padding removed - parent handles centering */
         }
 
         /* POINTERS FIXED - Inside the View */
