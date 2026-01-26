@@ -298,62 +298,83 @@
         }
 
 
-        /* --- SCOPED DARK/GOLD THEME FOR ROULETTE MODAL ONLY --- */
+        /* --- LIGHT THEME FOR ROULETTE MODAL (matches admin panel) --- */
         #drawModal .az-modal {
-            background: var(--zapao-card) !important;
-            border: 1px solid var(--gold) !important;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.15);
+            background: var(--az-card-bg) !important;
+            border: 1px solid var(--az-border) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             max-width: 700px;
         }
 
         #drawModal h3 {
-            color: var(--gold) !important;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: var(--az-primary) !important;
+            font-weight: 700;
             font-size: 1.5rem;
             margin-bottom: 20px;
         }
 
-        /* Dark Carousel Container inside Modal */
+        /* Light Carousel Container inside Modal */
         #drawModal .carousel-view {
-            background: #111827;
-            border: 2px solid #374151;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+            background: #f9fafb;
+            border: 2px solid var(--az-border);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.03);
             height: 180px;
             /* Force relative positioning for pointers */
             position: relative;
+            overflow: hidden;
         }
 
         #drawModal .carousel-view::before {
-            background: linear-gradient(to right, #111827, transparent);
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(to right, #f9fafb, transparent);
+            z-index: 10;
+            pointer-events: none;
         }
 
         #drawModal .carousel-view::after {
-            background: linear-gradient(to left, #111827, transparent);
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(to left, #f9fafb, transparent);
+            z-index: 10;
+            pointer-events: none;
         }
 
         /* Status Text in Modal */
         #drawStatus {
-            color: #ccc !important;
+            color: var(--az-text) !important;
             font-size: 1.1rem;
-            font-weight: 500;
+            font-weight: 600;
             min-height: 27px;
         }
 
         /* Spin Button in Modal */
         #btnSpin {
-            background: var(--gold) !important;
-            color: #000 !important;
-            font-weight: 800 !important;
-            font-size: 1.2rem !important;
-            padding: 16px 40px !important;
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
+            background: var(--az-primary) !important;
+            color: #fff !important;
+            font-weight: 700 !important;
+            font-size: 1.1rem !important;
+            padding: 12px 32px !important;
+            box-shadow: none !important;
+            border-radius: 8px;
         }
 
         #btnSpin:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5) !important;
+            opacity: 0.9;
+            transform: none;
+        }
+
+        #btnSpin:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         /* MODAL OVERLAY */
@@ -436,20 +457,18 @@
             z-index: 20;
         }
 
-        /* Top Pointer (Points Down) */
+        /* Top Pointer (Points Down) - Light theme */
         .pointer-top {
             top: 0;
-            /* Snapped to top */
-            border-top: 18px solid var(--gold);
-            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+            border-top: 18px solid var(--az-primary);
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
         }
 
-        /* Bottom Pointer (Points Up) */
+        /* Bottom Pointer (Points Up) - Light theme */
         .pointer-bottom {
             bottom: 0;
-            /* Snapped to bottom */
-            border-bottom: 18px solid var(--gold);
-            filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.5));
+            border-bottom: 18px solid var(--az-primary);
+            filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.2));
         }
     </style>
 </head>
@@ -736,6 +755,8 @@
     <script>
         // --- GLOBAL STATE ---
         let currentCampaignId = null;
+        let currentCampaignStartNum = 1;  // Store campaign start number
+        let currentCampaignEndNum = 300;  // Store campaign end number
         let isSpinning = false;
         let animationFrameId = null;
 
@@ -780,6 +801,8 @@
 
                 if (c.id) {
                     currentCampaignId = c.id;
+                    currentCampaignStartNum = parseInt(c.start_number) || 1;
+                    currentCampaignEndNum = parseInt(c.end_number) || 300;
                     setVal('campName', c.name);
                     setVal('startNum', c.start_number);
                     setVal('endNum', c.end_number);
@@ -835,18 +858,33 @@
 
         async function updateHouseName() {
             const name = document.getElementById('newHouseName').value;
-            // We reuse the update campaign endpoint or a specific one?
-            // Since we don't have a specific endpoint for just updating the dummy name documented here,
-            // I'll assume we can pass it to campaign update OR use the house-winner toggle with extra data?
-            // For now, I will try to call the campaign update with the new field if the backend supports it,
-            // or just re-toggle with the name.
-            // Actually, looking at previous context, there isn't a dedicated endpoint. 
-            // I will use a simple alert for now as I can't modify backend here easily without checking.
-            // BUT, I can try to simply send it as part of house-winner payload if the backend accepts it?
-            // Checking safeInit... I'll assume for this specific request I just need to SHOW it if it exists.
-            // If the user wants to EDIT it, they might need a backend change. I'll leave the input but it might not save yet without backend support.
-            // WAIT: User said "Nome Falso: --" (empty).
-            alert('Funcionalidade de atualizar nome requer ajuste no backend. Por enquanto, garantindo que o nome apareça se existir.');
+            if (!name) return alert('Digite um nome!');
+
+            try {
+                // Reuse campaign update endpoint or toggle, but since we updated the backend to accept fields on main update,
+                // we should probably just use the saveCampaign logic OR the toggle if we want a specific action.
+                // Best fit: Update campaign config directly.
+                // We need the current config to not overwrite other stuff?
+                // Ideally backend PATCH. But we only have updateCampaign (PUT-like).
+                // Let's assume we can just send the house_winner_name if we change the backend to partial update?
+                // The backend implementation:
+                // if (data.name) ...
+                // It builds the query dynamically! So partial update IS supported.
+
+                await fetch('/api/admin/amigos/campaign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        house_winner_name: name
+                    })
+                });
+
+                alert('Nome do Ganhador da Casa atualizado!');
+                loadCampaign(); // Refresh to effective values
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao atualizar nome: ' + e.message);
+            }
         }
 
         async function resetCampaign() {
@@ -883,9 +921,9 @@
             btn.disabled = false;
             btn.textContent = 'GIRAR A ROLETA 🎰';
 
-            // Initial visual state
+            // Initial visual state - use campaign range
             const candidates = Array(5).fill(0).map(() => ({
-                number: String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+                number: String(Math.floor(Math.random() * (currentCampaignEndNum - currentCampaignStartNum + 1)) + currentCampaignStartNum),
                 label: 'Sorteio',
                 status: 'NONE'
             }));
@@ -941,14 +979,14 @@
                 });
                 const winner = await res.json(); // { number, name, phone, status }
 
-                // 2. Build Reel
+                // 2. Build Reel - use campaign range numbers
                 const initialView = Array(5).fill(0).map(() => ({
-                    number: String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+                    number: String(Math.floor(Math.random() * (currentCampaignEndNum - currentCampaignStartNum + 1)) + currentCampaignStartNum),
                     // No label
                 }));
 
                 const middleFrames = Array(80).fill(0).map(() => ({
-                    number: String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+                    number: String(Math.floor(Math.random() * (currentCampaignEndNum - currentCampaignStartNum + 1)) + currentCampaignStartNum),
                     // No label
                 }));
 
@@ -972,23 +1010,31 @@
                 const view = document.querySelector('.carousel-view');
                 const viewWidth = view ? view.clientWidth : 600;
 
-                // Pure Center Calculation
-                // The track moves left by X pixels.
-                // We want: (WinnerCardLeft + WinnerCardHalfWidth) - TrackOffset = ViewHalfWidth
-                // TrackOffset = (WinnerIndex * CardWidth) + (CardWidth / 2) - (ViewWidth / 2)
+                // Pure Center Calculation FIXED
+                // The track is inside .carousel-view.
+                // We want the winner card center to be at view center.
+                // Scroll = (WinnerIndex * CardWidth) - (ViewWidth / 2) + (CardWidth / 2)
 
-                // Adjusting based on user feedback "decentralized"
-                // Assuming card is 120px wide + 20px gap = 140px effective slot.
-                // We want to center the Winner card (which is at index winnerIndex).
-                // Distance to start of winner card = winnerIndex * 140.
-                // To center it: Move track left by (Distance - ViewCenter + CardHalfWidth).
-                const scrollX = (winnerIndex * cardWidth) - (viewWidth / 2) + (120 / 2);
-                // Note: using 120/2 (actual card width) for centering, not slot width, to be precise.
+                const cardEffectiveWidth = 140; // 120 width + 20 gap
+                const viewCenter = viewWidth / 2;
+
+                // winnerIndex is the Nth item (0-based)
+                // Distance to START of winner card = winnerIndex * 140
+                // Distance to CENTER of winner card = (winnerIndex * 140) + (120/2)
+                const distanceToCardCenter = (winnerIndex * cardEffectiveWidth) + 60;
+
+                // We want this point to be at viewCenter.
+                // So we shift left by (distanceToCardCenter - viewCenter)
+
+                // Add a small offset if needed for border/padding? Usually not if calculation is raw.
+                // Let's stick to pure math.
+
+                const scrollX = distanceToCardCenter - viewCenter;
 
                 track.getBoundingClientRect();
 
                 setTimeout(() => {
-                    track.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)';
+                    track.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)'; // Smooth ease-out
                     track.style.transform = `translateX(-${scrollX}px)`;
                 }, 50);
 

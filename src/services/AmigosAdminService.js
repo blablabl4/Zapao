@@ -14,6 +14,8 @@ class AmigosAdminService {
         if (data.base_qty_config) { fields.push(`base_qty_config = $${idx++}`); values.push(data.base_qty_config); }
         if (data.is_active !== undefined) { fields.push(`is_active = $${idx++}`); values.push(data.is_active); }
         if (data.group_link !== undefined) { fields.push(`group_link = $${idx++}`); values.push(data.group_link); }
+        if (data.house_winner_name !== undefined) { fields.push(`house_winner_name = $${idx++}`); values.push(data.house_winner_name); }
+        if (data.house_winner_number !== undefined) { fields.push(`house_winner_number = $${idx++}`); values.push(data.house_winner_number); }
 
         values.push(id);
         const res = await query(`
