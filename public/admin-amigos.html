@@ -933,7 +933,7 @@
         async function loadKPIs() {
             try {
                 // Use existing debug endpoint which returns all stats
-                const res = await fetch('/api/admin/amigos/debug');
+                const res = await fetch('/api/admin/amigos/debug?t=' + Date.now());
                 const data = await res.json();
 
                 // 1. Total Tickets (Distributed / Total)
