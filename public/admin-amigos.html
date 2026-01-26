@@ -713,7 +713,7 @@
     <div id="drawModal" class="az-modal-overlay">
         <div class="az-modal">
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h3 style="margin:0;">Sorteio</h3>
+                <h3 style="margin:0; text-align:center;">Sorteio</h3>
                 <button onclick="closeDraw()"
                     style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
             </div>
@@ -1015,15 +1015,25 @@
                     status: winner.status,
                     name: winner.name,
                     phone: winner.phone,
+                    isWinner: true // Mark as winner explicitly
                 };
 
-                // Final reel: 2 full rotations + approach + winner
-                const finalReel = [...fullRotation1, ...fullRotation2, ...approachNumbers, winnerItem];
+                // Add trailing numbers AFTER winner for visual context (10-15 more cards)
+                const trailingNumbers = [];
+                const trailingCount = Math.floor(Math.random() * 5) + 10; // 10-15 numbers
+                for (let i = 0; i < trailingCount; i++) {
+                    const randNum = allNumbers[Math.floor(Math.random() * allNumbers.length)];
+                    trailingNumbers.push({ number: String(randNum) });
+                }
+
+                // Final reel: 2 full rotations + approach + winner + trailing
+                const finalReel = [...fullRotation1, ...fullRotation2, ...approachNumbers, winnerItem, ...trailingNumbers];
 
                 renderReel(finalReel);
 
                 // 3. Scroll Logic (Aligned Center)
-                const winnerIndex = finalReel.length - 1; // Winner is last
+                // Winner is NOT at the end anymore, need to find it
+                const winnerIndex = finalReel.findIndex(item => item.isWinner === true);
                 const cardEffectiveWidth = 140; // 120 width + 20 gap
                 const view = document.querySelector('.carousel-view');
                 const viewWidth = view ? view.clientWidth : 600;
@@ -1044,10 +1054,11 @@
                 const onFinish = () => {
                     track.removeEventListener('transitionend', onFinish);
 
-                    if (track.children[winnerIndex]) {
-                        const wCard = track.children[winnerIndex];
-                        wCard.classList.add('winner');
-                        wCard.style.zIndex = '100';
+                    // Find and highlight ONLY the winner card
+                    const winnerCard = Array.from(track.children).find((card, idx) => finalReel[idx]?.isWinner === true);
+                    if (winnerCard) {
+                        winnerCard.classList.add('winner');
+                        winnerCard.style.zIndex = '100';
                     }
 
                     let winnerText = '';
