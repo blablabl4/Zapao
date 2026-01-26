@@ -462,10 +462,17 @@ class AmigosService {
             */
 
             // 2. Single Participation Check (Strict)
-            // User Request: 1 number per PERSON per RAFFLE (Campaign)
-            const prevClaim = await client.query('SELECT 1 FROM az_claims WHERE campaign_id = $1 AND phone = $2 LIMIT 1', [campaign.id, phone]);
+            // User Request: 1 number per PERSON per ROUND in a CAMPAIGN
+            // Check if user already has a claim for tickets in the CURRENT round
+            const currentRound = campaign.current_round || 1;
+            const prevClaim = await client.query(`
+                SELECT 1 FROM az_claims c
+                JOIN az_tickets t ON t.assigned_claim_id = c.id
+                WHERE c.campaign_id = $1 AND c.phone = $2 AND t.round_number = $3
+                LIMIT 1
+            `, [campaign.id, phone, currentRound]);
             if (prevClaim.rowCount > 0) {
-                throw new Error('Você já garantiu seu número da sorte! É permitido apenas 1 número por pessoa neste sorteio.');
+                throw new Error('Você já garantiu seu número da sorte neste sorteio! É permitido apenas 1 número por pessoa.');
             }
 
             // 3. FORCE QTY = 1 (Ignore any other logic)
