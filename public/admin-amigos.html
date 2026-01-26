@@ -1169,34 +1169,33 @@
             }
         }
 
+        // --- ROULETTE REBUILD (Robust V2 - Stealth Mode) ---
+
         function renderReel(items) {
-            // Robust Selector
-            let track = document.getElementById('carouselTrack');
-            if (!track) {
-                console.error('CRITICAL: Carousel Track not found in DOM');
-                return;
-            }
-            // console.log('Track found:', track);
+            const track = document.getElementById('carouselTrack');
+            if (!track) return;
 
             track.innerHTML = '';
             track.style.transition = 'none';
             track.style.transform = 'translateX(0)';
 
-            // Create strip
             items.forEach(item => {
                 const card = document.createElement('div');
-                // STEALTH MODE: All cards look the same (Green/Valid)
+                // STEALTH MODE: All cards look identical (Green/Sold style)
                 card.className = 'number-card sold';
-                card.style.borderColor = '#10b981'; // Green
+                card.style.borderColor = '#10b981';
                 card.style.color = '#10b981';
-                card.style.background = '#f0fdf4'; // Light green bg
+                card.style.background = '#f0fdf4';
 
-                // Label Logic
-                // Always show generic label to hide "Free" status during spin
-                let label = 'Participante';
+                // Generic Label during spin
+                const label = 'Participante';
 
-                // Simple card content
-                card.innerHTML = `<div style="text-align:center"><div style="font-size:2rem">${item.number}</div><div style="font-size:0.6rem;opacity:0.8;font-weight:bold">${label}</div></div>`;
+                card.innerHTML = `
+                    <div style="text-align:center">
+                        <div style="font-size:2rem">${item.number}</div>
+                        <div style="font-size:0.6rem;opacity:0.8;font-weight:bold">${label}</div>
+                    </div>
+                `;
                 track.appendChild(card);
             });
         }
@@ -1206,108 +1205,103 @@
             isSpinning = true;
 
             const btn = document.getElementById('btnSpin');
+            const status = document.getElementById('drawStatus');
+            const track = document.getElementById('carouselTrack');
+
             btn.disabled = true;
-            document.getElementById('drawStatus').textContent = 'Sorteando...';
+            status.textContent = 'Sorteando...';
 
             try {
-                // 1. Get Winner from Backend
+                // 1. Fetch Result
                 const res = await fetch('/api/admin/amigos/draw/spin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ campaignId: currentCampaignId })
                 });
                 const winner = await res.json();
-                finalWinner = winner;
 
-                // 2. Prepare Reel
-                // Sequence: [Current View (5)] + [Random Fill (40+)] + [Winner] + [Buffer (5)]
+                // 2. Build Reel Strip
+                // We need a long strip for the animation duration (6s). 
 
-                // Ensure we have enough filler candidates
+                // Start with current view (first 5)
+                let reel = candidates.length > 0 ? candidates.slice(0, 5) : Array(5).fill({ number: '-', status: 'NONE' });
+
+                // Middle Fillers (Random mix)
                 let fillers = [...candidates];
-                // If not enough candidates for a good spin, repeat them
-                while (fillers.length < 50 && fillers.length > 0) {
-                    fillers = [...fillers, ...candidates];
+                if (fillers.length === 0) fillers = [{ number: '??', status: 'NONE' }];
+
+                // Repeat fillers until we have at least 50 items
+                const targetSize = 50;
+                let middle = [];
+                while (middle.length < targetSize) {
+                    const chunk = [...fillers].sort(() => Math.random() - 0.5);
+                    middle = [...middle, ...chunk];
                 }
-                // Shuffle fillers
-                fillers.sort(() => Math.random() - 0.5);
+                middle = middle.slice(0, 50);
 
-                // Take a solid chunk for the middle
-                const middleSection = fillers.slice(0, 40);
-
-                // Add Winner
+                // Winner Item
                 const winnerItem = {
                     number: winner.ticket_number,
                     status: winner.status,
-                    label: winner.status === 'ASSIGNED' ? (winner.name ? winner.name.split(' ')[0] : 'Vendido') : 'CASA 🏠'
+                    name: winner.name, // Real or Ghost Name
+                    phone: winner.phone
                 };
 
-                // Construct Reel
-                // Start with slice(0,5) to match current view
-                const startSection = candidates.length > 0 ? candidates.slice(0, 5) : Array(5).fill({ number: '-', label: '-' });
+                // Combine
+                const finalReel = [...reel, ...middle, winnerItem, { number: '...', status: 'NONE' }, { number: '...', status: 'NONE' }];
 
-                const reelItems = [
-                    ...startSection,
-                    ...middleSection,
-                    winnerItem,
-                    { number: '...', status: 'NONE' }, { number: '...', status: 'NONE' }, { number: '...', status: 'NONE' }
-                ];
+                renderReel(finalReel);
 
-                renderReel(reelItems);
+                // 3. Calculate Scroll
+                // Winner is at index: reel.length + middle.length = 5 + 50 = 55
+                const winnerIndex = reel.length + middle.length;
+                const cardWidth = 120; // 90px + 30px gap
 
-                // 3. Animate
-                const track = document.getElementById('carouselTrack');
-                const cardWidth = 120; // 90px card + 30px gap
+                // Center math
+                const view = document.querySelector('.carousel-view');
+                const viewWidth = view ? view.clientWidth : window.innerWidth;
+                const scrollX = (winnerIndex * cardWidth) - (viewWidth / 2) + (cardWidth / 2);
 
-                // Calculate Winner Index
-                const winnerIndex = startSection.length + middleSection.length;
-                // Index is 0-based, so this points exactly to the winnerItem
-
-                // Force Layout
-                track.getBoundingClientRect();
+                // 4. Animate
+                track.getBoundingClientRect(); // Reflow
 
                 setTimeout(() => {
-                    // CSS Transition for fluid spin
-                    // Scroll so winner is Centered
-                    // Formula: (Index * ItemWidth) - (ContainerWidth / 2) + (ItemWidth / 2)
-                    const view = document.querySelector('.carousel-view');
-                    const modalWidth = view ? view.clientWidth : 800; // Fallback
-                    const scrollAmount = (winnerIndex * cardWidth) - (modalWidth / 2) + (cardWidth / 2);
-
-                    track.style.transition = 'transform 6s cubic-bezier(0.1, 0.8, 0.1, 1)'; // Smooth ease out
-                    track.style.transform = `translateX(-${scrollAmount}px)`;
+                    track.style.transition = 'transform 6s cubic-bezier(0.1, 0.8, 0.1, 1.0)';
+                    track.style.transform = `translateX(-${scrollX}px)`;
                 }, 50);
 
-                // 4. Finish
-                setTimeout(() => {
+                // 5. Completion Handler
+                const onFinish = () => {
+                    track.removeEventListener('transitionend', onFinish);
+
                     // Highlight Winner
-                    const winnerCard = track.children[winnerIndex];
-                    if (winnerCard) {
-                        winnerCard.classList.add('winner');
-                        winnerCard.style.transform = 'scale(1.3)';
-                        winnerCard.style.zIndex = '100';
+                    if (track.children[winnerIndex]) {
+                        const wCard = track.children[winnerIndex];
+                        wCard.classList.add('winner');
+                        wCard.style.transform = 'scale(1.3)';
+                        wCard.style.zIndex = '100';
                     }
 
-                    if (winner.is_ghost) {
-                        // GHOST WINNER (Stealth)
-                        document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name}`; // Just name, no phone
-                    } else {
-                        // REAL WINNER
-                        document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name || 'Desconhecido'} (${winner.phone || '-'})`;
-                    }
+                    // Reveal Name (Real or Ghost)
+                    status.textContent = `Vencedor: ${winner.name} (${winner.phone})`;
 
-                    // Always fire confetti
-                    if (window.confetti) {
-                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                    }
+                    if (window.confetti) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
                     btn.disabled = false;
                     btn.textContent = 'Sorteio Finalizado';
                     loadKPIs();
                     isSpinning = false;
-                }, 6000); // Match transition time
+                };
+
+                const safeTimer = setTimeout(onFinish, 6100);
+                track.addEventListener('transitionend', () => {
+                    clearTimeout(safeTimer);
+                    onFinish();
+                });
 
             } catch (e) {
-                alert('Erro no sorteio: ' + e.message);
+                console.error(e);
+                alert('Erro: ' + e.message);
                 btn.disabled = false;
                 isSpinning = false;
             }
