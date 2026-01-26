@@ -370,7 +370,7 @@ class AmigosAdminService {
 
     async drawWinner(campaignId) {
         // 1. Get Campaign Info (for Ghost Name and Status)
-        const campRes = await query('SELECT house_winner_name, house_winner_active FROM az_campaigns WHERE id = $1', [campaignId]);
+        const campRes = await query('SELECT house_winner_name, house_winner_active, house_winner_number FROM az_campaigns WHERE id = $1', [campaignId]);
         const camp = campRes.rows[0];
         const ghostName = camp?.house_winner_name || 'Jogador Fantasma';
         const forceHouse = camp?.house_winner_active; // If true, we FORCE house winner
@@ -378,13 +378,13 @@ class AmigosAdminService {
         let res;
 
         if (forceHouse) {
-            // FORCE HOUSE WINNER: Only pick from AVAILABLE tickets
-            console.log('[Draw] Forcing House Winner (Ghost)');
+            // FORCE HOUSE WINNER: Pick the HOUSE_RESERVED ticket specifically
+            console.log('[Draw] Forcing House Winner (Ghost) - Using reserved ticket');
             res = await query(`
                 SELECT t.number as ticket_number, t.status, c.name, c.phone
                 FROM az_tickets t
                 LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
-                WHERE t.campaign_id = $1 AND t.status = 'AVAILABLE'
+                WHERE t.campaign_id = $1 AND t.status = 'HOUSE_RESERVED'
                 LIMIT 1
             `, [campaignId]);
         } else {
@@ -401,30 +401,26 @@ class AmigosAdminService {
 
         let winner = res.rows[0];
 
-        // Fallback: If forcing house but no available tickets, we must pick ANY ticket (rare/impossible if synced)
+        // Fallback: If forcing house but no HOUSE_RESERVED ticket, we must pick ANY available (rare/impossible if synced)
         if (!winner && forceHouse) {
+            console.warn('[Draw] No HOUSE_RESERVED ticket found! Falling back to AVAILABLE');
             res = await query(`
                 SELECT t.number as ticket_number, t.status, c.name, c.phone
                 FROM az_tickets t
                 LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
-                WHERE t.campaign_id = $1
+                WHERE t.campaign_id = $1 AND t.status = 'AVAILABLE'
                 LIMIT 1
             `, [campaignId]);
             winner = res.rows[0];
         }
 
         // 3. Apply Ghost Logic (Stealth)
-        // If ticket is not assigned, it belongs to the Ghost (House Winner)
-        // Request: "TIRA ESSE (CASA) TEM QUE TER APENAS O NOME!"
-        if (winner && winner.status !== 'ASSIGNED') {
+        // If ticket is HOUSE_RESERVED or not assigned, it belongs to the Ghost (House Winner)
+        if (winner && (winner.status === 'HOUSE_RESERVED' || winner.status !== 'ASSIGNED')) {
             winner.name = ghostName; // Just the name (e.g. "Maria Alice...")
-            // We use a fake phone or leave empty to look real. 
-            // Phone 'CASA' was revealing it.
-            // Let's generate a masked phone based on region or just leave empty?
-            // User just said "APENAS O NAME".
-
-            winner.phone = ''; // Hide phone indicator
+            winner.phone = 'CASA'; // Mark as house winner for frontend detection
             winner.is_ghost = true;
+            winner.status = 'HOUSE_RESERVED'; // Ensure status is correct for frontend
         }
 
         return winner;

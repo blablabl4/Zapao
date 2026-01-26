@@ -650,20 +650,16 @@
                     </p>
 
                     <div id="houseWinnerInfo"
-                        style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb; font-size: 0.95rem;">
-                        <div style="margin-bottom: 5px;"><strong>Número Reservado:</strong> <span
+                        style="display: none; margin-top: 15px; padding: 15px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
+                        <div style="margin-bottom: 8px;"><strong>Número Reservado:</strong> <span
                                 id="houseReservedNumber"
-                                style="color: var(--az-primary); font-weight: bold; font-size: 1.2rem;">--</span></div>
-                        <div style="margin-bottom: 15px;"><strong>Nome Falso:</strong> <span id="houseReservedName"
+                                style="color: var(--az-primary); font-weight: bold; font-size: 1.3rem;">--</span></div>
+                        <div style="margin-bottom: 10px;"><strong>Nome Gerado:</strong> <span id="houseReservedName"
                                 style="color: var(--az-text);">--</span></div>
 
-                        <!-- Simple Input to Update Name -->
-                        <div style="display:flex; gap:10px;">
-                            <input type="text" id="newHouseName" placeholder="Novo nome falso..."
-                                style="margin:0; font-size:0.9rem;">
-                            <button class="btn" style="padding: 5px 10px; font-size:0.9rem;"
-                                onclick="updateHouseName()">Atualizar</button>
-                        </div>
+                        <p style="font-size: 0.85rem; color: #6b7280; margin: 0;">
+                            💡 O nome é gerado automaticamente quando você ativa o modo.
+                        </p>
                     </div>
                 </div>
 
@@ -999,8 +995,7 @@
                     phone: winner.phone,
                 };
 
-                const finalReel = [...initialView, ...middleFrames, winnerItem,
-                { number: '...', label: '' }, { number: '...', label: '' }, { number: '...', label: '' }];
+                const finalReel = [...initialView, ...middleFrames, winnerItem];
 
                 renderReel(finalReel);
 
