@@ -423,6 +423,24 @@ class AmigosAdminService {
             winner.status = 'HOUSE_RESERVED'; // Ensure status is correct for frontend
         }
 
+        // 4. Mark winning ticket as WINNER
+        if (winner) {
+            await query(`
+                UPDATE az_tickets SET status = 'WINNER', updated_at = NOW() 
+                WHERE campaign_id = $1 AND number = $2
+            `, [campaignId, winner.ticket_number]);
+
+            // 5. AUTO-INCREMENT ROUND for next sorteio
+            // This allows people to get new numbers after each draw
+            await query(`
+                UPDATE az_campaigns SET current_round = current_round + 1, updated_at = NOW()
+                WHERE id = $1
+            `, [campaignId]);
+
+            // Invalidate cache
+            AmigosService.invalidateCache();
+        }
+
         return winner;
     }
 
