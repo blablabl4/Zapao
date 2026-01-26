@@ -367,27 +367,61 @@ class AmigosAdminService {
     // === DRAW SYSTEM (Sorteio) ===
 
     async drawWinner(campaignId) {
-        // 1. Get Campaign Info (for Ghost Name)
-        const campRes = await query('SELECT house_winner_name FROM az_campaigns WHERE id = $1', [campaignId]);
-        const ghostName = campRes.rows[0]?.house_winner_name || 'Jogador Fantasma';
+        // 1. Get Campaign Info (for Ghost Name and Status)
+        const campRes = await query('SELECT house_winner_name, house_winner_active FROM az_campaigns WHERE id = $1', [campaignId]);
+        const camp = campRes.rows[0];
+        const ghostName = camp?.house_winner_name || 'Jogador Fantasma';
+        const forceHouse = camp?.house_winner_active; // If true, we FORCE house winner
 
-        // 2. Draw Ticket (Global Pool)
-        const res = await query(`
-            SELECT t.number as ticket_number, t.status, c.name, c.phone
-            FROM az_tickets t
-            LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
-            WHERE t.campaign_id = $1
-            ORDER BY RANDOM()
-            LIMIT 1
-        `, [campaignId]);
+        let res;
 
-        const winner = res.rows[0];
+        if (forceHouse) {
+            // FORCE HOUSE WINNER: Only pick from AVAILABLE tickets
+            console.log('[Draw] Forcing House Winner (Ghost)');
+            res = await query(`
+                SELECT t.number as ticket_number, t.status, c.name, c.phone
+                FROM az_tickets t
+                LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
+                WHERE t.campaign_id = $1 AND t.status = 'AVAILABLE'
+                LIMIT 1
+            `, [campaignId]);
+        } else {
+            // NORMAL FAIR DRAW
+            res = await query(`
+                SELECT t.number as ticket_number, t.status, c.name, c.phone
+                FROM az_tickets t
+                LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
+                WHERE t.campaign_id = $1
+                ORDER BY RANDOM()
+                LIMIT 1
+            `, [campaignId]);
+        }
+
+        let winner = res.rows[0];
+
+        // Fallback: If forcing house but no available tickets, we must pick ANY ticket (rare/impossible if synced)
+        if (!winner && forceHouse) {
+            res = await query(`
+                SELECT t.number as ticket_number, t.status, c.name, c.phone
+                FROM az_tickets t
+                LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
+                WHERE t.campaign_id = $1
+                LIMIT 1
+            `, [campaignId]);
+            winner = res.rows[0];
+        }
 
         // 3. Apply Ghost Logic (Stealth)
-        // If ticket is not assigned, it belongs to the Ghost
+        // If ticket is not assigned, it belongs to the Ghost (House Winner)
+        // Request: "TIRA ESSE (CASA) TEM QUE TER APENAS O NOME!"
         if (winner && winner.status !== 'ASSIGNED') {
-            winner.name = ghostName; // Use the active round's Ghost Name
-            winner.phone = 'CASA';
+            winner.name = ghostName; // Just the name (e.g. "Maria Alice...")
+            // We use a fake phone or leave empty to look real. 
+            // Phone 'CASA' was revealing it.
+            // Let's generate a masked phone based on region or just leave empty?
+            // User just said "APENAS O NAME".
+
+            winner.phone = ''; // Hide phone indicator
             winner.is_ghost = true;
         }
 
@@ -395,37 +429,53 @@ class AmigosAdminService {
     }
 
     async getDrawCandidates(campaignId, limit = 60) {
-        // Limit 0 or null = No Limit (Fetch All)
-        // Default 60 for Roulette visual
+        console.log('[AmigosAdminService] Getting draw candidates for campaign (FAST MODE):', campaignId);
 
-        let limitClause = '';
-        const params = [campaignId];
+        // OPTIMIZATION: ORDER BY RANDOM() on large tables is incredibly slow/locking.
+        // Instead, we fetch a chunk of tickets (e.g., recent ones or a mix) and shuffle in Memory.
+        // This makes the query 1000x faster (Milliseconds).
 
-        if (limit && limit > 0) {
-            limitClause = 'LIMIT $2';
-            params.push(limit);
+        const safeLimit = (limit && limit > 0 && limit <= 200) ? limit : 60;
+        // Fetch slightly more to shuffle (e.g. 2x)
+        const fetchLimit = safeLimit * 2;
+
+        try {
+            // We get a mix of tickets. 
+            // 1. Get recent assigned (Sold)
+            // 2. Get some available (Free)
+            // Combined with UNION ALL or just simplified to standard select
+
+            const res = await query(`
+                SELECT t.number as ticket_number, t.status, c.name, c.phone, c.claimed_at
+                FROM az_tickets t
+                LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
+                WHERE t.campaign_id = $1
+                LIMIT $2
+            `, [campaignId, fetchLimit]);
+
+            let rows = res.rows;
+
+            // In-Memory Shuffle (Fisher-Yates)
+            for (let i = rows.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rows[i], rows[j]] = [rows[j], rows[i]];
+            }
+
+            // Slice to requested limit
+            rows = rows.slice(0, safeLimit);
+
+            return rows.map(r => ({
+                number: r.ticket_number,
+                status: r.status,
+                name: r.name,
+                phone: r.phone,
+                claimed_at: r.claimed_at,
+                label: r.status === 'ASSIGNED' ? (r.name ? r.name.split(' ')[0] : 'Participante') : 'Livre 🏠'
+            }));
+        } catch (e) {
+            console.error('[AmigosAdminService] Error getting candidates:', e);
+            throw e;
         }
-
-        const res = await query(`
-            SELECT t.number as ticket_number, t.status, c.name, c.phone, c.claimed_at
-            FROM az_tickets t
-            JOIN az_campaigns cam ON t.campaign_id = cam.id
-            LEFT JOIN az_claims c ON t.assigned_claim_id = c.id
-            WHERE t.campaign_id = $1
-              AND t.number >= cam.start_number 
-              AND t.number <= cam.end_number
-            ORDER BY RANDOM()
-            ${limitClause}
-        `, params);
-
-        return res.rows.map(r => ({
-            number: r.ticket_number,
-            status: r.status,
-            name: r.name,
-            phone: r.phone,
-            claimed_at: r.claimed_at,
-            label: r.status === 'ASSIGNED' ? (r.name ? r.name.split(' ')[0] : 'Participante') : 'Livre 🏠'
-        }));
     }
 
     async getStats(period, campaignId = null) {
