@@ -1188,15 +1188,25 @@
                 card.className = `number-card ${item.status === 'ASSIGNED' ? 'sold' : 'free'}`;
                 // Styling for free vs sold
                 if (item.status !== 'ASSIGNED') {
-                    card.style.borderColor = '#ef4444';
+                    // GHOST PLAYER / HOUSE / FREE
+                    card.style.borderColor = '#ef4444'; // Red
                     card.style.color = '#ef4444';
-                    card.style.background = '#fff0f0';
+                    card.style.background = '#fff5f5'; // Light red bg
+                    card.style.boxShadow = 'inset 0 0 10px rgba(239, 68, 68, 0.1)';
                 } else {
-                    card.style.borderColor = '#10b981';
+                    // SOLD
+                    card.style.borderColor = '#10b981'; // Green
                     card.style.color = '#10b981';
+                    card.style.background = '#f0fdf4'; // Light green bg
                 }
+                // Label Logic
+                let label = item.label || '';
+                if (item.status !== 'ASSIGNED') {
+                    label = 'CASA 🏠';
+                }
+
                 // Simple card content
-                card.innerHTML = `<div style="text-align:center"><div style="font-size:2rem">${item.number}</div><div style="font-size:0.6rem;opacity:0.7">${item.label || ''}</div></div>`;
+                card.innerHTML = `<div style="text-align:center"><div style="font-size:2rem">${item.number}</div><div style="font-size:0.6rem;opacity:0.8;font-weight:bold">${label}</div></div>`;
                 track.appendChild(card);
             });
         }
@@ -1221,16 +1231,16 @@
 
                 // 2. Prepare Reel
                 // Sequence: [Current View (5)] + [Random Fill (40+)] + [Winner] + [Buffer (5)]
-                
+
                 // Ensure we have enough filler candidates
                 let fillers = [...candidates];
                 // If not enough candidates for a good spin, repeat them
-                while(fillers.length < 50 && fillers.length > 0) {
-                   fillers = [...fillers, ...candidates];
+                while (fillers.length < 50 && fillers.length > 0) {
+                    fillers = [...fillers, ...candidates];
                 }
                 // Shuffle fillers
                 fillers.sort(() => Math.random() - 0.5);
-                
+
                 // Take a solid chunk for the middle
                 const middleSection = fillers.slice(0, 40);
 
@@ -1240,15 +1250,15 @@
                     status: winner.status,
                     label: winner.status === 'ASSIGNED' ? (winner.name ? winner.name.split(' ')[0] : 'Vendido') : 'CASA 🏠'
                 };
-                
+
                 // Construct Reel
                 // Start with slice(0,5) to match current view
-                const startSection = candidates.length > 0 ? candidates.slice(0, 5) : Array(5).fill({number:'-', label:'-'});
-                
+                const startSection = candidates.length > 0 ? candidates.slice(0, 5) : Array(5).fill({ number: '-', label: '-' });
+
                 const reelItems = [
-                    ...startSection, 
-                    ...middleSection, 
-                    winnerItem, 
+                    ...startSection,
+                    ...middleSection,
+                    winnerItem,
                     { number: '...', status: 'NONE' }, { number: '...', status: 'NONE' }, { number: '...', status: 'NONE' }
                 ];
 
@@ -1259,7 +1269,7 @@
                 const cardWidth = 120; // 90px card + 30px gap
 
                 // Calculate Winner Index
-                const winnerIndex = startSection.length + middleSection.length; 
+                const winnerIndex = startSection.length + middleSection.length;
                 // Index is 0-based, so this points exactly to the winnerItem
 
                 // Force Layout
