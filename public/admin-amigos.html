@@ -661,14 +661,14 @@
 
                     <div id="houseWinnerInfo"
                         style="display: none; margin-top: 15px; padding: 15px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
-                        <div style="margin-bottom: 8px;"><strong>Número Reservado:</strong> <span
+                        <div style="margin-bottom: 10px;"><strong>Número Reservado:</strong> <span
                                 id="houseReservedNumber"
-                                style="color: var(--az-primary); font-weight: bold; font-size: 1.3rem;">--</span></div>
+                                style="color: var(--az-primary); font-weight: bold; font-size: 1.5rem;">--</span></div>
                         <div style="margin-bottom: 10px;"><strong>Nome Gerado:</strong> <span id="houseReservedName"
-                                style="color: var(--az-text);">--</span></div>
+                                style="color: var(--az-text); font-weight: 600;">--</span></div>
 
                         <p style="font-size: 0.85rem; color: #6b7280; margin: 0;">
-                            💡 O nome é gerado automaticamente quando você ativa o modo.
+                            ✅ Nome gerado automaticamente pelo sistema.
                         </p>
                     </div>
                 </div>
@@ -881,7 +881,8 @@
                         const info = document.getElementById('houseWinnerInfo');
                         if (info) info.style.display = 'block';
                         setText('houseReservedNumber', c.house_winner_number || 'Aguardando...');
-                        setText('houseReservedName', c.house_winner_dummy_name || '(Sem nome)');
+                        // Use house_winner_name (correct field from backend)
+                        setText('houseReservedName', c.house_winner_name || '(Gerando...)');
                     } else {
                         const info = document.getElementById('houseWinnerInfo');
                         if (info) info.style.display = 'none';
@@ -1047,8 +1048,12 @@
 
         // --- DRAW LOGIC ---
 
-        function openDraw() {
+        async function openDraw() {
             if (!currentCampaignId) return;
+
+            // CRITICAL: Reload campaign data to ensure we have the correct range
+            await loadCampaign();
+
             const modal = document.getElementById('drawModal');
             const status = document.getElementById('drawStatus');
             const btn = document.getElementById('btnSpin');
@@ -1062,8 +1067,15 @@
             btn.textContent = 'GIRAR A ROLETA 🎰';
 
             // Initial visual state - use campaign range
+            // Debug: Log range values to ensure correctness
+            console.log('[Roulette] Campaign Range:', currentCampaignStartNum, 'to', currentCampaignEndNum);
+
+            // VALIDATION: Ensure range is valid (prevent numbers like 526, 708, etc.)
+            const startNum = Math.max(1, currentCampaignStartNum);
+            const endNum = Math.max(startNum, currentCampaignEndNum);
+
             const candidates = Array(5).fill(0).map(() => ({
-                number: String(Math.floor(Math.random() * (currentCampaignEndNum - currentCampaignStartNum + 1)) + currentCampaignStartNum),
+                number: String(Math.floor(Math.random() * (endNum - startNum + 1)) + startNum),
                 label: 'Sorteio',
                 status: 'NONE'
             }));
@@ -1119,9 +1131,14 @@
 
                 const winNum = winner.ticket_number || winner.number || '000';
 
+                // VALIDATION: Ensure range is valid
+                const startNum = Math.max(1, currentCampaignStartNum);
+                const endNum = Math.max(startNum, currentCampaignEndNum);
+                console.log('[Roulette Spin] Using range:', startNum, 'to', endNum);
+
                 // Create array with all numbers in range
                 const allNumbers = [];
-                for (let i = currentCampaignStartNum; i <= currentCampaignEndNum; i++) {
+                for (let i = startNum; i <= endNum; i++) {
                     allNumbers.push(i);
                 }
 
