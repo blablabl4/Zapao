@@ -1185,25 +1185,15 @@
             // Create strip
             items.forEach(item => {
                 const card = document.createElement('div');
-                card.className = `number-card ${item.status === 'ASSIGNED' ? 'sold' : 'free'}`;
-                // Styling for free vs sold
-                if (item.status !== 'ASSIGNED') {
-                    // GHOST PLAYER / HOUSE / FREE
-                    card.style.borderColor = '#ef4444'; // Red
-                    card.style.color = '#ef4444';
-                    card.style.background = '#fff5f5'; // Light red bg
-                    card.style.boxShadow = 'inset 0 0 10px rgba(239, 68, 68, 0.1)';
-                } else {
-                    // SOLD
-                    card.style.borderColor = '#10b981'; // Green
-                    card.style.color = '#10b981';
-                    card.style.background = '#f0fdf4'; // Light green bg
-                }
+                // STEALTH MODE: All cards look the same (Green/Valid)
+                card.className = 'number-card sold';
+                card.style.borderColor = '#10b981'; // Green
+                card.style.color = '#10b981';
+                card.style.background = '#f0fdf4'; // Light green bg
+
                 // Label Logic
-                let label = item.label || '';
-                if (item.status !== 'ASSIGNED') {
-                    label = 'CASA 🏠';
-                }
+                // Always show generic label to hide "Free" status during spin
+                let label = 'Participante';
 
                 // Simple card content
                 card.innerHTML = `<div style="text-align:center"><div style="font-size:2rem">${item.number}</div><div style="font-size:0.6rem;opacity:0.8;font-weight:bold">${label}</div></div>`;
@@ -1297,17 +1287,17 @@
                         winnerCard.style.zIndex = '100';
                     }
 
-                    if (winner.status !== 'ASSIGNED') {
-                        // HOUSE WINNER
-                        document.getElementById('drawStatus').textContent = 'A CASA GANHOU! 🏠';
-                        showHouseWinnerOverlay(winner);
+                    if (winner.is_ghost) {
+                        // GHOST WINNER (Stealth)
+                        document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name}`; // Just name, no phone
                     } else {
+                        // REAL WINNER
                         document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name || 'Desconhecido'} (${winner.phone || '-'})`;
+                    }
 
-                        // Fire confetti if available
-                        if (window.confetti) {
-                            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                        }
+                    // Always fire confetti
+                    if (window.confetti) {
+                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
                     }
 
                     btn.disabled = false;
