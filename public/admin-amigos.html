@@ -1220,13 +1220,19 @@
                 finalWinner = winner;
 
                 // 2. Prepare Reel
-                // Sequence: [Current View] + [Random 40] + [Winner] + [Buffer 2]
-                let reelItems = [...candidates.slice(0, 5)]; // Start
-
-                // Shuffle candidates for middle section (excluding winner if possible to avoid dupes visually close?)
-                // Just random mix
-                const middle = [...candidates].sort(() => Math.random() - 0.5).slice(0, 40);
-                reelItems = [...reelItems, ...middle];
+                // Sequence: [Current View (5)] + [Random Fill (40+)] + [Winner] + [Buffer (5)]
+                
+                // Ensure we have enough filler candidates
+                let fillers = [...candidates];
+                // If not enough candidates for a good spin, repeat them
+                while(fillers.length < 50 && fillers.length > 0) {
+                   fillers = [...fillers, ...candidates];
+                }
+                // Shuffle fillers
+                fillers.sort(() => Math.random() - 0.5);
+                
+                // Take a solid chunk for the middle
+                const middleSection = fillers.slice(0, 40);
 
                 // Add Winner
                 const winnerItem = {
@@ -1234,10 +1240,17 @@
                     status: winner.status,
                     label: winner.status === 'ASSIGNED' ? (winner.name ? winner.name.split(' ')[0] : 'Vendido') : 'CASA 🏠'
                 };
-                reelItems.push(winnerItem);
-
-                // Add buffer
-                reelItems.push({ number: '...', status: 'NONE' }, { number: '...', status: 'NONE' });
+                
+                // Construct Reel
+                // Start with slice(0,5) to match current view
+                const startSection = candidates.length > 0 ? candidates.slice(0, 5) : Array(5).fill({number:'-', label:'-'});
+                
+                const reelItems = [
+                    ...startSection, 
+                    ...middleSection, 
+                    winnerItem, 
+                    { number: '...', status: 'NONE' }, { number: '...', status: 'NONE' }, { number: '...', status: 'NONE' }
+                ];
 
                 renderReel(reelItems);
 
@@ -1245,21 +1258,19 @@
                 const track = document.getElementById('carouselTrack');
                 const cardWidth = 120; // 90px card + 30px gap
 
-                // Winner Index = 5 (start) + 40 (middle) = 45th index (0-based)
-                const winnerIndex = 45;
-
-                // We want to scroll so winner is CENTERED.
-                // Center of container (approx 400px width?) - Half Card (45)
-                // Let's assume container width is managed by CSS.
-                // Simple math: Shift left by (winnerIndex * cardWidth). Then add half-screen offset.
+                // Calculate Winner Index
+                const winnerIndex = startSection.length + middleSection.length; 
+                // Index is 0-based, so this points exactly to the winnerItem
 
                 // Force Layout
                 track.getBoundingClientRect();
 
                 setTimeout(() => {
                     // CSS Transition for fluid spin
-                    // Shift so item 45 is at X=0 (left edge), then Add 50% width offset
-                    const modalWidth = document.querySelector('.carousel-view').clientWidth;
+                    // Scroll so winner is Centered
+                    // Formula: (Index * ItemWidth) - (ContainerWidth / 2) + (ItemWidth / 2)
+                    const view = document.querySelector('.carousel-view');
+                    const modalWidth = view ? view.clientWidth : 800; // Fallback
                     const scrollAmount = (winnerIndex * cardWidth) - (modalWidth / 2) + (cardWidth / 2);
 
                     track.style.transition = 'transform 6s cubic-bezier(0.1, 0.8, 0.1, 1)'; // Smooth ease out
@@ -1281,7 +1292,7 @@
                         document.getElementById('drawStatus').textContent = 'A CASA GANHOU! 🏠';
                         showHouseWinnerOverlay(winner);
                     } else {
-                        document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name} (${winner.phone})`;
+                        document.getElementById('drawStatus').textContent = `Vencedor: ${winner.name || 'Desconhecido'} (${winner.phone || '-'})`;
 
                         // Fire confetti if available
                         if (window.confetti) {
