@@ -1089,20 +1089,7 @@
         let currentIndex = 0;
         const TOTAL_VIRTUAL = 1000; // Large number for loop effect
 
-        function getAdjacent(idx) {
-            // Mock infinite strip logic
-            return {
-                left: (idx - 1 + 1000) % 1000, // Just visual numbers
-                center: idx % 1000,
-                right: (idx + 1) % 1000
-            };
-        }
 
-        function updateDisplay(num) {
-            document.getElementById('numLeft').textContent = String((num - 1 + 100) % 100).padStart(2, '0');
-            document.getElementById('numCenter').textContent = String(num).padStart(2, '0');
-            document.getElementById('numRight').textContent = String((num + 1) % 100).padStart(2, '0');
-        }
 
         // We need 'real' numbers from DB ideally. 
         // For simplicity, we just spin 00-99 visually then snap to winner.
@@ -1160,9 +1147,16 @@
         }
 
         function renderReel(items) {
-            // We use the existing DOM elements but animate them
-            // Actually, for "Fluid" effect, we need a track we can translate
-            const track = document.getElementById('carouselTrack');
+            // Robust Selector
+            let track = document.getElementById('carouselTrack');
+            if (!track) {
+                track = document.querySelector('.carousel-track');
+            }
+            if (!track) {
+                console.error('CRITICAL: Carousel Track not found in DOM');
+                return;
+            }
+
             track.innerHTML = '';
             track.style.transition = 'none';
             track.style.transform = 'translateX(0)';
