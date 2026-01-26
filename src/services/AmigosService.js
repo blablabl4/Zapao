@@ -461,10 +461,11 @@ class AmigosService {
             }
             */
 
-            // 2. Single Participation Check (Strict)
+            // 2. Single Participation Check (DISABLED FOR NOW)
             // User Request: 1 number per PERSON per ROUND in a CAMPAIGN
             // Check if user already has a claim for tickets in the CURRENT round
             const currentRound = campaign.current_round || 1;
+            /*
             const prevClaim = await client.query(`
                 SELECT 1 FROM az_claims c
                 JOIN az_tickets t ON t.assigned_claim_id = c.id
@@ -474,6 +475,7 @@ class AmigosService {
             if (prevClaim.rowCount > 0) {
                 throw new Error('Você já garantiu seu número da sorte neste sorteio! É permitido apenas 1 número por pessoa.');
             }
+            */
 
             // 3. FORCE QTY = 1 (Ignore any other logic)
             const baseQty = 1;
