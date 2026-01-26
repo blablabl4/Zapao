@@ -1398,7 +1398,8 @@
 
             try {
                 // Reuse existing candidates endpoint which returns [{ticket_number, name, phone, status...}]
-                const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}`);
+                // Limit 0 = Fetch ALL
+                const res = await fetch(`/api/admin/amigos/draw/candidates?campaignId=${currentCampaignId}&limit=0`);
                 const list = await res.json();
 
                 // Filter only ASSIGNED

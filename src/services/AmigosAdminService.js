@@ -382,9 +382,18 @@ class AmigosAdminService {
         return res.rows[0];
     }
 
-    async getDrawCandidates(campaignId) {
-        // Get 60 random tickets for the visual "Spin" effect
-        // Enforce range strictly to avoid "ghost numbers"
+    async getDrawCandidates(campaignId, limit = 60) {
+        // Limit 0 or null = No Limit (Fetch All)
+        // Default 60 for Roulette visual
+
+        let limitClause = '';
+        const params = [campaignId];
+
+        if (limit && limit > 0) {
+            limitClause = 'LIMIT $2';
+            params.push(limit);
+        }
+
         const res = await query(`
             SELECT t.number as ticket_number, t.status, c.name, c.phone, c.claimed_at
             FROM az_tickets t
@@ -394,8 +403,8 @@ class AmigosAdminService {
               AND t.number >= cam.start_number 
               AND t.number <= cam.end_number
             ORDER BY RANDOM()
-            LIMIT 60
-        `, [campaignId]);
+            ${limitClause}
+        `, params);
 
         return res.rows.map(r => ({
             number: r.ticket_number,

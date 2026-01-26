@@ -183,7 +183,8 @@ router.post('/campaign/reset', async (req, res) => {
 router.get('/draw/candidates/:campaignId', async (req, res) => {
     try {
         const { campaignId } = req.params;
-        const candidates = await AmigosAdminService.getDrawCandidates(campaignId);
+        const { limit } = req.query;
+        const candidates = await AmigosAdminService.getDrawCandidates(campaignId, limit ? parseInt(limit) : 60);
         res.json(candidates);
     } catch (e) {
         console.error('Error fetching candidates:', e);
@@ -193,9 +194,9 @@ router.get('/draw/candidates/:campaignId', async (req, res) => {
 
 router.get('/draw/candidates', async (req, res) => { // fallback or query param support
     try {
-        const { campaignId } = req.query;
+        const { campaignId, limit } = req.query;
         if (!campaignId) return res.json([]);
-        const candidates = await AmigosAdminService.getDrawCandidates(campaignId);
+        const candidates = await AmigosAdminService.getDrawCandidates(campaignId, limit ? parseInt(limit) : 60);
         res.json(candidates);
     } catch (e) {
         res.status(500).json({ error: e.message });
