@@ -319,6 +319,8 @@
             border: 2px solid var(--az-border);
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.03);
             height: 180px;
+            margin: 10px 0;
+            /* Reduced margin */
             /* Force relative positioning for pointers */
             position: relative;
             overflow: hidden;
@@ -712,10 +714,10 @@
     <!-- DRAW MODAL (HORIZONTAL) -->
     <div id="drawModal" class="az-modal-overlay">
         <div class="az-modal">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h3 style="margin:0; text-align:center;">Sorteio</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0; flex: 1; text-align:center;">Sorteio</h3>
                 <button onclick="closeDraw()"
-                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; position: absolute; right: 20px;">&times;</button>
             </div>
 
             <!-- CAROUSEL -->
@@ -727,7 +729,7 @@
                 </div>
             </div>
 
-            <div id="drawStatus" style="color: var(--az-text-muted); margin: 20px 0;">Aguardando início...</div>
+            <div id="drawStatus" style="color: var(--az-text-muted); margin: 15px 0 0 0;">Aguardando início...</div>
 
             <button class="btn" id="btnSpin" onclick="startSpin()">
                 INICIAR SORTEIO 🎲
