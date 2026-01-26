@@ -617,6 +617,14 @@
                     </div>
                     <button type="submit" class="btn" style="width: 100%;">Salvar Configurações</button>
                 </form>
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <h3 style="color: #ef4444; font-size: 1rem;">Zona de Perigo</h3>
+                    <p style="font-size: 0.85rem; color: #777;">Cuidado: isso não pode ser desfeito.</p>
+                    <button type="button" onclick="resetCampaign()" class="btn"
+                        style="background: #ef4444; color: white; width: 100%; margin-top: 0.5rem;">
+                        ⚠️ ZERAR DISTRIBUIÇÃO (Renovar Números)
+                    </button>
+                </div>
             </div>
             <!-- WHITELIST SECTION -->
             <div class="card">
@@ -990,7 +998,6 @@
                 if (res.ok) {
                     let msg = 'Campanha salva com sucesso!';
 
-                    // Add Ticket Sync Info if available (Auto-Generated)
                     if (json.ticket_sync) {
                         const ts = json.ticket_sync;
                         msg += `\n\n🎟️ Tickets Sincronizados:\n• Total: ${ts.total}\n• Criados: ${ts.inserted}\n• Removidos: ${ts.deleted}`;
@@ -998,13 +1005,48 @@
 
                     alert(msg);
                     loadKPIs(); // Refresh stats immediately
-                    loadCampaign(); // Refresh status card and inputs
+                } else {
+                    alert('Erro: ' + (json.error || 'Falha ao salvar'));
+                }
+            } catch (e) {
+                alert('Erro na requisição: ' + e.message);
+            }
+        }
+
+        async function resetCampaign() {
+            if (!currentCampaignId) return alert('Nenhuma campanha ativa para zerar.');
+
+            const confirm1 = confirm('ATENÇÃO: Você está prestes a ZERAR toda a distribuição de números.\n\nIsso vai apagar todos os resgates feitos até agora e deixar os números livres novamente.\n\nTem certeza?');
+            if (!confirm1) return;
+
+            const confirm2 = confirm('Último aviso: Esta ação é irreversível.\n\nClique em OK para APAGAR TUDO e reiniciar a distribuição.');
+            if (!confirm2) return;
+
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    alert('SUCESSO: ' + json.message);
+                    loadKPIs(); // Refresh UI
                 } else {
                     alert('Erro: ' + json.error);
                 }
             } catch (e) {
-                alert('Erro de conexão: ' + e.message);
+                alert('Erro na requisição: ' + e.message);
             }
+        }
+        loadCampaign(); // Refresh status card and inputs
+                } else {
+            alert('Erro: ' + json.error);
+        }
+            } catch (e) {
+            alert('Erro de conexão: ' + e.message);
+        }
         }
 
         // --- HOUSE WINNER LOGIC ---
