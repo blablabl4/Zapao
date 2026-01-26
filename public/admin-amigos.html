@@ -1448,24 +1448,6 @@
                 const inputWhitelist = document.getElementById('whitelistInput');
                 if (inputWhitelist) {
 
-                    // Temp Button for 'Isaque' Cleanup
-                    const distCheck = document.getElementById('distributionTable').parentNode.previousElementSibling;
-                    if (distCheck && !document.getElementById('btnCleanIsaque')) {
-                        const btnClean = document.createElement('button');
-                        btnClean.id = 'btnCleanIsaque';
-                        btnClean.className = 'btn';
-                        btnClean.style.cssText = 'background:red; color:white; margin-left:10px;';
-                        btnClean.innerHTML = '⚠️ FAXINA: Isaque';
-                        btnClean.onclick = async () => {
-                            if (!confirm('Tem certeza que deseja apagar todos os "Isaque"?')) return;
-                            const res = await fetch('/api/admin/amigos/cleanup-isaque', { method: 'POST' });
-                            const json = await res.json();
-                            alert('Resultado: ' + JSON.stringify(json));
-                            loadDistribution(); // refresh
-                        };
-                        distCheck.appendChild(btnClean);
-                    }
-
                     inputWhitelist.disabled = false; // Always enabled
                     inputWhitelist.disabled = false; // Always enabled
                     inputWhitelist.placeholder = "Cole a lista de celulares permitidos (um por linha)...";

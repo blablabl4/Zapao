@@ -610,35 +610,4 @@ router.post('/whitelist', async (req, res) => {
     }
 });
 
-router.post('/cleanup-isaque', async (req, res) => {
-    try {
-        console.log('[Cleanup] Request received.');
-        const client = await require('../database/db').getClient();
-        try {
-            await client.query('BEGIN');
-
-            // 1. Find Claims
-            const findRes = await client.query(`SELECT id, name FROM az_claims WHERE name ILIKE '%isaque%'`);
-            const claimIds = findRes.rows.map(u => u.id);
-
-            if (claimIds.length > 0) {
-                // 2. Release Tickets
-                await client.query(`UPDATE az_tickets SET status = 'AVAILABLE', assigned_claim_id = NULL WHERE assigned_claim_id = ANY($1::int[])`, [claimIds]);
-                // 3. Delete Claims
-                await client.query(`DELETE FROM az_claims WHERE id = ANY($1::int[])`, [claimIds]);
-            }
-
-            await client.query('COMMIT');
-            res.json({ success: true, count: claimIds.length, names: findRes.rows.map(r => r.name) });
-        } catch (e) {
-            await client.query('ROLLBACK');
-            throw e;
-        } finally {
-            client.release();
-        }
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
 module.exports = router;
