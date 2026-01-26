@@ -1214,6 +1214,7 @@
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error || 'Erro ao finalizar');
 
+                currentStoryIndex = 1; // FIX: Advance to Reveal Slide
                 updateStories();
                 revealNumbers(result.numbers);
 
