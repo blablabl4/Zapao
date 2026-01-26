@@ -1130,40 +1130,65 @@
         // isSpinning is global
 
         async function openDraw() {
+            console.log('openDraw called. Campaign:', currentCampaignId);
             if (!currentCampaignId) return;
-            document.getElementById('drawModal').style.display = 'flex';
-            document.getElementById('drawStatus').textContent = 'Carregando tickets...';
-            document.getElementById('btnSpin').disabled = true;
+
+            const modal = document.getElementById('drawModal');
+            const status = document.getElementById('drawStatus');
+            const btn = document.getElementById('btnSpin');
+
+            modal.style.display = 'flex';
+            status.textContent = 'Carregando tickets...';
+            btn.disabled = true;
             document.getElementById('houseWinnerOverlay').classList.remove('active');
 
             // Reset View
             renderReel([]);
 
             try {
-                // Pre-fetch candidates
-                const res = await fetch(`/api/admin/amigos/draw/candidates/${currentCampaignId}?t=` + Date.now());
+                console.log('Fetching candidates...');
+                const timestamp = Date.now();
+                // Safety timeout for fetch
+                const fetchPromise = fetch(`/api/admin/amigos/draw/candidates/${currentCampaignId}?t=${timestamp}`);
+
+                // Race against 5s timeout
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de rede')), 8000));
+
+                const res = await Promise.race([fetchPromise, timeoutPromise]);
+
+                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+
                 candidates = await res.json();
+                console.log('Candidates loaded:', candidates.length);
 
                 if (!Array.isArray(candidates) || candidates.length === 0) {
-                    candidates = []; // Ensure empty array
-                    console.log('No candidates found');
-                    // Render placeholder or empty state
+                    candidates = [];
+                    console.log('No candidates found (Empty Array)');
                     renderReel([
                         { number: '...', label: 'Livre' },
                         { number: '...', label: 'Livre' },
                         { number: '...', label: 'Livre' }
                     ]);
                 } else {
-                    // Render initial static view (first 5)
                     renderReel(candidates.slice(0, 5));
                 }
 
-                document.getElementById('drawStatus').textContent = 'Pronto para sortear!';
-                document.getElementById('btnSpin').disabled = false;
-                document.getElementById('btnSpin').textContent = 'GIRAR A ROLETA 🎰';
+                status.textContent = 'Pronto para sortear!';
+                btn.disabled = false;
+                btn.textContent = 'GIRAR A ROLETA 🎰';
+
             } catch (e) {
-                alert('Erro ao carregar tickets: ' + e.message);
-                closeDraw();
+                console.error('CRITICAL ERROR in openDraw:', e);
+                status.textContent = 'Erro ao carregar tickets. Tente novamente.';
+                alert('Erro de conexão: ' + e.message + '\n\nO sistema vai tentar liberar a roleta mesmo assim.');
+
+                // Fallback unlock to prevent "stuck" UI
+                candidates = [];
+                renderReel([
+                    { number: '?', label: 'Erro' }, { number: '?', label: 'Erro' }, { number: '?', label: 'Erro' }
+                ]);
+                btn.disabled = false;
+                btn.textContent = 'GIRAR MESMO ASSIM ⚠️';
             }
         }
 
