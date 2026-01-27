@@ -508,26 +508,21 @@
                 <span class="stat-label">Usuários Ativos</span>
                 <span class="stat-value" id="kpiTotalUsers">...</span>
             </div>
-            <div class="stat-card">
-                <span class="stat-label">Resgates (Promo)</span>
-                <span class="stat-value" id="kpiTotalPromos">...</span>
-            </div>
         </div>
 
         <!-- Navigation -->
         <div class="nav-tabs">
-            <div id="nav-config" class="nav-tab active" onclick="switchTab('config')">Configuração</div>
-            <div id="nav-promos" class="nav-tab" onclick="switchTab('promos')">Promoções</div>
-            <div id="nav-draw" class="nav-tab" onclick="switchTab('draw')">Sorteio 🎰</div>
-            <div id="nav-search" class="nav-tab" onclick="switchTab('search')">Buscar Usuário</div>
+            <div id="nav-config" class="nav-tab active" onclick="switchTab('config')">Configuração & Sorteio</div>
+            <div id="nav-roulette" class="nav-tab" onclick="switchTab('roulette')">🎰 Roleta</div>
             <div id="nav-distribution" class="nav-tab" onclick="switchTab('distribution')">Distribuição 📊</div>
             <div id="nav-admins" class="nav-tab" onclick="switchTab('admins')">Administradores</div>
         </div>
 
-        <!-- TAB: CONFIG -->
+        <!-- TAB: CONFIG & SORTEIO (UNIFICADO) -->
         <div id="tab-config" class="section-content active">
+            <!-- CONFIGURAÇÃO DA CAMPANHA -->
             <div class="card">
-                <h2>Configuração da Campanha Atual</h2>
+                <h2>⚙️ Configuração da Campanha</h2>
                 <form id="campaignForm" onsubmit="saveCampaign(event)">
                     <div class="form-group">
                         <label>Nome da Campanha</label>
@@ -554,18 +549,11 @@
                     </div>
                     <button type="submit" class="btn" style="width: 100%;">Salvar Configurações</button>
                 </form>
-                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee;">
-                    <h3 style="color: #ef4444; font-size: 1rem;">Zona de Perigo</h3>
-                    <p style="font-size: 0.85rem; color: #777;">Cuidado: isso não pode ser desfeito.</p>
-                    <button type="button" onclick="resetCampaign()" class="btn"
-                        style="background: #ef4444; color: white; width: 100%; margin-top: 0.5rem;">
-                        ⚠️ ZERAR DISTRIBUIÇÃO (Renovar Números)
-                    </button>
-                </div>
             </div>
+
             <!-- WHITELIST SECTION -->
             <div class="card">
-                <h2>Lista de Convidados (Whitelist)</h2>
+                <h2>📋 Lista de Convidados (Whitelist)</h2>
                 <p style="color: var(--az-text-muted); font-size: 0.9rem;">
                     Cole a lista de celulares permitidos (um por linha). O sistema limpará formatação.
                 </p>
@@ -575,81 +563,15 @@
                 </div>
                 <button onclick="uploadWhitelist()" class="btn">Adicionar à Whitelist</button>
             </div>
-        </div>
 
-        <!-- TAB: PROMOS -->
-        <div id="tab-promos" class="section-content">
+            <!-- HOUSE WINNER (do antigo Sorteio) -->
             <div class="card">
-                <h2>Nova Promoção</h2>
-                <form id="promoForm" onsubmit="createPromo(event)">
-                    <input type="hidden" id="promoId">
-                    <div class="form-group">
-                        <label>Nome da Promoção/Parceiro</label>
-                        <input type="text" id="promoName" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Quantidade Extra</label>
-                        <input type="number" id="promoExtra" class="form-control" value="5">
-                    </div>
-                    <button type="submit" class="btn" id="promoSubmitBtn">Criar Promoção</button>
-                    <button type="button" class="btn btn-danger" id="promoCancelBtn" style="display: none;"
-                        onclick="resetPromoForm()">Cancelar</button>
-                </form>
-            </div>
-            <div class="card">
-                <h2>Promoções Ativas</h2>
-                <div class="table-wrapper">
-                    <table id="promoTable">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Extra</th>
-                                <th>Imagem</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB: DISTRIBUTION (NEW) -->
-        <div id="tab-distribution" class="section-content">
-            <div class="card">
-                <h2>Rastreio de Distribuição 📊</h2>
-                <button onclick="loadDistribution()" class="btn btn-outline" style="margin-bottom: 1rem;">🔄 Atualizar
-                    Lista</button>
-                <div class="table-wrapper">
-                    <table id="distributionTable">
-                        <thead>
-                            <tr>
-                                <th>Ticket</th>
-                                <th>Nome</th>
-                                <th>Telefone</th>
-                                <th>Data</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB: DRAW (SORTEIO) -->
-        <div id="tab-draw" class="section-content">
-            <div class="card" style="text-align: center;">
-                <h2>🎲 Sorteio & Premiação</h2>
-                <p style="color: var(--az-text-muted); margin-bottom: 2rem;">
-                    Realize o sorteio oficial entre TODOS os tickets da campanha.
-                </p>
-
-                <!-- House Winner Toggle -->
+                <h2>🏠 Modo: Ganhador da Casa</h2>
                 <div
-                    style="background: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid var(--az-border); margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto; text-align: left;">
+                    style="background: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid var(--az-border);">
                     <label
                         style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 0;">
-                        <span style="font-weight: 600; color: var(--az-text); font-size: 1.1rem;">🏠 Modo: Ganhador da
+                        <span style="font-weight: 600; color: var(--az-text); font-size: 1.1rem;">Ativar Ganhador da
                             Casa</span>
                         <input type="checkbox" id="houseWinnerToggle" onchange="toggleHouseWinner(this)"
                             style="transform: scale(1.5);">
@@ -666,23 +588,14 @@
                                 style="color: var(--az-primary); font-weight: bold; font-size: 1.5rem;">--</span></div>
                         <div style="margin-bottom: 10px;"><strong>Nome Gerado:</strong> <span id="houseReservedName"
                                 style="color: var(--az-text); font-weight: 600;">--</span></div>
-
-                        <p style="font-size: 0.85rem; color: #6b7280; margin: 0;">
-                            ✅ Nome gerado automaticamente pelo sistema.
-                        </p>
+                        <p style="font-size: 0.85rem; color: #6b7280; margin: 0;">✅ Nome gerado automaticamente pelo
+                            sistema.</p>
                     </div>
-                </div>
-
-                <div style="display: flex; justify-content: center;">
-                    <button onclick="openDraw()" class="btn"
-                        style="font-size: 1.2rem; padding: 15px 30px; text-transform: uppercase;">
-                        🎰 ABRIR ROLETA
-                    </button>
                 </div>
             </div>
 
-            <!-- SYSTEM STATUS CARD -->
-            <div class="card" style="margin-top: 20px;">
+            <!-- STATUS DO SISTEMA (do antigo Sorteio) -->
+            <div class="card">
                 <h2>📊 Status do Sistema</h2>
                 <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap; justify-content: center;">
                     <div
@@ -714,8 +627,8 @@
                 </div>
             </div>
 
-            <!-- WINNERS HISTORY TABLE -->
-            <div class="card" style="margin-top: 20px;">
+            <!-- HISTÓRICO DE GANHADORES (do antigo Sorteio) -->
+            <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h2 style="margin: 0;">🏆 Histórico de Ganhadores</h2>
                     <button onclick="loadWinnersHistory()" class="btn btn-outline" style="padding: 8px 15px;">🔄
@@ -741,24 +654,63 @@
                     </table>
                 </div>
             </div>
+
+            <!-- ZONA DE PERIGO -->
+            <div class="card" style="border: 2px solid #ef4444;">
+                <h2 style="color: #ef4444;">⚠️ Zona de Perigo</h2>
+                <p style="font-size: 0.85rem; color: #777;">Cuidado: isso não pode ser desfeito.</p>
+                <button type="button" onclick="resetCampaign()" class="btn"
+                    style="background: #ef4444; color: white; width: 100%; margin-top: 0.5rem;">
+                    ⚠️ ZERAR DISTRIBUIÇÃO (Renovar Números)
+                </button>
+            </div>
         </div>
 
-        <!-- TAB: SEARCH -->
-        <div id="tab-search" class="section-content">
-            <div class="card">
-                <h2>Buscar Participante</h2>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="searchTerm" class="form-control" placeholder="Telefone ou Ticket">
-                    <button onclick="searchUser()" class="btn">Buscar</button>
+
+        <!-- TAB: ROLETA (NOVA - EXCLUSIVA) -->
+        <div id="tab-roulette" class="section-content">
+            <div class="card" style="text-align: center; padding: 3rem;">
+                <h2 style="font-size: 2rem; margin-bottom: 1rem;">🎰 Roleta do Sorteio</h2>
+                <p style="color: var(--az-text-muted); margin-bottom: 2rem; font-size: 1.1rem;">
+                    Realize o sorteio oficial entre TODOS os tickets distribuídos da campanha.
+                </p>
+
+                <div style="display: flex; justify-content: center;">
+                    <button onclick="openDraw()" class="btn"
+                        style="font-size: 1.4rem; padding: 20px 50px; text-transform: uppercase; background: linear-gradient(135deg, var(--az-primary), #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">
+                        🎲 ABRIR ROLETA
+                    </button>
                 </div>
             </div>
-            <div id="searchResult"></div>
+        </div>
+
+        <!-- TAB: DISTRIBUTION -->
+        <div id="tab-distribution" class="section-content">
+            <div class="card">
+                <h2>📊 Rastreio de Distribuição</h2>
+                <button onclick="loadDistribution()" class="btn btn-outline" style="margin-bottom: 1rem;">🔄 Atualizar
+                    Lista</button>
+                <div class="table-wrapper">
+                    <table id="distributionTable">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- TAB: ADMINS -->
         <div id="tab-admins" class="section-content">
             <div class="card">
                 <h2>Administradores</h2>
+
                 <div class="table-wrapper">
                     <table id="adminsTable">
                         <thead>
@@ -965,7 +917,6 @@
             const k = await res.json();
             document.getElementById('kpiTotalNumbers').innerText = k.totalNumbers || 0;
             document.getElementById('kpiTotalUsers').innerText = k.totalUsers || 0;
-            document.getElementById('kpiTotalPromos').innerText = k.totalPromos || 0;
 
             // Also update status card
             updateStatusCard();
@@ -1329,31 +1280,11 @@
             }
         }
 
-        // --- ADMINS & PROMOS (Minimal Loaders for UX) ---
+        // --- ADMINS ---
         async function loadAdmins() {
             const res = await fetch('/admin/list');
             const list = await res.json();
             document.querySelector('#adminsTable tbody').innerHTML = list.map(a => `<tr><td>${a.name}</td><td>${a.phone}</td><td>-</td></tr>`).join('');
-        }
-
-        async function createPromo(e) {
-            e.preventDefault();
-            await fetch('/api/admin/amigos/promotions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: document.getElementById('promoName').value,
-                    extra_qty: document.getElementById('promoExtra').value
-                })
-            });
-            loadPromos();
-            document.getElementById('promoForm').reset();
-        }
-
-        async function loadPromos() {
-            const res = await fetch('/api/admin/amigos/promotions');
-            const list = await res.json();
-            document.querySelector('#promoTable tbody').innerHTML = list.map(p => `<tr><td>${p.name}</td><td>${p.extra_qty}</td><td>-</td><td><button onclick="fetch('/api/admin/amigos/promotions/${p.id}',{method:'DELETE'}).then(loadPromos)">Excluir</button></td></tr>`).join('');
         }
 
         async function loadDistribution() {
@@ -1380,15 +1311,6 @@
             }
         }
 
-        async function searchUser() {
-            const term = document.getElementById('searchTerm').value;
-            try {
-                const res = await fetch(`/api/admin/amigos/search?term=${term}`);
-                const json = await res.json();
-                document.getElementById('searchResult').innerHTML = json.found ? `Encontrado: ${json.participant.name} - ${json.history.length} resgates` : 'Não encontrado';
-            } catch (e) { document.getElementById('searchResult').textContent = 'Erro'; }
-        }
-
         function enableCampaignActions(enabled) {
             try {
                 const inputWhitelist = document.getElementById('whitelistInput');
@@ -1413,7 +1335,6 @@
                 try {
                     loadCampaign();
                     loadKPIs();
-                    loadPromos();
                 } catch (e) { console.error('Init Crash:', e); }
             }
             safeInit();
