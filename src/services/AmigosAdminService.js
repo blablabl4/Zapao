@@ -104,16 +104,30 @@ class AmigosAdminService {
 
     // Finalize a campaign (mark as finished, deactivate)
     async finalizeCampaign(campaignId) {
-        const res = await query(`
-            UPDATE az_campaigns 
-            SET is_active = false, finished_at = NOW()
-            WHERE id = $1
-            RETURNING *
-        `, [campaignId]);
+        // Try with finished_at first, fallback to just is_active if column doesn't exist
+        let res;
+        try {
+            res = await query(`
+                UPDATE az_campaigns 
+                SET is_active = false, finished_at = NOW()
+                WHERE id = $1
+                RETURNING *
+            `, [campaignId]);
+        } catch (e) {
+            // Fallback: column finished_at might not exist yet
+            console.log('[finalizeCampaign] finished_at failed, using fallback:', e.message);
+            res = await query(`
+                UPDATE az_campaigns 
+                SET is_active = false
+                WHERE id = $1
+                RETURNING *
+            `, [campaignId]);
+        }
 
         AmigosService.invalidateCache();
         return res.rows[0];
     }
+
 
     // === WHITELIST CRUD ===
 
