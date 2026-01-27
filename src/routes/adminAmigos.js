@@ -145,15 +145,145 @@ router.post('/campaign/finish', async (req, res) => {
             targetId = campaign.id;
         }
 
-        const result = await AmigosService.finishCampaign(targetId);
+        // Use new finalizeCampaign that marks finished_at
+        const result = await AmigosAdminService.finalizeCampaign(targetId);
         res.json({
             success: true,
-            message: 'Campanha finalizada com sucesso! O sorteio foi encerrado.'
+            message: 'Campanha finalizada com sucesso!',
+            campaign: result
         });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
+
+// Duplicate Campaign (for quick restart after draw)
+router.post('/campaign/duplicate', async (req, res) => {
+    try {
+        const { campaignId } = req.body;
+        console.log('[AdminAmigos] Duplicating campaign:', campaignId);
+
+        if (!campaignId) {
+            return res.status(400).json({ error: 'campaignId required' });
+        }
+
+        const newCampaign = await AmigosAdminService.duplicateCampaign(campaignId);
+
+        // Auto-generate tickets for new campaign
+        await AmigosService.populateTickets(newCampaign.id);
+
+        res.json({
+            success: true,
+            message: `Nova campanha "${newCampaign.name}" criada e ativada!`,
+            campaign: newCampaign
+        });
+    } catch (e) {
+        console.error('[AdminAmigos] Duplicate error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// === WHITELIST CRUD ROUTES ===
+
+// Get whitelist for campaign
+router.get('/whitelist/:campaignId', async (req, res) => {
+    try {
+        const { campaignId } = req.params;
+        const phones = await AmigosAdminService.getWhitelist(campaignId);
+        const count = phones.length;
+        res.json({ phones, count });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Add to whitelist (merge)
+router.post('/whitelist/add', async (req, res) => {
+    try {
+        const { campaignId, phones, text } = req.body;
+
+        if (!campaignId) {
+            // Try to get active campaign
+            const campaign = await AmigosService.getActiveCampaign();
+            if (!campaign) return res.status(400).json({ error: 'Nenhuma campanha ativa' });
+            req.body.campaignId = campaign.id;
+        }
+
+        let numbersToAdd = [];
+        if (Array.isArray(phones)) {
+            numbersToAdd = phones;
+        } else if (text) {
+            numbersToAdd = text.split(/[\n,;]+/).map(s => s.trim()).filter(s => s.length >= 10);
+        }
+
+        const result = await AmigosAdminService.addToWhitelist(req.body.campaignId, numbersToAdd);
+        const count = await AmigosAdminService.getWhitelistCount(req.body.campaignId);
+
+        res.json({
+            success: true,
+            message: `${result.inserted} números adicionados!`,
+            total: count
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Replace whitelist (clear + add)
+router.post('/whitelist/replace', async (req, res) => {
+    try {
+        const { campaignId, phones, text } = req.body;
+
+        let targetId = campaignId;
+        if (!targetId) {
+            const campaign = await AmigosService.getActiveCampaign();
+            if (!campaign) return res.status(400).json({ error: 'Nenhuma campanha ativa' });
+            targetId = campaign.id;
+        }
+
+        let numbersToAdd = [];
+        if (Array.isArray(phones)) {
+            numbersToAdd = phones;
+        } else if (text) {
+            numbersToAdd = text.split(/[\n,;]+/).map(s => s.trim()).filter(s => s.length >= 10);
+        }
+
+        const result = await AmigosAdminService.replaceWhitelist(targetId, numbersToAdd);
+        const count = await AmigosAdminService.getWhitelistCount(targetId);
+
+        res.json({
+            success: true,
+            message: `Whitelist substituída! ${result.inserted} números ativos.`,
+            total: count
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Clear whitelist
+router.delete('/whitelist/clear', async (req, res) => {
+    try {
+        const { campaignId } = req.body;
+
+        let targetId = campaignId;
+        if (!targetId) {
+            const campaign = await AmigosService.getActiveCampaign();
+            if (!campaign) return res.status(400).json({ error: 'Nenhuma campanha ativa' });
+            targetId = campaign.id;
+        }
+
+        const result = await AmigosAdminService.clearWhitelist(targetId);
+
+        res.json({
+            success: true,
+            message: `Whitelist limpa! ${result.deleted} números removidos.`
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 router.post('/campaign/reset', async (req, res) => {
     try {

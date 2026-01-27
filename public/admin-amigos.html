@@ -525,102 +525,90 @@
             <!-- GRID LAYOUT: 2 COLUNAS -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
 
-                <!-- COLUNA 1: CONFIGURAÇÃO -->
+                <!-- COLUNA 1: CONFIGURAÇÃO (SIMPLIFICADA) -->
                 <div class="card" style="margin-bottom: 0;">
-                    <h2 style="font-size: 1.1rem;">⚙️ Configuração</h2>
-                    <form id="campaignForm" onsubmit="saveCampaign(event)">
-                        <div class="form-group" style="margin-bottom: 0.8rem;">
-                            <label style="font-size: 0.8rem;">Nome da Campanha</label>
-                            <input type="text" id="campName" class="form-control" style="padding: 8px 10px;" required>
-                        </div>
+                    <h2 style="font-size: 1.1rem;">⚙️ Nova Campanha</h2>
+                    <form id="campaignForm" onsubmit="createCampaign(event)">
                         <div style="display: flex; gap: 0.8rem;">
                             <div class="form-group" style="flex:1; margin-bottom: 0.8rem;">
                                 <label style="font-size: 0.8rem;">Range Inicial</label>
                                 <input type="number" id="startNum" class="form-control" style="padding: 8px 10px;"
-                                    placeholder="1" required>
+                                    placeholder="1" value="1" required>
                             </div>
                             <div class="form-group" style="flex:1; margin-bottom: 0.8rem;">
                                 <label style="font-size: 0.8rem;">Range Final</label>
                                 <input type="number" id="endNum" class="form-control" style="padding: 8px 10px;"
-                                    placeholder="300" required>
+                                    placeholder="300" value="300" required>
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0.8rem;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
-                                <input type="checkbox" id="isActive" style="width: 18px; height: 18px;">
-                                Campanha Ativa
+                            <label
+                                style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; background: #fef3c7; padding: 8px 12px; border-radius: 6px; border: 1px solid #fbbf24;">
+                                <input type="checkbox" id="houseWinnerOnCreate" style="width: 18px; height: 18px;">
+                                🏠 Ativar Ganhador da Casa
                             </label>
                         </div>
-                        <button type="submit" class="btn" style="width: 100%; padding: 8px;">Salvar</button>
+                        <button type="submit" class="btn" style="width: 100%; padding: 10px; font-weight: 600;">🚀 Criar
+                            Campanha</button>
                     </form>
                 </div>
 
-                <!-- COLUNA 2: WHITELIST -->
+
+                <!-- COLUNA 2: WHITELIST (COM CRUD) -->
                 <div class="card" style="margin-bottom: 0;">
-                    <h2 style="font-size: 1.1rem;">📋 Whitelist</h2>
-                    <p style="color: var(--az-text-muted); font-size: 0.8rem; margin-bottom: 0.8rem;">
-                        Cole a lista de celulares (um por linha).
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="font-size: 1.1rem; margin: 0;">📋 Whitelist</h2>
+                        <span id="whitelistCount"
+                            style="background: var(--az-primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">0</span>
+                    </div>
+                    <p style="color: var(--az-text-muted); font-size: 0.75rem; margin: 5px 0 8px 0;">
+                        Vazia = qualquer um participa. Com números = apenas esses.
                     </p>
                     <div class="form-group" style="margin-bottom: 0.8rem;">
-                        <textarea id="whitelistInput" class="form-control" rows="4"
+                        <textarea id="whitelistInput" class="form-control" rows="3"
                             style="padding: 8px 10px; font-size: 0.85rem;"
                             placeholder="5511999999999&#10;5511888888888"></textarea>
                     </div>
-                    <button onclick="uploadWhitelist()" class="btn"
-                        style="width: 100%; padding: 8px;">Adicionar</button>
-                </div>
-
-                <!-- COLUNA 1: HOUSE WINNER -->
-                <div class="card" style="margin-bottom: 0;">
-                    <h2 style="font-size: 1.1rem;">🏠 Ganhador da Casa</h2>
-                    <div
-                        style="background: #f9fafb; padding: 12px; border-radius: 8px; border: 1px solid var(--az-border);">
-                        <label
-                            style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
-                            <span style="font-weight: 600; font-size: 0.95rem;">Ativar Modo Casa</span>
-                            <input type="checkbox" id="houseWinnerToggle" onchange="toggleHouseWinner(this)"
-                                style="transform: scale(1.3);">
-                        </label>
-                        <div id="houseWinnerInfo"
-                            style="display: none; margin-top: 10px; padding: 10px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;">
-                            <div style="font-size: 0.85rem;"><strong>Nº:</strong> <span id="houseReservedNumber"
-                                    style="color: var(--az-primary); font-weight: bold; font-size: 1.2rem;">--</span>
-                            </div>
-                            <div style="font-size: 0.85rem;"><strong>Nome:</strong> <span id="houseReservedName"
-                                    style="font-weight: 600;">--</span></div>
-                        </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="whitelistAdd()" class="btn"
+                            style="flex: 1; padding: 8px; font-size: 0.85rem;">➕ Adicionar</button>
+                        <button onclick="whitelistReplace()" class="btn btn-outline"
+                            style="flex: 1; padding: 8px; font-size: 0.85rem;">🔄 Substituir</button>
+                        <button onclick="whitelistClear()" class="btn"
+                            style="flex: 0.5; padding: 8px; font-size: 0.85rem; background: #ef4444;">🗑️</button>
                     </div>
                 </div>
 
-                <!-- COLUNA 2: STATUS DO SISTEMA -->
-                <div class="card" style="margin-bottom: 0;">
-                    <h2 style="font-size: 1.1rem;">📊 Status</h2>
+                <!-- COLUNA 1: STATUS DA CAMPANHA ATIVA -->
+                <div class="card" style="margin-bottom: 0; grid-column: span 2;">
+                    <h2 style="font-size: 1.1rem;">📊 Campanha Ativa</h2>
                     <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
                         <div
-                            style="flex: 1; text-align: center; padding: 12px; background: #f0fdf4; border-radius: 8px; border: 2px solid var(--az-primary); min-width: 80px;">
-                            <div style="font-size: 0.75rem; color: #6b7280;">Rodada</div>
-                            <div
-                                style="display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 5px;">
-                                <button onclick="changeRound(-1)" class="btn"
-                                    style="padding: 2px 8px; font-size: 1rem;">−</button>
-                                <span id="currentRoundDisplay"
-                                    style="font-size: 1.8rem; font-weight: 800; color: var(--az-primary);">1</span>
-                                <button onclick="changeRound(1)" class="btn"
-                                    style="padding: 2px 8px; font-size: 1rem;">+</button>
-                            </div>
-                        </div>
-                        <div
-                            style="flex: 1; text-align: center; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--az-border); min-width: 80px;">
+                            style="flex: 1; text-align: center; padding: 15px; background: #f0fdf4; border-radius: 8px; border: 2px solid var(--az-primary); min-width: 100px;">
                             <div style="font-size: 0.75rem; color: #6b7280;">Campanha</div>
-                            <div id="currentCampaignName" style="font-size: 1rem; font-weight: 600; margin-top: 5px;">--
-                            </div>
-                            <div id="campaignStatus" style="font-size: 0.75rem; color: #10b981;">● Ativo</div>
+                            <div id="currentCampaignName"
+                                style="font-size: 1.1rem; font-weight: 700; margin-top: 5px; color: var(--az-primary);">
+                                --</div>
+                            <div id="campaignStatus" style="font-size: 0.75rem; color: #10b981; margin-top: 3px;">●
+                                Ativa</div>
                         </div>
                         <div
-                            style="flex: 1; text-align: center; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--az-border); min-width: 80px;">
+                            style="flex: 1; text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--az-border); min-width: 80px;">
                             <div style="font-size: 0.75rem; color: #6b7280;">Range</div>
-                            <div id="currentRangeDisplay" style="font-size: 1rem; font-weight: 600; margin-top: 5px;">1
-                                - 300</div>
+                            <div id="currentRangeDisplay" style="font-size: 1.3rem; font-weight: 700; margin-top: 5px;">
+                                1 - 300</div>
+                        </div>
+                        <div
+                            style="flex: 1; text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--az-border); min-width: 80px;">
+                            <div style="font-size: 0.75rem; color: #6b7280;">Ganhador Casa</div>
+                            <div id="houseWinnerStatus" style="font-size: 1.1rem; font-weight: 700; margin-top: 5px;">❌
+                                OFF</div>
+                        </div>
+                        <div
+                            style="flex: 1; text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--az-border); min-width: 80px;">
+                            <div style="font-size: 0.75rem; color: #6b7280;">Whitelist</div>
+                            <div id="whitelistStatusCount"
+                                style="font-size: 1.1rem; font-weight: 700; margin-top: 5px;">0</div>
                         </div>
                     </div>
                 </div>
@@ -825,53 +813,171 @@
 
                 const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
                 const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-                const setCheck = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
 
                 if (c.id) {
                     currentCampaignId = c.id;
                     currentCampaignStartNum = parseInt(c.start_number) || 1;
                     currentCampaignEndNum = parseInt(c.end_number) || 300;
-                    setVal('campName', c.name);
+
+                    // Fill form with current values (for reference)
                     setVal('startNum', c.start_number);
                     setVal('endNum', c.end_number);
-                    setCheck('isActive', c.is_active);
+
+                    // Update Status Card
+                    setText('currentCampaignName', c.name || '--');
+                    setText('currentRangeDisplay', `${c.start_number} - ${c.end_number}`);
 
                     // House Winner Status
-                    setCheck('houseWinnerToggle', c.house_winner_active);
-                    if (c.house_winner_active) {
-                        const info = document.getElementById('houseWinnerInfo');
-                        if (info) info.style.display = 'block';
-                        setText('houseReservedNumber', c.house_winner_number || 'Aguardando...');
-                        // Use house_winner_name (correct field from backend)
-                        setText('houseReservedName', c.house_winner_name || '(Gerando...)');
-                    } else {
-                        const info = document.getElementById('houseWinnerInfo');
-                        if (info) info.style.display = 'none';
+                    const hwStatus = document.getElementById('houseWinnerStatus');
+                    if (hwStatus) {
+                        hwStatus.textContent = c.house_winner_active ? '✅ ON' : '❌ OFF';
+                        hwStatus.style.color = c.house_winner_active ? '#10b981' : '#9ca3af';
                     }
+
+                    // Campaign Status (active/finished)
+                    const campStatus = document.getElementById('campaignStatus');
+                    if (campStatus) {
+                        if (c.finished_at) {
+                            campStatus.textContent = '⬛ Finalizada';
+                            campStatus.style.color = '#9ca3af';
+                        } else if (c.is_active) {
+                            campStatus.textContent = '● Ativa';
+                            campStatus.style.color = '#10b981';
+                        } else {
+                            campStatus.textContent = '○ Inativa';
+                            campStatus.style.color = '#9ca3af';
+                        }
+                    }
+
+                    // Load whitelist count
+                    loadWhitelist();
+                } else {
+                    // No campaign - show empty state
+                    setText('currentCampaignName', 'Nenhuma');
+                    setText('campaignStatus', '○ Criar nova');
                 }
             } catch (e) {
                 console.error('loadCampaign error:', e);
             }
         }
 
-        async function saveCampaign(e) {
+
+        async function createCampaign(e) {
             e.preventDefault();
             const data = {
-                name: document.getElementById('campName').value,
-                startNum: parseInt(document.getElementById('startNum').value),
-                endNum: parseInt(document.getElementById('endNum').value),
-                isActive: document.getElementById('isActive').checked
+                start_number: parseInt(document.getElementById('startNum').value),
+                end_number: parseInt(document.getElementById('endNum').value),
+                house_winner_active: document.getElementById('houseWinnerOnCreate').checked
             };
+
             try {
-                await fetch('/api/admin/amigos/campaign', {
+                const res = await fetch('/api/admin/amigos/campaign', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                alert('Salvo!');
+                const result = await res.json();
+                showToast(`🚀 Campanha "${result.name}" criada e ativada!`);
                 loadCampaign();
-            } catch (e) { alert('Erro: ' + e.message); }
+                loadKPIs();
+            } catch (e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
         }
+
+        // === WHITELIST CRUD ===
+        async function loadWhitelist() {
+            if (!currentCampaignId) return;
+            try {
+                const res = await fetch(`/api/admin/amigos/whitelist/${currentCampaignId}`);
+                const data = await res.json();
+                document.getElementById('whitelistCount').innerText = data.count || 0;
+                document.getElementById('whitelistStatusCount').innerText = data.count || 0;
+            } catch (e) {
+                console.error('loadWhitelist error:', e);
+            }
+        }
+
+        async function whitelistAdd() {
+            const text = document.getElementById('whitelistInput').value;
+            if (!text.trim()) return showToast('Cole os números primeiro!', 'error');
+
+            try {
+                const res = await fetch('/api/admin/amigos/whitelist/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId, text })
+                });
+                const result = await res.json();
+                showToast(result.message);
+                document.getElementById('whitelistInput').value = '';
+                document.getElementById('whitelistCount').innerText = result.total || 0;
+                document.getElementById('whitelistStatusCount').innerText = result.total || 0;
+            } catch (e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
+        }
+
+        async function whitelistReplace() {
+            const text = document.getElementById('whitelistInput').value;
+            if (!confirm('Isso vai SUBSTITUIR toda a whitelist atual. Continuar?')) return;
+
+            try {
+                const res = await fetch('/api/admin/amigos/whitelist/replace', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId, text })
+                });
+                const result = await res.json();
+                showToast(result.message);
+                document.getElementById('whitelistInput').value = '';
+                document.getElementById('whitelistCount').innerText = result.total || 0;
+                document.getElementById('whitelistStatusCount').innerText = result.total || 0;
+            } catch (e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
+        }
+
+        async function whitelistClear() {
+            if (!confirm('🗑️ LIMPAR toda a whitelist? Qualquer pessoa poderá participar!')) return;
+
+            try {
+                const res = await fetch('/api/admin/amigos/whitelist/clear', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId })
+                });
+                const result = await res.json();
+                showToast(result.message);
+                document.getElementById('whitelistCount').innerText = '0';
+                document.getElementById('whitelistStatusCount').innerText = '0';
+            } catch (e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
+        }
+
+        // === DUPLICATE CAMPAIGN (Pós-Sorteio) ===
+        async function duplicateCampaign() {
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/duplicate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast(result.message);
+                    loadCampaign();
+                    loadKPIs();
+                    closeDraw();
+                } else {
+                    showToast('Erro: ' + result.error, 'error');
+                }
+            } catch (e) {
+                showToast('Erro ao duplicar: ' + e.message, 'error');
+            }
+        }
+
 
         async function toggleHouseWinner(el) {
             const active = el.checked;

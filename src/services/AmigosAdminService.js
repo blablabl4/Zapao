@@ -37,27 +37,131 @@ class AmigosAdminService {
     }
 
     async createCampaign(data) {
-        // Enforce is_active default true if not provided
-        const isActive = data.is_active !== undefined ? data.is_active : true;
+        // Generate sequential name automatically: "Sorteio #N"
+        const countRes = await query('SELECT COUNT(*) as total FROM az_campaigns');
+        const nextNumber = parseInt(countRes.rows[0].total) + 1;
+        const autoName = `Sorteio #${nextNumber}`;
+
+        // New campaigns are always active immediately
+        const isActive = true;
+
+        // Default base_qty_config: 1 ticket per day
+        const baseQtyConfig = data.base_qty_config || '{"sun":1,"mon":1,"tue":1,"wed":1,"thu":1,"fri":1,"sat":1}';
 
         const res = await query(`
-            INSERT INTO az_campaigns (name, start_number, end_number, base_qty_config, is_active, group_link)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO az_campaigns (name, start_number, end_number, base_qty_config, is_active, house_winner_active, house_winner_name, house_winner_number, cloned_from)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
-        `, [data.name, data.start_number, data.end_number, data.base_qty_config, isActive, data.group_link || null]);
+        `, [
+            autoName,
+            data.start_number,
+            data.end_number,
+            baseQtyConfig,
+            isActive,
+            data.house_winner_active || false,
+            data.house_winner_name || null,
+            data.house_winner_number || null,
+            data.cloned_from || null
+        ]);
 
         const newCampaign = res.rows[0];
 
-        // If activating, deactivate all others
-        if (isActive) {
-            await query('UPDATE az_campaigns SET is_active = false WHERE id != $1', [newCampaign.id]);
-        }
+        // Deactivate all other campaigns
+        await query('UPDATE az_campaigns SET is_active = false WHERE id != $1', [newCampaign.id]);
 
         // Invalidate cache
         AmigosService.invalidateCache();
 
         return newCampaign;
     }
+
+    // Duplicate a campaign (copy settings + whitelist)
+    async duplicateCampaign(campaignId) {
+        // 1. Get original campaign
+        const origRes = await query('SELECT * FROM az_campaigns WHERE id = $1', [campaignId]);
+        const original = origRes.rows[0];
+        if (!original) throw new Error('Campanha não encontrada');
+
+        // 2. Create new campaign with same settings
+        const newCampaign = await this.createCampaign({
+            start_number: original.start_number,
+            end_number: original.end_number,
+            base_qty_config: original.base_qty_config,
+            house_winner_active: original.house_winner_active,
+            house_winner_name: original.house_winner_name,
+            house_winner_number: original.house_winner_number,
+            cloned_from: campaignId
+        });
+
+        // 3. Copy whitelist (if any)
+        await query(`
+            INSERT INTO az_whitelist (campaign_id, phone)
+            SELECT $1, phone FROM az_whitelist WHERE campaign_id = $2
+        `, [newCampaign.id, campaignId]);
+
+        return newCampaign;
+    }
+
+    // Finalize a campaign (mark as finished, deactivate)
+    async finalizeCampaign(campaignId) {
+        const res = await query(`
+            UPDATE az_campaigns 
+            SET is_active = false, finished_at = NOW()
+            WHERE id = $1
+            RETURNING *
+        `, [campaignId]);
+
+        AmigosService.invalidateCache();
+        return res.rows[0];
+    }
+
+    // === WHITELIST CRUD ===
+
+    // Add phones to whitelist (merge, doesn't remove existing)
+    async addToWhitelist(campaignId, phones) {
+        const inserted = [];
+        for (const phone of phones) {
+            const cleanPhone = phone.replace(/\D/g, '');
+            if (cleanPhone.length >= 10) {
+                try {
+                    await query(`
+                        INSERT INTO az_whitelist (campaign_id, phone)
+                        VALUES ($1, $2)
+                        ON CONFLICT (campaign_id, phone) DO NOTHING
+                    `, [campaignId, cleanPhone]);
+                    inserted.push(cleanPhone);
+                } catch (e) {
+                    // Ignore duplicates
+                }
+            }
+        }
+        return { inserted: inserted.length };
+    }
+
+    // Replace entire whitelist
+    async replaceWhitelist(campaignId, phones) {
+        await query('DELETE FROM az_whitelist WHERE campaign_id = $1', [campaignId]);
+        return this.addToWhitelist(campaignId, phones);
+    }
+
+    // Clear whitelist
+    async clearWhitelist(campaignId) {
+        const res = await query('DELETE FROM az_whitelist WHERE campaign_id = $1', [campaignId]);
+        return { deleted: res.rowCount };
+    }
+
+    // Get whitelist
+    async getWhitelist(campaignId) {
+        const res = await query('SELECT phone FROM az_whitelist WHERE campaign_id = $1 ORDER BY created_at DESC', [campaignId]);
+        return res.rows.map(r => r.phone);
+    }
+
+    // Get whitelist count
+    async getWhitelistCount(campaignId) {
+        const res = await query('SELECT COUNT(*) as total FROM az_whitelist WHERE campaign_id = $1', [campaignId]);
+        return parseInt(res.rows[0].total);
+    }
+
 
     async createPromotion(campaignId, data) {
         const startsAt = data.starts_at || new Date();
