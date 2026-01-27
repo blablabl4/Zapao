@@ -610,8 +610,16 @@
                             <div id="whitelistStatusCount"
                                 style="font-size: 1.1rem; font-weight: 700; margin-top: 5px;">0</div>
                         </div>
+                        <!-- BOTÃO PARAR -->
+                        <div style="flex: 0.8; display: flex; align-items: center; justify-content: center;">
+                            <button onclick="stopCampaign()" class="btn"
+                                style="background: #ef4444; color: white; padding: 12px 20px; font-weight: 600; white-space: nowrap;">
+                                ⏹️ PARAR
+                            </button>
+                        </div>
                     </div>
                 </div>
+
 
             </div>
 
@@ -953,6 +961,29 @@
                 document.getElementById('whitelistStatusCount').innerText = '0';
             } catch (e) {
                 showToast('Erro: ' + e.message, 'error');
+            }
+        }
+
+        // === STOP CAMPAIGN ===
+        async function stopCampaign() {
+            if (!confirm('⏹️ PARAR esta campanha? Ela será marcada como finalizada e ninguém mais poderá participar.')) return;
+
+            try {
+                const res = await fetch('/api/admin/amigos/campaign/finish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignId: currentCampaignId })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('⏹️ Campanha finalizada!');
+                    loadCampaign();
+                    loadKPIs();
+                } else {
+                    showToast('Erro: ' + result.error, 'error');
+                }
+            } catch (e) {
+                showToast('Erro ao parar campanha: ' + e.message, 'error');
             }
         }
 
