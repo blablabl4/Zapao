@@ -512,122 +512,140 @@
 
         <!-- Navigation -->
         <div class="nav-tabs">
-            <div id="nav-config" class="nav-tab active" onclick="switchTab('config')">Configuração & Sorteio</div>
+            <div id="nav-config" class="nav-tab active" onclick="switchTab('config')">Configuração</div>
             <div id="nav-roulette" class="nav-tab" onclick="switchTab('roulette')">🎰 Roleta</div>
-            <div id="nav-distribution" class="nav-tab" onclick="switchTab('distribution')">Distribuição 📊</div>
+            <div id="nav-history" class="nav-tab" onclick="switchTab('history')">🏆 Ganhadores</div>
+            <div id="nav-distribution" class="nav-tab" onclick="switchTab('distribution')">📊 Distribuição</div>
             <div id="nav-admins" class="nav-tab" onclick="switchTab('admins')">Administradores</div>
         </div>
 
+
         <!-- TAB: CONFIG & SORTEIO (UNIFICADO) -->
         <div id="tab-config" class="section-content active">
-            <!-- CONFIGURAÇÃO DA CAMPANHA -->
-            <div class="card">
-                <h2>⚙️ Configuração da Campanha</h2>
-                <form id="campaignForm" onsubmit="saveCampaign(event)">
-                    <div class="form-group">
-                        <label>Nome da Campanha</label>
-                        <input type="text" id="campName" class="form-control" required>
-                    </div>
-                    <div style="display: flex; gap: 1rem;">
-                        <div class="form-group" style="flex:1;">
-                            <label>Range Inicial</label>
-                            <input type="number" id="startNum" class="form-control" placeholder="1" required>
-                        </div>
-                        <div class="form-group" style="flex:1;">
-                            <label>Range Final</label>
-                            <input type="number" id="endNum" class="form-control" placeholder="300" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="isActive" style="width: 20px; height: 20px;">
-                            Campanha Ativa/Rodando
-                        </label>
-                        <label style="margin-top: 1rem; color: #ef4444; font-size: 0.9rem;">
-                            * Alterações aqui afetam o app imediatamente.
-                        </label>
-                    </div>
-                    <button type="submit" class="btn" style="width: 100%;">Salvar Configurações</button>
-                </form>
-            </div>
+            <!-- GRID LAYOUT: 2 COLUNAS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
 
-            <!-- WHITELIST SECTION -->
-            <div class="card">
-                <h2>📋 Lista de Convidados (Whitelist)</h2>
-                <p style="color: var(--az-text-muted); font-size: 0.9rem;">
-                    Cole a lista de celulares permitidos (um por linha). O sistema limpará formatação.
-                </p>
-                <div class="form-group">
-                    <textarea id="whitelistInput" class="form-control" rows="5"
-                        placeholder="5511999999999&#10;5511888888888"></textarea>
+                <!-- COLUNA 1: CONFIGURAÇÃO -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 style="font-size: 1.1rem;">⚙️ Configuração</h2>
+                    <form id="campaignForm" onsubmit="saveCampaign(event)">
+                        <div class="form-group" style="margin-bottom: 0.8rem;">
+                            <label style="font-size: 0.8rem;">Nome da Campanha</label>
+                            <input type="text" id="campName" class="form-control" style="padding: 8px 10px;" required>
+                        </div>
+                        <div style="display: flex; gap: 0.8rem;">
+                            <div class="form-group" style="flex:1; margin-bottom: 0.8rem;">
+                                <label style="font-size: 0.8rem;">Range Inicial</label>
+                                <input type="number" id="startNum" class="form-control" style="padding: 8px 10px;"
+                                    placeholder="1" required>
+                            </div>
+                            <div class="form-group" style="flex:1; margin-bottom: 0.8rem;">
+                                <label style="font-size: 0.8rem;">Range Final</label>
+                                <input type="number" id="endNum" class="form-control" style="padding: 8px 10px;"
+                                    placeholder="300" required>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0.8rem;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                                <input type="checkbox" id="isActive" style="width: 18px; height: 18px;">
+                                Campanha Ativa
+                            </label>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%; padding: 8px;">Salvar</button>
+                    </form>
                 </div>
-                <button onclick="uploadWhitelist()" class="btn">Adicionar à Whitelist</button>
-            </div>
 
-            <!-- HOUSE WINNER (do antigo Sorteio) -->
-            <div class="card">
-                <h2>🏠 Modo: Ganhador da Casa</h2>
-                <div
-                    style="background: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid var(--az-border);">
-                    <label
-                        style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 0;">
-                        <span style="font-weight: 600; color: var(--az-text); font-size: 1.1rem;">Ativar Ganhador da
-                            Casa</span>
-                        <input type="checkbox" id="houseWinnerToggle" onchange="toggleHouseWinner(this)"
-                            style="transform: scale(1.5);">
-                    </label>
-                    <p style="font-size: 0.9rem; color: var(--az-text-muted); margin-top: 8px; margin-bottom: 0;">
-                        Quando ativo, você pode definir um número específico para ganhar (simulando um usuário
-                        fantasma).
+                <!-- COLUNA 2: WHITELIST -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 style="font-size: 1.1rem;">📋 Whitelist</h2>
+                    <p style="color: var(--az-text-muted); font-size: 0.8rem; margin-bottom: 0.8rem;">
+                        Cole a lista de celulares (um por linha).
                     </p>
-
-                    <div id="houseWinnerInfo"
-                        style="display: none; margin-top: 15px; padding: 15px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
-                        <div style="margin-bottom: 10px;"><strong>Número Reservado:</strong> <span
-                                id="houseReservedNumber"
-                                style="color: var(--az-primary); font-weight: bold; font-size: 1.5rem;">--</span></div>
-                        <div style="margin-bottom: 10px;"><strong>Nome Gerado:</strong> <span id="houseReservedName"
-                                style="color: var(--az-text); font-weight: 600;">--</span></div>
-                        <p style="font-size: 0.85rem; color: #6b7280; margin: 0;">✅ Nome gerado automaticamente pelo
-                            sistema.</p>
+                    <div class="form-group" style="margin-bottom: 0.8rem;">
+                        <textarea id="whitelistInput" class="form-control" rows="4"
+                            style="padding: 8px 10px; font-size: 0.85rem;"
+                            placeholder="5511999999999&#10;5511888888888"></textarea>
                     </div>
+                    <button onclick="uploadWhitelist()" class="btn"
+                        style="width: 100%; padding: 8px;">Adicionar</button>
                 </div>
-            </div>
 
-            <!-- STATUS DO SISTEMA (do antigo Sorteio) -->
-            <div class="card">
-                <h2>📊 Status do Sistema</h2>
-                <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                <!-- COLUNA 1: HOUSE WINNER -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 style="font-size: 1.1rem;">🏠 Ganhador da Casa</h2>
                     <div
-                        style="text-align: center; padding: 20px; background: #f0fdf4; border-radius: 12px; border: 2px solid var(--az-primary);">
-                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Rodada Atual</div>
-                        <div style="display: flex; align-items: center; gap: 15px; justify-content: center;">
-                            <button onclick="changeRound(-1)" class="btn"
-                                style="padding: 5px 12px; font-size: 1.2rem;">−</button>
-                            <span id="currentRoundDisplay"
-                                style="font-size: 2.5rem; font-weight: 800; color: var(--az-primary);">1</span>
-                            <button onclick="changeRound(1)" class="btn"
-                                style="padding: 5px 12px; font-size: 1.2rem;">+</button>
+                        style="background: #f9fafb; padding: 12px; border-radius: 8px; border: 1px solid var(--az-border);">
+                        <label
+                            style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                            <span style="font-weight: 600; font-size: 0.95rem;">Ativar Modo Casa</span>
+                            <input type="checkbox" id="houseWinnerToggle" onchange="toggleHouseWinner(this)"
+                                style="transform: scale(1.3);">
+                        </label>
+                        <div id="houseWinnerInfo"
+                            style="display: none; margin-top: 10px; padding: 10px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;">
+                            <div style="font-size: 0.85rem;"><strong>Nº:</strong> <span id="houseReservedNumber"
+                                    style="color: var(--az-primary); font-weight: bold; font-size: 1.2rem;">--</span>
+                            </div>
+                            <div style="font-size: 0.85rem;"><strong>Nome:</strong> <span id="houseReservedName"
+                                    style="font-weight: 600;">--</span></div>
                         </div>
                     </div>
-                    <div
-                        style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid var(--az-border);">
-                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Campanha</div>
-                        <div id="currentCampaignName"
-                            style="font-size: 1.3rem; font-weight: 600; color: var(--az-text);">--</div>
-                        <div id="campaignStatus" style="font-size: 0.85rem; color: #10b981; margin-top: 5px;">● Ativo
+                </div>
+
+                <!-- COLUNA 2: STATUS DO SISTEMA -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 style="font-size: 1.1rem;">📊 Status</h2>
+                    <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
+                        <div
+                            style="flex: 1; text-align: center; padding: 12px; background: #f0fdf4; border-radius: 8px; border: 2px solid var(--az-primary); min-width: 80px;">
+                            <div style="font-size: 0.75rem; color: #6b7280;">Rodada</div>
+                            <div
+                                style="display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 5px;">
+                                <button onclick="changeRound(-1)" class="btn"
+                                    style="padding: 2px 8px; font-size: 1rem;">−</button>
+                                <span id="currentRoundDisplay"
+                                    style="font-size: 1.8rem; font-weight: 800; color: var(--az-primary);">1</span>
+                                <button onclick="changeRound(1)" class="btn"
+                                    style="padding: 2px 8px; font-size: 1rem;">+</button>
+                            </div>
+                        </div>
+                        <div
+                            style="flex: 1; text-align: center; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--az-border); min-width: 80px;">
+                            <div style="font-size: 0.75rem; color: #6b7280;">Campanha</div>
+                            <div id="currentCampaignName" style="font-size: 1rem; font-weight: 600; margin-top: 5px;">--
+                            </div>
+                            <div id="campaignStatus" style="font-size: 0.75rem; color: #10b981;">● Ativo</div>
+                        </div>
+                        <div
+                            style="flex: 1; text-align: center; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--az-border); min-width: 80px;">
+                            <div style="font-size: 0.75rem; color: #6b7280;">Range</div>
+                            <div id="currentRangeDisplay" style="font-size: 1rem; font-weight: 600; margin-top: 5px;">1
+                                - 300</div>
                         </div>
                     </div>
-                    <div
-                        style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid var(--az-border);">
-                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Range de Números</div>
-                        <div id="currentRangeDisplay"
-                            style="font-size: 1.3rem; font-weight: 600; color: var(--az-text);">1 - 300</div>
-                    </div>
                 </div>
+
             </div>
 
-            <!-- HISTÓRICO DE GANHADORES (do antigo Sorteio) -->
+            <!-- ZONA DE PERIGO (COMPACTO) -->
+            <div class="card" style="margin-top: 1rem; padding: 1rem; border: 2px solid #ef4444;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <h3 style="color: #ef4444; margin: 0; font-size: 1rem;">⚠️ Zona de Perigo</h3>
+                        <p style="font-size: 0.8rem; color: #777; margin: 5px 0 0 0;">Cuidado: isso não pode ser
+                            desfeito.</p>
+                    </div>
+                    <button type="button" onclick="resetCampaign()" class="btn"
+                        style="background: #ef4444; color: white; padding: 8px 15px; white-space: nowrap;">
+                        ZERAR DISTRIBUIÇÃO
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: HISTORICO (NOVA - EXCLUSIVA) -->
+        <div id="tab-history" class="section-content">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h2 style="margin: 0;">🏆 Histórico de Ganhadores</h2>
@@ -654,17 +672,8 @@
                     </table>
                 </div>
             </div>
-
-            <!-- ZONA DE PERIGO -->
-            <div class="card" style="border: 2px solid #ef4444;">
-                <h2 style="color: #ef4444;">⚠️ Zona de Perigo</h2>
-                <p style="font-size: 0.85rem; color: #777;">Cuidado: isso não pode ser desfeito.</p>
-                <button type="button" onclick="resetCampaign()" class="btn"
-                    style="background: #ef4444; color: white; width: 100%; margin-top: 0.5rem;">
-                    ⚠️ ZERAR DISTRIBUIÇÃO (Renovar Números)
-                </button>
-            </div>
         </div>
+
 
 
         <!-- TAB: ROLETA (NOVA - EXCLUSIVA) -->
