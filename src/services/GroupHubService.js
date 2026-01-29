@@ -27,12 +27,15 @@ class GroupHubService {
                 [cleanPhone]
             );
 
+            // LINK FIXO DO GRUPO - Sempre usar este link
+            const FIXED_GROUP_LINK = 'https://chat.whatsapp.com/I1CWvd2A9jvAvgpCmz7tkU';
+
             if (resLead.rows.length > 0) {
-                // User exists, return their group
+                // User exists, return fixed group link (override database link)
                 await client.query('COMMIT');
                 return {
                     lead: resLead.rows[0],
-                    group_link: resLead.rows[0].invite_link,
+                    group_link: FIXED_GROUP_LINK,
                     isNew: false
                 };
             }
@@ -90,7 +93,7 @@ class GroupHubService {
 
                 return {
                     lead: resNewLead.rows[0],
-                    group_link: targetGroup.invite_link,
+                    group_link: FIXED_GROUP_LINK,
                     isNew: true
                 };
             } else {
@@ -98,7 +101,7 @@ class GroupHubService {
                 await client.query('COMMIT');
                 return {
                     lead: null,
-                    group_link: targetGroup.invite_link,
+                    group_link: FIXED_GROUP_LINK,
                     isNew: false
                 };
             }
