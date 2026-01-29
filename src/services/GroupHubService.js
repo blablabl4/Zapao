@@ -59,34 +59,49 @@ class GroupHubService {
                  LIMIT 1`
             );
 
+            // Fallback: Use fixed group link if no groups available
+            const FALLBACK_GROUP_LINK = 'https://chat.whatsapp.com/I1CWvd2A9jvAvgpCmz7tkU';
+
+            let targetGroup;
             if (resGroup.rows.length === 0) {
-                throw new Error('Nenhum grupo disponível no momento.');
+                // No available groups, use fallback
+                targetGroup = { id: null, invite_link: FALLBACK_GROUP_LINK, name: 'Grupo VIP' };
+            } else {
+                targetGroup = resGroup.rows[0];
             }
 
-            const targetGroup = resGroup.rows[0];
+            // 4. Create Lead (only if we have a real group)
+            if (targetGroup.id) {
+                const newToken = uuidv4().split('-')[0]; // Short token
+                const resNewLead = await client.query(
+                    `INSERT INTO leads (name, phone, assigned_group_id, affiliate_token, referrer_id)
+                     VALUES ($1, $2, $3, $4, $5)
+                     RETURNING *`,
+                    [name, cleanPhone, targetGroup.id, newToken, referrerId]
+                );
 
-            // 4. Create Lead
-            const newToken = uuidv4().split('-')[0]; // Short token
-            const resNewLead = await client.query(
-                `INSERT INTO leads (name, phone, assigned_group_id, affiliate_token, referrer_id)
-                 VALUES ($1, $2, $3, $4, $5)
-                 RETURNING *`,
-                [name, cleanPhone, targetGroup.id, newToken, referrerId]
-            );
+                // 5. Increment Group Count
+                await client.query(
+                    `UPDATE whatsapp_groups SET current_count = current_count + 1 WHERE id = $1`,
+                    [targetGroup.id]
+                );
 
-            // 5. Increment Group Count
-            await client.query(
-                `UPDATE whatsapp_groups SET current_count = current_count + 1 WHERE id = $1`,
-                [targetGroup.id]
-            );
+                await client.query('COMMIT');
 
-            await client.query('COMMIT');
-
-            return {
-                lead: resNewLead.rows[0],
-                group_link: targetGroup.invite_link,
-                isNew: true
-            };
+                return {
+                    lead: resNewLead.rows[0],
+                    group_link: targetGroup.invite_link,
+                    isNew: true
+                };
+            } else {
+                // Fallback mode: just return the fixed group link
+                await client.query('COMMIT');
+                return {
+                    lead: null,
+                    group_link: targetGroup.invite_link,
+                    isNew: false
+                };
+            }
 
         } catch (error) {
             await client.query('ROLLBACK');
