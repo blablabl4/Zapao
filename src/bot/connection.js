@@ -1,7 +1,8 @@
-const { default: makeWASocket, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
 const pino = require('pino');
+const path = require('path');
+const fs = require('fs');
 const GroupMonitor = require('./groupMonitor');
-const { usePostgresAuthState } = require('./authStore');
 
 // Global state for QR code (accessible from admin panel)
 global.botQR = null;
@@ -10,10 +11,13 @@ global.botStatus = 'disconnected'; // 'disconnected', 'qr_ready', 'connected'
 async function connectToWhatsApp() {
     console.log('[Bot] Iniciando conexão...');
 
-    // Use PostgreSQL-based auth state (persists across deploys!)
-    const { state, saveCreds } = await usePostgresAuthState();
+    // Ensure auth folder exists
+    const authPath = path.join(__dirname, 'auth_info_baileys');
+    if (!fs.existsSync(authPath)) {
+        fs.mkdirSync(authPath, { recursive: true });
+    }
 
-
+    const { state, saveCreds } = await useMultiFileAuthState(authPath);
     // Create Socket
     const sock = makeWASocket({
         logger: pino({ level: 'silent' }),
