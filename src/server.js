@@ -374,6 +374,19 @@ async function startServer() {
         webhookRetryJob.start();
         startRemarketingJob(); // Remarketing automations
 
+        // Hourly Hub Sync Job - syncs group members with database every hour
+        setInterval(async () => {
+            if (global.groupMonitor && global.botStatus === 'connected') {
+                console.log('[Server] ⏰ Running hourly group sync...');
+                try {
+                    const results = await global.groupMonitor.syncAllMembers();
+                    console.log('[Server] Hourly sync completed:', results);
+                } catch (e) {
+                    console.error('[Server] Hourly sync error:', e.message);
+                }
+            }
+        }, 60 * 60 * 1000); // Every hour (3600000ms)
+
         // DISABLED: Scratchcard expiration job
         // const { startScratchcardExpirationJob } = require('./jobs/scratchcardExpirationJob');
         // startScratchcardExpirationJob();

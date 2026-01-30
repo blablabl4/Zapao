@@ -3,6 +3,18 @@
  */
 const { query } = require('../database/db');
 
+/**
+ * Normalize phone number for comparison - extracts last 9 digits
+ * Handles: 5511999998888, 11999998888, (11) 99999-8888, +55 11 99999-8888
+ */
+function normalizePhone(phone) {
+    if (!phone) return '';
+    // Remove all non-digits
+    const digits = phone.replace(/\D/g, '');
+    // Get last 9 digits (ignores country code and area code variations)
+    return digits.slice(-9);
+}
+
 class GroupMonitor {
     constructor(sock) {
         this.sock = sock;
@@ -328,37 +340,45 @@ class GroupMonitor {
             }
 
             // Step 3: BATCH UPDATE - Update assigned_group_id for all members in each group
+            // Uses RIGHT() to compare last 9 digits - handles different phone formats
             for (const mapping of groupMappings) {
                 if (mapping.participants.length === 0) continue;
 
-                // Batch update: set assigned_group_id for all phones in this group
-                const phonesArray = mapping.participants;
+                // Normalize phones to last 9 digits for comparison
+                const normalizedPhones = mapping.participants.map(p => normalizePhone(p));
+
+                // Batch update using last 9 digits match
                 const updateResult = await query(
                     `UPDATE leads 
                      SET assigned_group_id = $1, status = 'ACTIVE', updated_at = NOW() 
-                     WHERE phone = ANY($2::text[]) AND (assigned_group_id != $1 OR status != 'ACTIVE')
+                     WHERE RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 9) = ANY($2::text[]) 
+                       AND (assigned_group_id != $1 OR status != 'ACTIVE')
                      RETURNING id`,
-                    [mapping.dbGroupId, phonesArray]
+                    [mapping.dbGroupId, normalizedPhones]
                 );
                 results.leads_updated += updateResult.rowCount;
 
-                // Count unregistered (in group but not in DB)
+                // Count registered phones (matching last 9 digits)
                 const registeredRes = await query(
-                    'SELECT phone FROM leads WHERE phone = ANY($1::text[])',
-                    [phonesArray]
+                    `SELECT phone FROM leads 
+                     WHERE RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 9) = ANY($1::text[])`,
+                    [normalizedPhones]
                 );
-                results.unregistered_count += phonesArray.length - registeredRes.rows.length;
+                results.unregistered_count += mapping.participants.length - registeredRes.rows.length;
             }
 
-            // Step 4: BATCH - Mark leads as LEFT if not in any group
-            const allPhones = groupMappings.flatMap(m => m.participants);
-            if (allPhones.length > 0) {
+            // Step 4: BATCH - Mark leads as LEFT if not in any group (using normalized comparison)
+            const allNormalizedPhones = groupMappings.flatMap(m =>
+                m.participants.map(p => normalizePhone(p))
+            );
+            if (allNormalizedPhones.length > 0) {
                 const leftResult = await query(
                     `UPDATE leads 
                      SET status = 'LEFT', updated_at = NOW() 
-                     WHERE status = 'ACTIVE' AND phone != ALL($1::text[])
+                     WHERE status = 'ACTIVE' 
+                       AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 9) != ALL($1::text[])
                      RETURNING id`,
-                    [allPhones]
+                    [allNormalizedPhones]
                 );
                 results.missing_from_groups = leftResult.rowCount;
             }
