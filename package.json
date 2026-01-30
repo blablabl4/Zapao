@@ -19,6 +19,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@whiskeysockets/baileys": "^6.6.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^9.2.2",
@@ -40,8 +41,7 @@
     "qrcode": "^1.5.3",
     "uuid": "^9.0.0",
     "web-push": "^3.6.7",
-    "xlsx": "^0.18.5",
-    "@whiskeysockets/baileys": "^6.7.9"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "jest": "^30.2.0",
