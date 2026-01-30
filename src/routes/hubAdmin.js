@@ -194,6 +194,27 @@ router.post('/bot/start', async (req, res) => {
     }
 });
 
+// Sync all groups and validate members
+router.post('/bot/sync-members', async (req, res) => {
+    try {
+        if (!global.groupMonitor) {
+            return res.status(400).json({ error: 'Bot não está conectado. Inicie o robô primeiro.' });
+        }
+
+        console.log('[HubAdmin] Starting full member sync...');
+        const results = await global.groupMonitor.syncAllMembers();
+
+        res.json({
+            success: true,
+            message: 'Sincronização completa!',
+            ...results
+        });
+    } catch (e) {
+        console.error('[HubAdmin] Sync error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Leads Table (with search and pagination)
 router.get('/leads', async (req, res) => {
     try {
