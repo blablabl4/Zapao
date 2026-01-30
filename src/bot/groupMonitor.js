@@ -245,18 +245,18 @@ class GroupMonitor {
 
     /**
      * FULL SYNC: Map all groups and validate members against database
-     * This is the main method for complete synchronization
+     * OPTIMIZED: Uses batch SQL operations instead of per-member queries
      */
     async syncAllMembers() {
-        console.log('[GroupMonitor] 🔄 Starting FULL sync of all groups and members...');
+        console.log('[GroupMonitor] 🔄 Starting OPTIMIZED sync of all groups and members...');
+        const startTime = Date.now();
 
         const results = {
             groups_synced: 0,
             total_wa_members: 0,
             leads_updated: 0,
-            leads_created: 0,
-            unregistered_in_groups: [],
-            missing_from_groups: [],
+            unregistered_count: 0,
+            missing_from_groups: 0,
             errors: []
         };
 
@@ -266,26 +266,26 @@ class GroupMonitor {
             const groupJids = Object.keys(groups);
             console.log(`[GroupMonitor] Found ${groupJids.length} groups`);
 
-            // Step 2: Map each group to database
+            // Collect all participants per group
+            const groupMappings = []; // {jid, link, participants, dbGroupId}
+
+            // Step 2: Map groups to database (fast - only a few groups)
             for (const jid of groupJids) {
                 const groupMeta = groups[jid];
                 console.log(`[GroupMonitor] Processing group: ${groupMeta.subject}`);
 
                 try {
-                    // Get invite code for this group
                     const code = await this.sock.groupInviteCode(jid);
                     const currentLink = `https://chat.whatsapp.com/${code}`;
 
-                    // Try to find this group in database
+                    // Find group in database
                     let dbGroupRes = await query(
                         'SELECT * FROM whatsapp_groups WHERE whatsapp_id = $1 OR invite_link = $2',
                         [jid, currentLink]
                     );
-
                     let dbGroup = dbGroupRes.rows[0];
 
                     if (!dbGroup) {
-                        // Try to match by name
                         const nameRes = await query(
                             'SELECT * FROM whatsapp_groups WHERE LOWER(name) LIKE LOWER($1)',
                             [`%${groupMeta.subject}%`]
@@ -294,112 +294,84 @@ class GroupMonitor {
                     }
 
                     if (dbGroup) {
-                        // Update whatsapp_id and invite_link if needed
+                        // Update group mapping
                         await query(
                             `UPDATE whatsapp_groups 
                              SET whatsapp_id = $1, invite_link = $2, name = COALESCE(name, $3)
                              WHERE id = $4`,
                             [jid, currentLink, groupMeta.subject, dbGroup.id]
                         );
-                        console.log(`[GroupMonitor] ✅ Mapped group "${groupMeta.subject}" -> DB ID ${dbGroup.id}`);
 
-                        // Step 3: Get all participants and sync
                         const participants = groupMeta.participants.map(p =>
                             p.id.replace('@s.whatsapp.net', '')
                         );
-                        results.total_wa_members += participants.length;
 
-                        // Update the real count
+                        // Update real count in DB
                         await query(
                             'UPDATE whatsapp_groups SET current_count = $1 WHERE id = $2',
                             [participants.length, dbGroup.id]
                         );
 
-                        // Step 4: Cross-reference with leads
-                        for (const phone of participants) {
-                            // Check if lead exists
-                            const leadRes = await query(
-                                'SELECT * FROM leads WHERE phone = $1',
-                                [phone]
-                            );
+                        groupMappings.push({
+                            jid,
+                            dbGroupId: dbGroup.id,
+                            participants
+                        });
 
-                            if (leadRes.rows.length > 0) {
-                                const lead = leadRes.rows[0];
-                                // Update assigned_group_id if different
-                                if (lead.assigned_group_id !== dbGroup.id) {
-                                    await query(
-                                        'UPDATE leads SET assigned_group_id = $1, status = $2, updated_at = NOW() WHERE id = $3',
-                                        [dbGroup.id, 'ACTIVE', lead.id]
-                                    );
-                                    results.leads_updated++;
-                                    console.log(`[GroupMonitor] 📝 Updated lead ${phone}: group ${lead.assigned_group_id} -> ${dbGroup.id}`);
-                                } else if (lead.status !== 'ACTIVE') {
-                                    // Mark as ACTIVE since they're in the group
-                                    await query(
-                                        'UPDATE leads SET status = $1, updated_at = NOW() WHERE id = $2',
-                                        ['ACTIVE', lead.id]
-                                    );
-                                }
-                            } else {
-                                // User in group but not in database
-                                results.unregistered_in_groups.push({
-                                    phone,
-                                    group_id: dbGroup.id,
-                                    group_name: dbGroup.name
-                                });
-                            }
-                        }
-
+                        results.total_wa_members += participants.length;
                         results.groups_synced++;
-                    } else {
-                        console.log(`[GroupMonitor] ⚠️ Group "${groupMeta.subject}" not found in database`);
+                        console.log(`[GroupMonitor] ✅ Mapped: ${groupMeta.subject} (${participants.length} members)`);
                     }
-
-                } catch (groupError) {
-                    console.error(`[GroupMonitor] Error processing group ${jid}:`, groupError.message);
-                    results.errors.push({ group: jid, error: groupError.message });
+                } catch (e) {
+                    results.errors.push({ group: jid, error: e.message });
                 }
             }
 
-            // Step 5: Find leads that are NOT in any group (missing from groups)
-            const leadsInDbRes = await query(
-                `SELECT l.phone, l.name, l.assigned_group_id, g.name as group_name
-                 FROM leads l
-                 LEFT JOIN whatsapp_groups g ON l.assigned_group_id = g.id
-                 WHERE l.status = 'ACTIVE'`
-            );
+            // Step 3: BATCH UPDATE - Update assigned_group_id for all members in each group
+            for (const mapping of groupMappings) {
+                if (mapping.participants.length === 0) continue;
 
-            // Collect all phone numbers in all synced groups
-            const allGroupPhones = new Set();
-            for (const jid of groupJids) {
-                const meta = groups[jid];
-                meta.participants.forEach(p => {
-                    allGroupPhones.add(p.id.replace('@s.whatsapp.net', ''));
-                });
+                // Batch update: set assigned_group_id for all phones in this group
+                const phonesArray = mapping.participants;
+                const updateResult = await query(
+                    `UPDATE leads 
+                     SET assigned_group_id = $1, status = 'ACTIVE', updated_at = NOW() 
+                     WHERE phone = ANY($2::text[]) AND (assigned_group_id != $1 OR status != 'ACTIVE')
+                     RETURNING id`,
+                    [mapping.dbGroupId, phonesArray]
+                );
+                results.leads_updated += updateResult.rowCount;
+
+                // Count unregistered (in group but not in DB)
+                const registeredRes = await query(
+                    'SELECT phone FROM leads WHERE phone = ANY($1::text[])',
+                    [phonesArray]
+                );
+                results.unregistered_count += phonesArray.length - registeredRes.rows.length;
             }
 
-            // Find leads marked ACTIVE but not in any group
-            for (const lead of leadsInDbRes.rows) {
-                if (!allGroupPhones.has(lead.phone)) {
-                    results.missing_from_groups.push({
-                        phone: lead.phone,
-                        name: lead.name,
-                        expected_group: lead.group_name
-                    });
-                    // Mark as LEFT since they're not in any group
-                    await query(
-                        `UPDATE leads SET status = 'LEFT', updated_at = NOW() WHERE phone = $1`,
-                        [lead.phone]
-                    );
-                }
+            // Step 4: BATCH - Mark leads as LEFT if not in any group
+            const allPhones = groupMappings.flatMap(m => m.participants);
+            if (allPhones.length > 0) {
+                const leftResult = await query(
+                    `UPDATE leads 
+                     SET status = 'LEFT', updated_at = NOW() 
+                     WHERE status = 'ACTIVE' AND phone != ALL($1::text[])
+                     RETURNING id`,
+                    [allPhones]
+                );
+                results.missing_from_groups = leftResult.rowCount;
             }
 
-            console.log('[GroupMonitor] ✅ FULL SYNC COMPLETE!');
-            console.log(`  Groups synced: ${results.groups_synced}`);
-            console.log(`  Total WA members: ${results.total_wa_members}`);
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            console.log(`[GroupMonitor] ✅ SYNC COMPLETE in ${duration}s!`);
+            console.log(`  Groups: ${results.groups_synced}`);
+            console.log(`  WA Members: ${results.total_wa_members}`);
             console.log(`  Leads updated: ${results.leads_updated}`);
-            console.log(`  Unregistered in groups: ${results.unregistered_in_groups.length}`);
-            console.log(`  Missing from groups: ${results.missing_from_groups.length}`);
+            console.log(`  Unregistered: ${results.unregistered_count}`);
+            console.log(`  Marked LEFT: ${results.missing_from_groups}`);
+
+            results.duration_seconds = parseFloat(duration);
 
         } catch (e) {
             console.error('[GroupMonitor] SYNC ERROR:', e.message);
