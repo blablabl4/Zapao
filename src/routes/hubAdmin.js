@@ -218,12 +218,12 @@ router.post('/bot/sync-members', async (req, res) => {
 // DEBUG: Compare phone formats between WhatsApp and database
 router.get('/bot/debug-phones', async (req, res) => {
     try {
-        if (!global.whatsappSocket) {
+        if (!global.groupMonitor) {
             return res.status(400).json({ error: 'Bot não conectado' });
         }
 
         // Get first 10 phones from WhatsApp (first group)
-        const groups = await global.whatsappSocket.groupFetchAllParticipating();
+        const groups = await global.groupMonitor.sock.groupFetchAllParticipating();
         const firstGroupJid = Object.keys(groups)[0];
         const waPhones = groups[firstGroupJid]?.participants
             .slice(0, 10)
