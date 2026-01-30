@@ -19,6 +19,8 @@ class GroupMonitor {
     constructor(sock) {
         this.sock = sock;
         this.monitoredGroups = new Set();
+        // Cache for LID -> Phone mapping (built from events)
+        this.lidToPhone = new Map();
     }
 
     /**
@@ -30,8 +32,32 @@ class GroupMonitor {
         // Load registered groups from DB
         await this.loadMonitoredGroups();
 
+        // Listen for LID to Phone mappings (Baileys 6.8+)
+        this.sock.ev.on('lid-mapping.update', async (mappings) => {
+            for (const mapping of mappings) {
+                if (mapping.lid && mapping.jid) {
+                    const phone = mapping.jid.replace('@s.whatsapp.net', '');
+                    const lid = mapping.lid.replace('@lid', '');
+                    this.lidToPhone.set(lid, phone);
+                    console.log(`[GroupMonitor] LID Mapping: ${lid} -> ${phone}`);
+                }
+            }
+        });
+
         // Listen for participant updates
         this.sock.ev.on('group-participants.update', async (update) => {
+            // Try to capture LID -> Phone mapping from participants
+            if (update.participants) {
+                for (const p of update.participants) {
+                    // If participant has participantAlt (phone when participant is LID)
+                    if (p.includes('@lid') && update.participantAlt) {
+                        const lid = p.replace('@lid', '');
+                        const phone = update.participantAlt.replace('@s.whatsapp.net', '');
+                        this.lidToPhone.set(lid, phone);
+                        console.log(`[GroupMonitor] Captured LID mapping: ${lid} -> ${phone}`);
+                    }
+                }
+            }
             await this.handleParticipantUpdate(update);
         });
 
@@ -550,6 +576,32 @@ class GroupMonitor {
         }
 
         return results;
+    }
+
+    /**
+     * Get all cached LID -> Phone mappings
+     */
+    getLidMappings() {
+        return {
+            count: this.lidToPhone.size,
+            mappings: Object.fromEntries(this.lidToPhone)
+        };
+    }
+
+    /**
+     * Resolve a LID to phone number using cache
+     */
+    resolvePhone(participantId) {
+        if (!participantId) return null;
+
+        // If already a phone number, return as is
+        if (participantId.includes('@s.whatsapp.net')) {
+            return participantId.replace('@s.whatsapp.net', '');
+        }
+
+        // Try to resolve from cache
+        const lid = participantId.replace('@lid', '');
+        return this.lidToPhone.get(lid) || null;
     }
 }
 

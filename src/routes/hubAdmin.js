@@ -332,6 +332,24 @@ router.post('/bot/import-members', async (req, res) => {
     }
 });
 
+// DEBUG: View LID -> Phone mappings cache
+router.get('/bot/lid-mappings', async (req, res) => {
+    try {
+        if (!global.groupMonitor) {
+            return res.status(400).json({ error: 'Bot não conectado' });
+        }
+
+        const mappings = global.groupMonitor.getLidMappings();
+        res.json({
+            success: true,
+            ...mappings
+        });
+    } catch (e) {
+        console.error('[HubAdmin] LID mappings error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // DEBUG: Compare phone formats between WhatsApp and database
 router.get('/bot/debug-phones', async (req, res) => {
     try {
