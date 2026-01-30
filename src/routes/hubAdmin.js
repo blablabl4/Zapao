@@ -236,6 +236,102 @@ router.post('/bot/sync-leads', async (req, res) => {
     }
 });
 
+// IMPORT: Sync group members from external export (Chrome extension)
+// Accepts JSON body with { groupId: number, phones: string[] }
+router.post('/bot/import-members', async (req, res) => {
+    try {
+        const { groupId, phones, groupLink } = req.body;
+
+        if (!phones || !Array.isArray(phones) || phones.length === 0) {
+            return res.status(400).json({ error: 'Array de telefones é obrigatório' });
+        }
+
+        // If groupLink provided, find the group ID
+        let targetGroupId = groupId;
+        if (!targetGroupId && groupLink) {
+            const groupRes = await query(
+                'SELECT id FROM whatsapp_groups WHERE invite_link = $1 OR invite_link LIKE $2',
+                [groupLink, `%${groupLink.split('/').pop()}%`]
+            );
+            if (groupRes.rows[0]) {
+                targetGroupId = groupRes.rows[0].id;
+            }
+        }
+
+        if (!targetGroupId) {
+            return res.status(400).json({ error: 'groupId ou groupLink válido é obrigatório' });
+        }
+
+        console.log(`[HubAdmin] Importing ${phones.length} phones for group ${targetGroupId}...`);
+
+        // Normalize function (last 9 digits)
+        const normalize = (phone) => {
+            if (!phone) return '';
+            return phone.replace(/\D/g, '').slice(-9);
+        };
+
+        // Normalize all imported phones
+        const normalizedPhones = phones.map(p => normalize(p)).filter(p => p.length >= 9);
+
+        const results = {
+            phones_received: phones.length,
+            phones_valid: normalizedPhones.length,
+            leads_matched: 0,
+            leads_updated: 0,
+            leads_not_found: 0
+        };
+
+        // Batch update - find leads matching these phones and update their group
+        const updateResult = await query(
+            `UPDATE leads 
+             SET assigned_group_id = $1, status = 'ACTIVE', updated_at = NOW() 
+             WHERE RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 9) = ANY($2::text[])
+               AND (assigned_group_id IS DISTINCT FROM $1 OR status != 'ACTIVE')
+             RETURNING id, phone`,
+            [targetGroupId, normalizedPhones]
+        );
+        results.leads_updated = updateResult.rowCount;
+
+        // Count how many leads we found (not necessarily updated)
+        const matchResult = await query(
+            `SELECT COUNT(*) FROM leads 
+             WHERE RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 9) = ANY($1::text[])`,
+            [normalizedPhones]
+        );
+        results.leads_matched = parseInt(matchResult.rows[0].count);
+        results.leads_not_found = normalizedPhones.length - results.leads_matched;
+
+        // Update the group's current count based on imported phones
+        await query(
+            'UPDATE whatsapp_groups SET current_count = $1 WHERE id = $2',
+            [phones.length, targetGroupId]
+        );
+
+        // Mark leads NOT in this import as LEFT (if they were previously in this group)
+        const leftResult = await query(
+            `UPDATE leads 
+             SET status = 'LEFT', updated_at = NOW() 
+             WHERE assigned_group_id = $1 
+               AND status = 'ACTIVE'
+               AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 9) != ALL($2::text[])
+             RETURNING id`,
+            [targetGroupId, normalizedPhones]
+        );
+        results.leads_marked_left = leftResult.rowCount;
+
+        console.log(`[HubAdmin] Import complete:`, results);
+
+        res.json({
+            success: true,
+            message: 'Importação concluída!',
+            ...results
+        });
+    } catch (e) {
+        console.error('[HubAdmin] Import error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // DEBUG: Compare phone formats between WhatsApp and database
 router.get('/bot/debug-phones', async (req, res) => {
     try {
