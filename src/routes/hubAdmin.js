@@ -215,6 +215,48 @@ router.post('/bot/sync-members', async (req, res) => {
     }
 });
 
+// DEBUG: Compare phone formats between WhatsApp and database
+router.get('/bot/debug-phones', async (req, res) => {
+    try {
+        if (!global.whatsappSocket) {
+            return res.status(400).json({ error: 'Bot não conectado' });
+        }
+
+        // Get first 10 phones from WhatsApp (first group)
+        const groups = await global.whatsappSocket.groupFetchAllParticipating();
+        const firstGroupJid = Object.keys(groups)[0];
+        const waPhones = groups[firstGroupJid]?.participants
+            .slice(0, 10)
+            .map(p => p.id.replace('@s.whatsapp.net', '')) || [];
+
+        // Get first 10 phones from database
+        const dbResult = await query('SELECT phone FROM leads LIMIT 10');
+        const dbPhones = dbResult.rows.map(r => r.phone);
+
+        // Normalize function
+        const normalize = (p) => p?.replace(/\D/g, '').slice(-9) || '';
+
+        // Show comparison
+        const comparison = {
+            whatsapp_raw: waPhones,
+            whatsapp_normalized: waPhones.map(normalize),
+            database_raw: dbPhones,
+            database_normalized: dbPhones.map(normalize),
+            sample_match_test: {
+                wa_sample: waPhones[0],
+                wa_normalized: normalize(waPhones[0]),
+                db_sample: dbPhones[0],
+                db_normalized: normalize(dbPhones[0]),
+                would_match: normalize(waPhones[0]) === normalize(dbPhones[0])
+            }
+        };
+
+        res.json(comparison);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Leads Table (with search and pagination)
 router.get('/leads', async (req, res) => {
     try {
