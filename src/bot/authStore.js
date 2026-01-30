@@ -3,8 +3,27 @@
  * Replaces useMultiFileAuthState with database persistence
  */
 const { query } = require('../database/db');
-const { proto } = require('@whiskeysockets/baileys');
-const { initAuthCreds } = require('@whiskeysockets/baileys');
+const baileys = require('@whiskeysockets/baileys');
+
+// Handle different export styles across Baileys versions
+const proto = baileys.proto || baileys.default?.proto;
+const initAuthCreds = baileys.initAuthCreds || baileys.default?.initAuthCreds || (() => {
+    // Fallback: create basic creds structure
+    const { randomBytes } = require('crypto');
+    return {
+        noiseKey: { private: randomBytes(32), public: randomBytes(32) },
+        signedIdentityKey: { private: randomBytes(32), public: randomBytes(32) },
+        signedPreKey: { keyPair: { private: randomBytes(32), public: randomBytes(32) }, signature: randomBytes(64), keyId: 1 },
+        registrationId: Math.floor(Math.random() * 16383) + 1,
+        advSecretKey: randomBytes(32).toString('base64'),
+        me: undefined,
+        account: undefined,
+        signalIdentities: [],
+        platform: undefined,
+        lastAccountSyncTimestamp: 0,
+        myAppStateKeyId: undefined
+    };
+});
 
 /**
  * Custom auth state that stores in PostgreSQL
