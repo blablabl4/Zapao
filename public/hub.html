@@ -217,8 +217,8 @@
 
                 if (data.error) throw new Error(data.error);
 
-                // Determine affiliate link
-                const affLink = window.location.origin + '/hub?ref=' + data.lead.affiliate_token;
+                // Determine affiliate link (points to survey page)
+                const affLink = window.location.origin + '/hub-survey.html?ref=' + data.lead.affiliate_token;
 
                 // Show Success
                 closeModal();
@@ -265,10 +265,24 @@
         loadConfig();
 
         function copyLink() {
-            const copyText = document.getElementById("affiliateLink");
-            copyText.select();
-            document.execCommand("copy");
-            alert("Link copiado!");
+            const linkValue = document.getElementById("affiliateLink").value;
+            const textToCopy = `Sorteio Grátis,
+10 mil reais 👇
+
+${linkValue}`;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("Link copiado com a mensagem!");
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert("Link copiado com a mensagem!");
+            });
         }
     </script>
 </body>
