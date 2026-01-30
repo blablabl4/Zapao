@@ -314,9 +314,11 @@ class GroupMonitor {
                             [jid, currentLink, groupMeta.subject, dbGroup.id]
                         );
 
-                        const participants = groupMeta.participants.map(p =>
-                            p.id.replace('@s.whatsapp.net', '')
-                        );
+                        // Extract ONLY real phone numbers (filter out @lid participants)
+                        // LID = Linked ID, internal WhatsApp identifier, not a phone number
+                        const participants = groupMeta.participants
+                            .filter(p => p.id.endsWith('@s.whatsapp.net')) // Only real phones
+                            .map(p => p.id.replace('@s.whatsapp.net', ''));
 
                         // Update real count in DB
                         await query(

@@ -222,12 +222,18 @@ router.get('/bot/debug-phones', async (req, res) => {
             return res.status(400).json({ error: 'Bot não conectado' });
         }
 
-        // Get first 10 phones from WhatsApp (first group)
+        // Get participants from WhatsApp (first group)
         const groups = await global.groupMonitor.sock.groupFetchAllParticipating();
         const firstGroupJid = Object.keys(groups)[0];
-        const waPhones = groups[firstGroupJid]?.participants
+        const allParticipants = groups[firstGroupJid]?.participants || [];
+
+        // Separate LIDs from real phones
+        const lidParticipants = allParticipants.filter(p => p.id.endsWith('@lid'));
+        const phoneParticipants = allParticipants.filter(p => p.id.endsWith('@s.whatsapp.net'));
+
+        const waPhones = phoneParticipants
             .slice(0, 10)
-            .map(p => p.id.replace('@s.whatsapp.net', '')) || [];
+            .map(p => p.id.replace('@s.whatsapp.net', ''));
 
         // Get first 10 phones from database
         const dbResult = await query('SELECT phone FROM leads LIMIT 10');
@@ -238,17 +244,24 @@ router.get('/bot/debug-phones', async (req, res) => {
 
         // Show comparison
         const comparison = {
-            whatsapp_raw: waPhones,
-            whatsapp_normalized: waPhones.map(normalize),
-            database_raw: dbPhones,
-            database_normalized: dbPhones.map(normalize),
-            sample_match_test: {
-                wa_sample: waPhones[0],
+            participant_breakdown: {
+                total: allParticipants.length,
+                lid_count: lidParticipants.length,
+                phone_count: phoneParticipants.length,
+                lid_sample: lidParticipants.slice(0, 3).map(p => p.id),
+                phone_sample: phoneParticipants.slice(0, 3).map(p => p.id)
+            },
+            whatsapp_phones_raw: waPhones,
+            whatsapp_phones_normalized: waPhones.map(normalize),
+            database_phones_raw: dbPhones,
+            database_phones_normalized: dbPhones.map(normalize),
+            sample_match: waPhones[0] ? {
+                wa: waPhones[0],
                 wa_normalized: normalize(waPhones[0]),
-                db_sample: dbPhones[0],
+                db: dbPhones[0],
                 db_normalized: normalize(dbPhones[0]),
                 would_match: normalize(waPhones[0]) === normalize(dbPhones[0])
-            }
+            } : 'No phone participants found'
         };
 
         res.json(comparison);
