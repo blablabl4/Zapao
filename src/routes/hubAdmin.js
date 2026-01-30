@@ -215,6 +215,27 @@ router.post('/bot/sync-members', async (req, res) => {
     }
 });
 
+// REVERSE Sync - Check DB leads against WhatsApp groups (bypasses LID limitation)
+router.post('/bot/sync-leads', async (req, res) => {
+    try {
+        if (!global.groupMonitor) {
+            return res.status(400).json({ error: 'Bot não está conectado. Inicie o robô primeiro.' });
+        }
+
+        console.log('[HubAdmin] Starting REVERSE sync (DB leads → WhatsApp)...');
+        const results = await global.groupMonitor.syncLeadsToGroups();
+
+        res.json({
+            success: true,
+            message: 'Sync reverso completo!',
+            ...results
+        });
+    } catch (e) {
+        console.error('[HubAdmin] Reverse sync error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // DEBUG: Compare phone formats between WhatsApp and database
 router.get('/bot/debug-phones', async (req, res) => {
     try {

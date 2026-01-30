@@ -414,6 +414,143 @@ class GroupMonitor {
             return { participants: 0, unregistered: [], error: e.message };
         }
     }
+
+    /**
+     * REVERSE SYNC: Check if leads from database are in WhatsApp groups
+     * Bypasses LID limitation by starting from known phone numbers
+     */
+    async syncLeadsToGroups() {
+        console.log('[GroupMonitor] 🔄 Starting REVERSE sync (DB leads → WhatsApp groups)...');
+        const startTime = Date.now();
+
+        const results = {
+            leads_checked: 0,
+            leads_on_whatsapp: 0,
+            leads_in_groups: 0,
+            leads_not_in_groups: 0,
+            leads_not_on_whatsapp: 0,
+            group_assignments_updated: 0,
+            errors: []
+        };
+
+        try {
+            // Step 1: Get all groups and their participant JIDs (including LIDs)
+            const groups = await this.sock.groupFetchAllParticipating();
+            const groupJids = Object.keys(groups);
+            console.log(`[GroupMonitor] Found ${groupJids.length} groups`);
+
+            // Map group JIDs to DB group IDs
+            const groupDbMap = {}; // { waJid: dbGroupId }
+            for (const jid of groupJids) {
+                const code = await this.sock.groupInviteCode(jid);
+                const link = `https://chat.whatsapp.com/${code}`;
+                const dbRes = await query(
+                    'SELECT id FROM whatsapp_groups WHERE whatsapp_id = $1 OR invite_link = $2',
+                    [jid, link]
+                );
+                if (dbRes.rows[0]) {
+                    groupDbMap[jid] = dbRes.rows[0].id;
+                }
+            }
+
+            // Step 2: Get all leads from database
+            const leadsRes = await query(
+                `SELECT id, phone, name, assigned_group_id, status FROM leads 
+                 WHERE phone IS NOT NULL AND phone != ''`
+            );
+            const leads = leadsRes.rows;
+            console.log(`[GroupMonitor] Checking ${leads.length} leads against WhatsApp...`);
+
+            // Step 3: Check each lead in batches of 50
+            const batchSize = 50;
+            for (let i = 0; i < leads.length; i += batchSize) {
+                const batch = leads.slice(i, i + batchSize);
+                const phones = batch.map(l => `55${l.phone.replace(/\D/g, '')}@s.whatsapp.net`);
+
+                try {
+                    // Check if phones are on WhatsApp
+                    const waResults = await this.sock.onWhatsApp(...phones.map(p => p.replace('@s.whatsapp.net', '')));
+
+                    for (const lead of batch) {
+                        results.leads_checked++;
+                        const normalizedPhone = lead.phone.replace(/\D/g, '');
+
+                        // Find matching WhatsApp result
+                        const waInfo = waResults.find(w =>
+                            w.jid?.includes(normalizedPhone) ||
+                            w.jid?.includes(normalizedPhone.slice(-9))
+                        );
+
+                        if (waInfo?.exists) {
+                            results.leads_on_whatsapp++;
+                            const userJid = waInfo.jid;
+
+                            // Check if this JID is in any of our groups
+                            let foundInGroupId = null;
+                            for (const [groupJid, dbGroupId] of Object.entries(groupDbMap)) {
+                                const group = groups[groupJid];
+                                const isInGroup = group.participants.some(p =>
+                                    p.id === userJid ||
+                                    p.id.includes(normalizedPhone) ||
+                                    p.id.includes(normalizedPhone.slice(-9))
+                                );
+                                if (isInGroup) {
+                                    foundInGroupId = dbGroupId;
+                                    break;
+                                }
+                            }
+
+                            if (foundInGroupId) {
+                                results.leads_in_groups++;
+                                // Update assigned_group_id if different
+                                if (lead.assigned_group_id !== foundInGroupId || lead.status !== 'ACTIVE') {
+                                    await query(
+                                        `UPDATE leads SET assigned_group_id = $1, status = 'ACTIVE', updated_at = NOW() WHERE id = $2`,
+                                        [foundInGroupId, lead.id]
+                                    );
+                                    results.group_assignments_updated++;
+                                }
+                            } else {
+                                results.leads_not_in_groups++;
+                                // Mark as not in group
+                                if (lead.status === 'ACTIVE') {
+                                    await query(
+                                        `UPDATE leads SET status = 'LEFT', updated_at = NOW() WHERE id = $1`,
+                                        [lead.id]
+                                    );
+                                }
+                            }
+                        } else {
+                            results.leads_not_on_whatsapp++;
+                        }
+                    }
+                } catch (batchError) {
+                    console.error(`[GroupMonitor] Batch error:`, batchError.message);
+                    results.errors.push({ batch: i, error: batchError.message });
+                }
+
+                // Small delay between batches to avoid rate limiting
+                if (i + batchSize < leads.length) {
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            console.log(`[GroupMonitor] ✅ REVERSE SYNC COMPLETE in ${duration}s!`);
+            console.log(`  Leads checked: ${results.leads_checked}`);
+            console.log(`  On WhatsApp: ${results.leads_on_whatsapp}`);
+            console.log(`  In groups: ${results.leads_in_groups}`);
+            console.log(`  Updated: ${results.group_assignments_updated}`);
+
+            results.duration_seconds = parseFloat(duration);
+
+        } catch (e) {
+            console.error('[GroupMonitor] REVERSE SYNC ERROR:', e.message);
+            results.errors.push({ error: e.message });
+        }
+
+        return results;
+    }
 }
 
 module.exports = GroupMonitor;
