@@ -38,8 +38,10 @@
     "pg": "^8.16.3",
     "pino": "^10.1.0",
     "qrcode": "^1.5.3",
+    "uuid": "^9.0.0",
     "web-push": "^3.6.7",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "@whiskeysockets/baileys": "^6.7.9"
   },
   "devDependencies": {
     "jest": "^30.2.0",
