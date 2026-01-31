@@ -147,6 +147,7 @@ router.put('/groups/:id', async (req, res) => {
         const { id } = req.params;
         const { name, invite_link, capacity, active } = req.body;
 
+        // Update the group
         await query(
             `UPDATE whatsapp_groups 
              SET name = COALESCE($1, name), 
@@ -156,7 +157,21 @@ router.put('/groups/:id', async (req, res) => {
              WHERE id = $5`,
             [name, invite_link, capacity, active, id]
         );
-        res.json({ success: true });
+
+        // If invite_link was updated, also update leads' carimbo_link
+        let leadsUpdated = 0;
+        if (invite_link) {
+            const result = await query(
+                `UPDATE leads 
+                 SET carimbo_link = $1, updated_at = NOW() 
+                 WHERE assigned_group_id = $2`,
+                [invite_link, id]
+            );
+            leadsUpdated = result.rowCount;
+            console.log(`[HubAdmin] Updated carimbo_link for ${leadsUpdated} leads in group ${id}`);
+        }
+
+        res.json({ success: true, leadsUpdated });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
