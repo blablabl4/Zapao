@@ -158,20 +158,12 @@ router.put('/groups/:id', async (req, res) => {
             [name, invite_link, capacity, active, id]
         );
 
-        // If invite_link was updated, also update leads' carimbo_link
-        let leadsUpdated = 0;
+        // Log if invite_link was updated
         if (invite_link) {
-            const result = await query(
-                `UPDATE leads 
-                 SET carimbo_link = $1, updated_at = NOW() 
-                 WHERE assigned_group_id = $2`,
-                [invite_link, id]
-            );
-            leadsUpdated = result.rowCount;
-            console.log(`[HubAdmin] Updated carimbo_link for ${leadsUpdated} leads in group ${id}`);
+            console.log(`[HubAdmin] Updated invite_link for group ${id}`);
         }
 
-        res.json({ success: true, leadsUpdated });
+        res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
